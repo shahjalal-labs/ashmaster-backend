@@ -3,7 +3,7 @@
 POST {{port6011}}/auth/login
 
 {
-  "email":"koyelot367@roastic.com",
+  "email":"jamalbinabul@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }
@@ -20,5 +20,11 @@ POST {{port6011}}/auth/auth-login
 
 POST {{port6011}}/auth/send-forgot-otp
 {
-   "email":"koyelot367@roastic.com" 
+   "email":"jamalbinabul@merepost.com" 
 }
+
+
+POST {{port6011}}/auth//verify-forgot-otp
+{
+   "email":"jamalbinabul@merepost.com" 
+} 

@@ -55,6 +55,7 @@ const sendForgotPasswordOtp = catchAsync(
 );
 
 // verify forgot password otp code
+//w: (start)╭──────────── verifyForgotPasswordOtpCode ────────────╮
 const verifyForgotPasswordOtpCode = catchAsync(
   async (req: Request, res: Response) => {
     const payload = req.body;
@@ -68,6 +69,7 @@ const verifyForgotPasswordOtpCode = catchAsync(
     });
   },
 );
+//w: (end)  ╰──────────── verifyForgotPasswordOtpCode ────────────╯
 
 // update forgot password
 const resetPassword = catchAsync(async (req: Request, res: Response) => {

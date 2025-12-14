@@ -126,6 +126,7 @@ const userLocationUpdateInDB = async (
 };
 
 //send forgot password otp
+//w: (start)╭──────────── sendForgotPasswordOtpDB ────────────╮
 const sendForgotPasswordOtpDB = async (email: string) => {
   const existringUser = await prisma.user.findUnique({
     where: {
@@ -153,8 +154,10 @@ const sendForgotPasswordOtpDB = async (email: string) => {
 
   return;
 };
+//w: (end)  ╰──────────── sendForgotPasswordOtpDB ────────────╯
 
 // verify otp code
+//w: (start)╭──────────── verifyForgotPasswordOtpCodeDB ────────────╮
 const verifyForgotPasswordOtpCodeDB = async (payload: any) => {
   const { email, otp } = payload;
 
@@ -179,6 +182,7 @@ const verifyForgotPasswordOtpCodeDB = async (payload: any) => {
 
   return { forgetToken };
 };
+//w: (end)  ╰──────────── verifyForgotPasswordOtpCodeDB ────────────╯
 
 // reset password
 const resetForgotPasswordDB = async (newPassword: string, userId: string) => {

@@ -2,8 +2,8 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Hasan Bin Ali",
-   "email":"koyelot367@roastic.com",
+   "fullname":"Jamal Bin Abul",
+   "email":"jamalbinabul@merepost.com",
    "password":"SjAbc1@Bad"
 }
 
@@ -13,6 +13,6 @@ Content-type: application/json
 POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
-   "email":"koyelot367@roastic.com",
-   "otp":"2242"
+   "email":"jamalbinabul@merepost.com",
+   "otp":"3664"
 }
