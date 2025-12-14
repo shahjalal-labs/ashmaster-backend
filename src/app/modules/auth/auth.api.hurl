@@ -1,10 +1,11 @@
+SjAbc1@Bad
 # email password  login
 
 POST {{port6011}}/auth/login
 
 {
-  "email":"jamalbinabul@merepost.com",
-  "password":"SjAbc1@Bad",
+  "email":"yousufbinhadi@merepost.com",
+  "password":"SjAbc1@Bad3",
   "fcmToken":""
 }
 
@@ -27,14 +28,14 @@ POST {{port6011}}/auth/send-forgot-otp
 POST {{port6011}}/auth/verify-forgot-otp
 {
    "email":"yousufbinhadi@merepost.com",
-   "otp":"8271"
+   "otp":"7565"
 } 
 
 
 # reset password
 
 PATCH {{port6011}}/auth/reset-password
+Authorization: {{tempToken}}
 {
-   "email":"yousufbinhadi@merepost.com",
-   "otp":"8271"
+   "newPassword":"SjAbc1@Bad"
 }

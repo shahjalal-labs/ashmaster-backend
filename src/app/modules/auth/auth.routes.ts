@@ -41,7 +41,13 @@ router.post(
   authController.verifyForgotPasswordOtpCode,
 );
 
-router.patch("/reset-password", auth(), authController.resetPassword);
+router.patch(
+  "/reset-password",
+  auth(),
+  validateRequest(authValidation.resetPasswordSchema),
+  authController.resetPassword,
+);
+
 router.put(
   "/profile",
   validateRequest(authValidation.updateProfileSchema),
