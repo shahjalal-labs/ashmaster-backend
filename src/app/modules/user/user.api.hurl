@@ -2,9 +2,9 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Jamal Bin Abul",
-   "email":"jamalbinabul@merepost.com",
-   "password":"SjAbc1@Bad"
+   "fullname":"Yousuf Ibn Hadi",
+   "email":"yousufbinhadi@merepost.com",
+   "password":"Yousuf1@"
 }
 
 
@@ -13,6 +13,6 @@ Content-type: application/json
 POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
-   "email":"jamalbinabul@merepost.com",
-   "otp":"3664"
+   "email":"yousufbinhadi@merepost.com",
+   "otp":"8844"
 }
