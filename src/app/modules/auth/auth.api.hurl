@@ -26,5 +26,6 @@ POST {{port6011}}/auth/send-forgot-otp
 
 POST {{port6011}}/auth//verify-forgot-otp
 {
-   "email":"jamalbinabul@merepost.com" 
+   "email":"jamalbinabul@merepost.com",
+   "otp":3343
 } 

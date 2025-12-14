@@ -50,9 +50,19 @@ const sendForgotPassOtp = z
   .strict();
 //w: (end)  ╰──────────── sendForgotPassOtp ────────────╯
 
+//w: (start)╭──────────── verifyForgotPasswordOtpCodeDB ────────────╮
+const verifyForgotPasswordOtpCodeDB = z
+  .object({
+    email: z.string().email(),
+    otp: z.number(),
+  })
+  .strict();
+//w: (end)  ╰──────────── verifyForgotPasswordOtpCodeDB ────────────╯
+
 export const authValidation = {
   updateProfileSchema,
   authLoginSchema,
   sendForgotPassOtp,
   loginSchema,
+  verifyForgotPasswordOtpCodeDB,
 };

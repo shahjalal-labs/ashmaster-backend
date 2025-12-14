@@ -161,10 +161,6 @@ const sendForgotPasswordOtpDB = async (email: string) => {
 const verifyForgotPasswordOtpCodeDB = async (payload: any) => {
   const { email, otp } = payload;
 
-  if (!email && !otp) {
-    throw new ApiError(400, "Email and OTP are required.");
-  }
-
   const user = await prisma.user.findUnique({ where: { email: email } });
   if (!user) {
     throw new ApiError(404, "User not found");

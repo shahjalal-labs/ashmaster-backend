@@ -35,7 +35,11 @@ router.post(
 );
 //w: (end)  ╰──────────── sendForgotPassOtp ────────────╯
 
-router.post("/verify-forgot-otp", authController.verifyForgotPasswordOtpCode);
+router.post(
+  "/verify-forgot-otp",
+  validateRequest(authValidation.verifyForgotPasswordOtpCodeDB),
+  authController.verifyForgotPasswordOtpCode,
+);
 
 router.patch("/reset-password", auth(), authController.resetPassword);
 router.put(
