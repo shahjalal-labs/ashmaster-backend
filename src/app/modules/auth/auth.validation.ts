@@ -54,7 +54,7 @@ const sendForgotPassOtp = z
 const verifyForgotPasswordOtpCodeDB = z
   .object({
     email: z.string().email(),
-    otp: z.number(),
+    otp: z.string(),
   })
   .strict();
 //w: (end)  ╰──────────── verifyForgotPasswordOtpCodeDB ────────────╯

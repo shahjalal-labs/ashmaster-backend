@@ -8,7 +8,7 @@ import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
-import { redisOtpService } from "../../../shared/redis-services\n/otp.service";
+import { redisOtpService } from "../../../shared/redis-services/otp.service";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -150,7 +150,7 @@ const sendForgotPasswordOtpDB = async (email: string) => {
   </div>
 `;
   await sendEmail(email, subject, html);
-  redisOtpService.storeOtp(email, otp);
+  await redisOtpService.storeOtp(email, otp);
 
   return;
 };
@@ -168,7 +168,7 @@ const verifyForgotPasswordOtpCodeDB = async (payload: any) => {
 
   const userId = user.id;
 
-  redisOtpService.verifyOtp(email, otp);
+  await redisOtpService.verifyOtp(email, otp);
 
   const forgetToken = jwtHelpers.generateToken(
     { id: userId, email },

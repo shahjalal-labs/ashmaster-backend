@@ -7,8 +7,8 @@ import config from "../../../config";
 import prisma from "../../../shared/prisma";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
-import { redisOtpService } from "../../../shared/redis-services\n/otp.service";
 import { Secret } from "jsonwebtoken";
+import { redisOtpService } from "../../../shared/redis-services/otp.service";
 
 //create new user
 const createUserIntoDB = async (payload: User) => {
@@ -50,7 +50,7 @@ const createUserIntoDB = async (payload: User) => {
   </div>
 `;
   await sendEmail(userInfo.email, subject, html);
-  redisOtpService.storeOtp(userInfo.email, otp);
+  await redisOtpService.storeOtp(userInfo.email, otp);
   return;
 };
 
@@ -72,7 +72,7 @@ const signupVerification = async (payload: { email: string; otp: string }) => {
     throw new ApiError(404, "Please first sign up");
   }
 
-  const verifyData = redisOtpService.verifyOtp(pendingUser.email, otp);
+  const verifyData = await redisOtpService.verifyOtp(pendingUser.email, otp);
 
   if (!verifyData) {
     throw new ApiError(400, "Invalid or expired OTP.");
