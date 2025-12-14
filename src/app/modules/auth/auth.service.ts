@@ -181,6 +181,7 @@ const verifyForgotPasswordOtpCodeDB = async (payload: any) => {
 //w: (end)  ╰──────────── verifyForgotPasswordOtpCodeDB ────────────╯
 
 // reset password
+//w: (start)╭──────────── resetForgotPasswordDB ────────────╮
 const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
   const existingUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!existingUser) {
@@ -202,6 +203,7 @@ const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
   });
   return;
 };
+//w: (end)  ╰──────────── resetForgotPasswordDB ────────────╯
 
 // get profile for logged in user
 const getProfileFromDB = async (userId: string) => {

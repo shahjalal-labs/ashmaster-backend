@@ -23,9 +23,18 @@ POST {{port6011}}/auth/send-forgot-otp
    "email":"jamalbinabul@merepost.com" 
 }
 
-
-POST {{port6011}}/auth//verify-forgot-otp
+# verify forgot password otp
+POST {{port6011}}/auth/verify-forgot-otp
 {
    "email":"jamalbinabul@merepost.com",
-   "otp":"6863"
+   "otp":"8271"
 } 
+
+
+# reset password
+
+POST {{port6011}}/auth/reset-password
+{
+   "email":"jamalbinabul@merepost.com",
+   "otp":"8271"
+}

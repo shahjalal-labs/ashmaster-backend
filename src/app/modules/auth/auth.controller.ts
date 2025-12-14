@@ -72,6 +72,7 @@ const verifyForgotPasswordOtpCode = catchAsync(
 //w: (end)  ╰──────────── verifyForgotPasswordOtpCode ────────────╯
 
 // update forgot password
+//w: (start)╭──────────── resetPassword ────────────╮
 const resetPassword = catchAsync(async (req: Request, res: Response) => {
   const userId = req.user.id;
   const { newPassword } = req.body;
@@ -84,6 +85,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+//w: (end)  ╰──────────── resetPassword ────────────╯
 
 // get profile for logged in user
 const getProfile = catchAsync(async (req: any, res: Response) => {

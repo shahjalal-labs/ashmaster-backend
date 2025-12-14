@@ -59,6 +59,12 @@ const verifyForgotPasswordOtpCodeDB = z
   .strict();
 //w: (end)  ╰──────────── verifyForgotPasswordOtpCodeDB ────────────╯
 
+
+
+ const resetPassword=z.object({
+  new
+}) ;
+
 export const authValidation = {
   updateProfileSchema,
   authLoginSchema,
