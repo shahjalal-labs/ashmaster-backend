@@ -1,0 +1,41 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+//w: (start)╭────────────  PendingUser  ────────────╮
+model PendingUser {
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String  @unique
+  password String
+  fullname String
+  fcmToken String?
+
+  @@map("Pending_users")
+}
+
+//w: (end)  ╰────────────  PendingUser  ────────────╯
+
+//w: (start)╭────────────  User  ────────────╮
+model User {
+  id       String   @id @default(auto()) @map("_id") @db.ObjectId
+  email    String   @unique
+  password String?
+  fullname String
+  fcmToken String?
+  role     UserRole @default(MENTEE)
+
+  @@map("users")
+}
+
+//w: (end)  ╰────────────  User  ────────────╯
+
+enum UserRole {
+  MENTOR
+  MENTEE
+  ADMIN
+}
