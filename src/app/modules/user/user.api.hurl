@@ -4,7 +4,8 @@ Content-type: application/json
 {
    "fullname":"Yousuf Ibn Hadi",
    "email":"yousufbinhadi@merepost.com",
-   "password":"Yousuf1@"
+   "password":"Yousuf1@",
+   "fcmToken":""
 }
 
 

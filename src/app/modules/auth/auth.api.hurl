@@ -14,7 +14,8 @@ POST {{port6011}}/auth/login
 POST {{port6011}}/auth/auth-login
 {
   "email":"koyelot367@roastic.com",
-  "fullname":"Hasan Bin Ali"
+  "fullname":"Hasan Bin Ali",
+  "fcmToken":""
 }
 
 # send forgot password otp

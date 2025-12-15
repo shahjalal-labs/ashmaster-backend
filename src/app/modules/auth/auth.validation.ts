@@ -16,7 +16,7 @@ const loginSchema = z
 const authLoginSchema = z
   .object({
     email: z.string().email("Invalid email address"),
-    fcmToken: z.string().min(1, "FCM Token is required!").optional(),
+    fcmToken: z.string().optional(),
     fullname: z.string(),
   })
   .strict()

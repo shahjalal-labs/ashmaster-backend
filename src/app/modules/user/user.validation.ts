@@ -16,7 +16,7 @@ const registrationSchema = z.object({
       "Password must contain at least one special character",
     )
     .regex(/^\S+$/, "Password must not contain spaces"),
-  fcmToken: z.string().min(1, "FCM Token is required!").optional(),
+  fcmToken: z.string().optional(),
 });
 //w: (end)  ╰──────────── registration ────────────╯
 
