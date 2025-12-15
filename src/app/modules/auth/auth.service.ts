@@ -3,12 +3,13 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { User } from "@prisma/client";
+import { Profile, User } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
+import httpStatus from "http-status";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -54,6 +55,22 @@ const loginUserIntoDB = async (payload: {
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
+
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = async (userId: string, payload: Profile) => {
+  const existingUser = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!existingUser) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+
+  const result = async prisma.$transaction((tx) => {
+    await tx.;
+  });
+};
+//w: (end)  ╰──────────── completeProfile ────────────╯
 
 // google login
 //w: (start)╭──────────── authLogin ────────────╮
@@ -205,7 +222,7 @@ const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
 };
 //w: (end)  ╰──────────── resetForgotPasswordDB ────────────╯
 
-// get profile for logged in user
+//w: (start)╭──────────── getProfileFromDB ────────────╮
 const getProfileFromDB = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -218,6 +235,7 @@ const getProfileFromDB = async (userId: string) => {
 
   return sanitizedUser;
 };
+//w: (end)  ╰──────────── getProfileFromDB ────────────╯
 
 //w: (start)╭──────────── updateProfileIntoDB ────────────╮
 const updateProfileIntoDB = async (userId: string, userData: User) => {
@@ -265,4 +283,5 @@ export const authService = {
   verifyForgotPasswordOtpCodeDB,
   resetForgotPasswordDB,
   updateProfileImage,
+  completeProfile,
 };
