@@ -43,6 +43,7 @@ model Profile {
   gender         Gender
   profession     String
   experienceYear String
+  availability   Json
 
   @@map("profiles")
 }
