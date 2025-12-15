@@ -29,6 +29,7 @@ model User {
   fcmToken     String?
   role         UserRole     @default(MENTEE)
   profilStatus ProfilStatus @default(INCOMPLETE)
+  Profile      Profile?
 
   @@map("users")
 }
@@ -46,11 +47,23 @@ model Profile {
   experienceYear String
   availability   Json
   profileImage   String?
+  interests      String
+  userId         String    @unique @db.ObjectId
+  user           User      @relation(fields: [userId], references: [id])
 
   @@map("profiles")
 }
 
 //w: (end)  ╰──────────── Profile   ────────────╯
+
+model Preference {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  career    String
+  gender    Gender
+  ethnicity Ethnicity
+  notes     String?
+  age
+}
 
 enum UserRole {
   MENTOR
@@ -77,4 +90,9 @@ enum Gender {
 enum ProfilStatus {
   COMPLETE
   INCOMPLETE
+}
+
+type ageRange {
+  start DateTime
+  end   DateTime
 }
