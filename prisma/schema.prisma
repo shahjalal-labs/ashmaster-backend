@@ -9,11 +9,13 @@ generator client {
 
 //w: (start)╭────────────  PendingUser  ────────────╮
 model PendingUser {
-  id       String  @id @default(auto()) @map("_id") @db.ObjectId
-  email    String  @unique
-  password String
-  fullname String
-  fcmToken String?
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  password  String
+  fullname  String
+  fcmToken  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("Pending_users")
 }
@@ -31,6 +33,8 @@ model User {
   profilStatus ProfilStatus @default(INCOMPLETE)
   profile      Profile?
   preference   Preference?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@map("users")
 }
@@ -41,16 +45,18 @@ model User {
 model Profile {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   about          String
-  age            Float
+  age            Int
   ethnicity      Ethnicity
   gender         Gender
   profession     String
   experienceYear String
   availability   Json
   profileImage   String?
-  interests      String
+  interests      String[]  @default([])
   userId         String    @unique @db.ObjectId
-  user           User      @relation(fields: [userId], references: [id])
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@map("profiles")
 }
@@ -66,7 +72,7 @@ model Preference {
   notes     String?
   age       AgeRange
   userId    String    @unique @db.ObjectId
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
