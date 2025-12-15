@@ -29,7 +29,8 @@ model User {
   fcmToken     String?
   role         UserRole     @default(MENTEE)
   profilStatus ProfilStatus @default(INCOMPLETE)
-  Profile      Profile?
+  profile      Profile?
+  preference   Preference?
 
   @@map("users")
 }
@@ -40,7 +41,7 @@ model User {
 model Profile {
   id             String    @id @default(auto()) @map("_id") @db.ObjectId
   about          String
-  age            String
+  age            Float
   ethnicity      Ethnicity
   gender         Gender
   profession     String
@@ -56,14 +57,19 @@ model Profile {
 
 //w: (end)  ╰──────────── Profile   ────────────╯
 
+//w: (start)╭────────────  Preference  ────────────╮
 model Preference {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
   career    String
   gender    Gender
   ethnicity Ethnicity
   notes     String?
-  age
+  age       AgeRange
+  userId    String    @unique @db.ObjectId
+  user      User      @relation(fields: [userId], references: [id])
 }
+
+//w: (end)  ╰──────────── Preference   ────────────╯
 
 enum UserRole {
   MENTOR
@@ -92,7 +98,7 @@ enum ProfilStatus {
   INCOMPLETE
 }
 
-type ageRange {
-  start DateTime
-  end   DateTime
+type AgeRange {
+  min Int
+  max Int
 }
