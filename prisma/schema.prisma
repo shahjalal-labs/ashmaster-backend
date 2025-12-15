@@ -32,6 +32,15 @@ model User {
   @@map("users")
 }
 
+//w: (start)╭────────────  Profile  ────────────╮
+model Profile {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+
+  @@map("profiles")
+}
+
+//w: (end)  ╰──────────── Profile   ────────────╯
+
 //w: (end)  ╰────────────  User  ────────────╯
 
 enum UserRole {
