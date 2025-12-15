@@ -32,19 +32,41 @@ model User {
   @@map("users")
 }
 
+//w: (end)  ╰────────────  User  ────────────╯
+
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  about          String
+  age            String
+  ethnicity      Ethnicity
+  gender         Gender
+  profession     String
+  experienceYear String
 
   @@map("profiles")
 }
 
 //w: (end)  ╰──────────── Profile   ────────────╯
 
-//w: (end)  ╰────────────  User  ────────────╯
-
 enum UserRole {
   MENTOR
   MENTEE
   ADMIN
+}
+
+enum Ethnicity {
+  BLACK
+  EAST_ASIAN
+  HISPANIC
+  MIDDLE_EASTERN
+  NATIVE_AMERICAN
+  PACIFIC_ISLANDER
+  NO_ANSWER // prefer not to say
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NO_ANSWER
 }
