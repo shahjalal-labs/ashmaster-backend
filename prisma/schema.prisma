@@ -22,12 +22,13 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  email    String   @unique
-  password String?
-  fullname String
-  fcmToken String?
-  role     UserRole @default(MENTEE)
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  email        String       @unique
+  password     String?
+  fullname     String
+  fcmToken     String?
+  role         UserRole     @default(MENTEE)
+  profilStatus ProfilStatus @default(INCOMPLETE)
 
   @@map("users")
 }
@@ -44,6 +45,7 @@ model Profile {
   profession     String
   experienceYear String
   availability   Json
+  profileImage   String?
 
   @@map("profiles")
 }
@@ -70,4 +72,9 @@ enum Gender {
   MALE
   FEMALE
   NO_ANSWER
+}
+
+enum ProfilStatus {
+  COMPLETE
+  INCOMPLETE
 }
