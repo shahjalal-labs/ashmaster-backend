@@ -66,8 +66,15 @@ const completeProfile = async (userId: string, payload: Profile) => {
 
   if (!existingUser) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
 
-  const result = async prisma.$transaction((tx) => {
-    await tx.;
+  await prisma.$transaction(async (tx) => {
+    await tx.profile.create({
+      where: {
+        userId,
+      },
+      data: {
+        ...payload,
+      },
+    });
   });
 };
 //w: (end)  ╰──────────── completeProfile ────────────╯
