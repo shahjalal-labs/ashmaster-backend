@@ -219,7 +219,7 @@ const getProfileFromDB = async (userId: string) => {
   return sanitizedUser;
 };
 
-// update user profile only logged in user
+//w: (start)╭──────────── updateProfileIntoDB ────────────╮
 const updateProfileIntoDB = async (userId: string, userData: User) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user) {
@@ -232,7 +232,9 @@ const updateProfileIntoDB = async (userId: string, userData: User) => {
 
   return updatedUser;
 };
+//w: (end)  ╰──────────── updateProfileIntoDB ────────────╯
 
+//w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = async (
   userId: string,
   file: Express.Multer.File,
@@ -251,6 +253,7 @@ const updateProfileImage = async (
   });
   return;
 };
+//w: (end)  ╰──────────── updateProfileImage ────────────╯
 
 export const authService = {
   loginUserIntoDB,
