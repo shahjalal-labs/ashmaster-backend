@@ -89,6 +89,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 //w: (end)  ╰──────────── resetPassword ────────────╯
 
 // get profile for logged in user
+//w: (start)╭──────────── getProfile ────────────╮
 const getProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
   const user = await authService.getProfileFromDB(id);
@@ -100,21 +101,24 @@ const getProfile = catchAsync(async (req: any, res: Response) => {
     data: user,
   });
 });
+//w: (end)  ╰──────────── getProfile ────────────╯
 
-// update user profile only logged in user
+//w: (start)╭──────────── updateProfile ────────────╮
 const updateProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
-  const updatedUser = await authService.updateProfileIntoDB(id, req.body);
+  const result = await authService.updateProfileIntoDB(id, req.body);
 
   sendResponse(res, {
-    statusCode: 200,
+    statusCode: httpStatus.OK,
     success: true,
-    message: "User profile updated successfully",
-    data: updatedUser,
+    message: "Profile updated successfully",
+    data: result,
   });
 });
+//w: (end)  ╰──────────── updateProfile ────────────╯
 
 // update user profile only logged in user
+//w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
   await authService.updateProfileImage(id, req.file);
@@ -125,6 +129,7 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
     message: "User profile image updated successfully",
   });
 });
+//w: (end)  ╰──────────── updateProfileImage ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
 const completeProfile = catchAsync(async (req: any, res: Response) => {

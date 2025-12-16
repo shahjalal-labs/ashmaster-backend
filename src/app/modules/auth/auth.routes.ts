@@ -69,6 +69,18 @@ router.post(
   authController.completeProfile,
 );
 //w: (end)  ╰──────────── completeProfile ────────────╯
+
+// Update user profile (replaces the old route)
+router.put(
+  "/profile",
+  auth(),
+  validateRequest(authValidation.updateProfileSche
+
+
+  ),
+  authController.updateProfile,
+);
+
 //
 //
 //w: (start)╭──────────── deleteAccount ────────────╮
