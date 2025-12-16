@@ -877,3 +877,22 @@ export const authController = {
   updateProfileImage,
 };
 ```
+
+I need an api for complete profile it's task is complete profile with, profile data creation and preference creation, and change the user model complete profile status to complete. you need must strict zod validation with proper message.
+and availability data pattern is like:
+
+{
+"monday": [
+{"start": "09:00", "end": "12:00"},
+{"start": "14:00", "end": "17:00"}
+],
+"tuesday": [
+{"start": "10:00", "end": "15:00"}
+],
+// ... other days
+}
+
+here days mainly week days like saturday, sunday,, not all.
+
+currently availability is only a json data in prisma, as json type is typescript friendly i prefer a new way without create a new model.
+and must validate through zod so that front end can't send false validated data.
