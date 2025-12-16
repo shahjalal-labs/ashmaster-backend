@@ -178,8 +178,8 @@ const completeProfileSchema = z
         .min(2, "Profession must be at least 2 characters long")
         .max(100, "Profession must be at most 100 characters long"),
       experienceYear: z
-        .string()
-        .min(1, "Experience year is required")
+        .number()
+        .positive()
         .max(50, "Experience year must be at most 50 characters long"),
       availability: availabilitySchema,
       profileImage: z

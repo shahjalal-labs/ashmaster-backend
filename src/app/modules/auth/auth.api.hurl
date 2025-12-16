@@ -5,7 +5,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"yousufbinhadi@merepost.com",
+  "email":"raisaahmed@merepost.com",
   "password":"SjAbc1@Bad3",
   "fcmToken":""
 }
@@ -55,7 +55,7 @@ Content-Type: application/json
     "ethnicity": "EAST_ASIAN",
     "gender": "MALE",
     "profession": "Software Developer",
-    "experienceYear": "1 year",
+    "experienceYear": "1",
     "availability": {
       "monday": [
         { "start": "09:00", "end": "12:00" },

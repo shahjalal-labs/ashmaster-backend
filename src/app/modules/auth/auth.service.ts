@@ -264,7 +264,7 @@ interface CompleteProfileInput {
     ethnicity: Ethnicity;
     gender: Gender;
     profession: string;
-    experienceYear: string;
+    experienceYear: number;
     availability: Record<string, { start: string; end: string }[]>;
     profileImage?: string;
     interests: string[];
