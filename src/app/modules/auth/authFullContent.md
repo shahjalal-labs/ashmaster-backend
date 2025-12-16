@@ -1230,7 +1230,7 @@ Authorization: {{ashRaisa}}
 
 POST {{port6011}}/auth/send-forgot-otp
 {
-   "email":"yousufbinhadi@merepost.com" 
+   "email":"yousufbinhadi@merepost.com"
 }
 
 # verify forgot password otp
@@ -1238,7 +1238,7 @@ POST {{port6011}}/auth/verify-forgot-otp
 {
    "email":"yousufbinhadi@merepost.com",
    "otp":"7565"
-} 
+}
 
 
 # reset password
@@ -1452,3 +1452,5 @@ Content-Type: application/json
   "role": "ADMIN"
 }
 ```
+
+I need an profile update api, where data can be update, without email update field, make sure update validation through zod. and instead of creating interface take it from zode typeof

@@ -24,25 +24,6 @@ const authLoginSchema = z
   .strict();
 //w: (end)  ╰──────────── authLogin ────────────╯
 
-//w: (start)╭──────────── updateProfile ────────────╮
-const updateProfileSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(2, "First name must be at least 2 characters long")
-      .optional(),
-    lastName: z
-      .string()
-      .min(2, "Last name must be at least 2 characters long")
-      .optional(),
-    mobile: z
-      .string()
-      .min(10, "Mobile must be at least 10 characters long")
-      .optional(),
-  })
-  .strict();
-//w: (end)  ╰──────────── updateProfile ────────────╯
-
 //w: (start)╭──────────── sendForgotPassOtp ────────────╮
 const sendForgotPassOtp = z
   .object({
@@ -225,6 +206,133 @@ const completeProfileSchema = z
   })
   .strict();
 //w: (end)  ╰──────────── completeProfileSchema ────────────╯
+
+//w: (start)╭──────────── updateProfileSchema ────────────╮
+
+// Update availability validation (all fields optional)
+const updateAvailabilitySchema = availabilitySchema.optional();
+
+// Update age range validation (all fields optional)
+const updateAgeRangeSchema = ageRangeSchema.optional();
+
+// Update profile schema (all fields optional except structure)
+const updateProfileSchema = z
+  .object({
+    // User fields that can be updated
+    fullname: z
+      .string()
+      .min(2, "Full name must be at least 2 characters long")
+      .max(100, "Full name must be at most 100 characters long")
+      .optional(),
+    fcmToken: z.string().optional(),
+    role: z
+      .nativeEnum(UserRole, {
+        errorMap: () => ({ message: "Invalid role value" }),
+      })
+      .optional(),
+
+    // Profile fields (all optional)
+    profile: z
+      .object({
+        about: z
+          .string()
+          .min(10, "About must be at least 10 characters long")
+          .max(500, "About must be at most 500 characters long")
+          .optional(),
+        age: z
+          .number()
+          .int()
+          .min(18, "Age must be at least 18")
+          .max(100, "Age must be at most 100")
+          .optional(),
+        ethnicity: z
+          .nativeEnum(Ethnicity, {
+            errorMap: () => ({ message: "Invalid ethnicity value" }),
+          })
+          .optional(),
+        gender: z
+          .nativeEnum(Gender, {
+            errorMap: () => ({ message: "Invalid gender value" }),
+          })
+          .optional(),
+        profession: z
+          .string()
+          .min(2, "Profession must be at least 2 characters long")
+          .max(100, "Profession must be at most 100 characters long")
+          .optional(),
+        experienceYear: z
+          .number()
+          .positive("Experience year must be a positive number")
+          .max(50, "Experience year must be at most 50")
+          .optional(),
+        availability: updateAvailabilitySchema,
+        profileImage: z
+          .string()
+          .url("Profile image must be a valid URL")
+          .optional()
+          .or(z.literal("").optional()), // Allow empty string
+        interests: z
+          .array(
+            z
+              .string()
+              .min(2, "Interest must be at least 2 characters long")
+              .max(50, "Interest must be at most 50 characters long"),
+          )
+          .min(1, "At least one interest is required")
+          .max(10, "Maximum 10 interests allowed")
+          .optional(),
+      })
+      .strict()
+      .optional(),
+
+    // Preference fields (all optional)
+    preference: z
+      .object({
+        career: z
+          .string()
+          .min(2, "Career preference must be at least 2 characters long")
+          .max(100, "Career preference must be at most 100 characters long")
+          .optional(),
+        gender: z
+          .nativeEnum(Gender, {
+            errorMap: () => ({ message: "Invalid preferred gender value" }),
+          })
+          .optional(),
+        ethnicity: z
+          .nativeEnum(Ethnicity, {
+            errorMap: () => ({ message: "Invalid preferred ethnicity value" }),
+          })
+          .optional(),
+        notes: z
+          .string()
+          .max(500, "Notes must be at most 500 characters long")
+          .optional()
+          .or(z.literal("").optional()), // Allow empty string
+        age: updateAgeRangeSchema,
+      })
+      .strict()
+      .optional(),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      // At least one field should be provided for update
+      const hasUserFields = data.fullname || data.fcmToken || data.role;
+      const hasProfileFields =
+        data.profile && Object.keys(data.profile).length > 0;
+      const hasPreferenceFields =
+        data.preference && Object.keys(data.preference).length > 0;
+
+      return hasUserFields || hasProfileFields || hasPreferenceFields;
+    },
+    {
+      message: "At least one field must be provided for update",
+    },
+  );
+//w: (end)  ╰──────────── updateProfileSchema ────────────╯
+
+// Generate TypeScript type from the schema
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;
 
 export const authValidation = {
   updateProfileSchema,

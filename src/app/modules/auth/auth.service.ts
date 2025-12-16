@@ -222,17 +222,161 @@ const getProfileFromDB = async (userId: string) => {
 //w: (end)  ╰──────────── getProfileFromDB ────────────╯
 
 //w: (start)╭──────────── updateProfileIntoDB ────────────╮
-const updateProfileIntoDB = async (userId: string, userData: User) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    throw new ApiError(404, "user not found for edit user");
-  }
-  const updatedUser = await prisma.user.update({
+const updateProfileIntoDB = async (
+  userId: string,
+  payload: UpdateProfileInput,
+) => {
+  const existingUser = await prisma.user.findUnique({
     where: { id: userId },
-    data: userData,
+    include: {
+      profile: true,
+      preference: true,
+    },
   });
 
-  return updatedUser;
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Use transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Update user fields if provided
+    const userUpdateData: any = {};
+
+    if (payload.fullname !== undefined) {
+      userUpdateData.fullname = payload.fullname;
+    }
+
+    if (payload.fcmToken !== undefined) {
+      userUpdateData.fcmToken = payload.fcmToken;
+    }
+
+    if (payload.role !== undefined) {
+      userUpdateData.role = payload.role;
+    }
+
+    // Update user if there are user fields to update
+    let updatedUser = existingUser;
+    if (Object.keys(userUpdateData).length > 0) {
+      updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+        include: {
+          profile: true,
+          preference: true,
+        },
+      });
+    }
+
+    // Update profile if provided and exists
+    let updatedProfile = existingUser.profile;
+    if (payload.profile && existingUser.profile) {
+      const profileUpdateData: any = {};
+
+      if (payload.profile.about !== undefined) {
+        profileUpdateData.about = payload.profile.about;
+      }
+
+      if (payload.profile.age !== undefined) {
+        profileUpdateData.age = payload.profile.age;
+      }
+
+      if (payload.profile.ethnicity !== undefined) {
+        profileUpdateData.ethnicity = payload.profile.ethnicity;
+      }
+
+      if (payload.profile.gender !== undefined) {
+        profileUpdateData.gender = payload.profile.gender;
+      }
+
+      if (payload.profile.profession !== undefined) {
+        profileUpdateData.profession = payload.profile.profession;
+      }
+
+      if (payload.profile.experienceYear !== undefined) {
+        profileUpdateData.experienceYear = payload.profile.experienceYear;
+      }
+
+      if (payload.profile.availability !== undefined) {
+        profileUpdateData.availability = payload.profile.availability;
+      }
+
+      if (payload.profile.profileImage !== undefined) {
+        profileUpdateData.profileImage = payload.profile.profileImage;
+      }
+
+      if (payload.profile.interests !== undefined) {
+        profileUpdateData.interests = payload.profile.interests;
+      }
+
+      if (Object.keys(profileUpdateData).length > 0) {
+        updatedProfile = await tx.profile.update({
+          where: { userId: userId },
+          data: profileUpdateData,
+        });
+      }
+    } else if (payload.profile && !existingUser.profile) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Profile does not exist. Please complete your profile first.",
+      );
+    }
+
+    // Update preference if provided and exists
+    let updatedPreference = existingUser.preference;
+    if (payload.preference && existingUser.preference) {
+      const preferenceUpdateData: any = {};
+
+      if (payload.preference.career !== undefined) {
+        preferenceUpdateData.career = payload.preference.career;
+      }
+
+      if (payload.preference.gender !== undefined) {
+        preferenceUpdateData.gender = payload.preference.gender;
+      }
+
+      if (payload.preference.ethnicity !== undefined) {
+        preferenceUpdateData.ethnicity = payload.preference.ethnicity;
+      }
+
+      if (payload.preference.notes !== undefined) {
+        preferenceUpdateData.notes = payload.preference.notes;
+      }
+
+      if (payload.preference.age !== undefined) {
+        preferenceUpdateData.age = payload.preference.age;
+      }
+
+      if (Object.keys(preferenceUpdateData).length > 0) {
+        updatedPreference = await tx.preference.update({
+          where: { userId: userId },
+          data: preferenceUpdateData,
+        });
+      }
+    } else if (payload.preference && !existingUser.preference) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Preference does not exist. Please complete your profile first.",
+      );
+    }
+
+    return {
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullname: updatedUser.fullname,
+        role: updatedUser.role,
+        profilStatus: updatedUser.profilStatus,
+        fcmToken: updatedUser.fcmToken,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+      },
+      profile: updatedProfile,
+      preference: updatedPreference,
+    };
+  });
+
+  return result;
 };
 //w: (end)  ╰──────────── updateProfileIntoDB ────────────╯
 
@@ -245,7 +389,7 @@ const updateProfileImage = async (
     throw new ApiError(400, "Please select an image");
   }
   const fileUrl = await uploadInSpace(file, "users/profileImage");
-  await prisma.user.update({
+  await prisma.profile.update({
     where: {
       id: userId,
     },
