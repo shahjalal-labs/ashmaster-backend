@@ -378,6 +378,27 @@ const completeProfile = async (
 };
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
+//w: (start)╭──────────── deleteAccountFromDB ────────────╮
+const deleteAccountFromDB = async (userId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: true,
+      preference: true,
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  return { message: "Account deleted successfully" };
+};
+//w: (end)  ╰──────────── deleteAccountFromDB ────────────╯
+
 export const authService = {
   loginUserIntoDB,
   authLogin,
@@ -389,4 +410,5 @@ export const authService = {
   resetForgotPasswordDB,
   updateProfileImage,
   completeProfile,
+  deleteAccountFromDB,
 };

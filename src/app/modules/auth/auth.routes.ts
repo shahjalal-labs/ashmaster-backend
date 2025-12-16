@@ -69,5 +69,10 @@ router.post(
   authController.completeProfile,
 );
 //w: (end)  ╰──────────── completeProfile ────────────╯
+//
+//
+//w: (start)╭──────────── deleteAccount ────────────╮
+router.delete("/delete-account", auth(), authController.deleteAccount);
+//w: (end)  ╰──────────── deleteAccount ────────────╯
 
 export const AuthRoutes = router;

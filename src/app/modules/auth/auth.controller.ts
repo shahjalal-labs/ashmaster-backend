@@ -140,6 +140,20 @@ const completeProfile = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
+//w: (start)╭──────────── deleteAccount ────────────╮
+const deleteAccount = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.user;
+  const result = await authService.deleteAccountFromDB(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Account deleted successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── deleteAccount ────────────╯
+
 export const authController = {
   loginUser,
   authLogin,
@@ -151,4 +165,5 @@ export const authController = {
   resetPassword,
   updateProfileImage,
   completeProfile,
+  deleteAccount,
 };

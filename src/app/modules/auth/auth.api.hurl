@@ -19,6 +19,11 @@ POST {{port6011}}/auth/auth-login
   "fcmToken":""
 }
 
+# Delete Account
+# Note: This will permanently delete the user account and all associated data
+DELETE {{port6011}}/auth/delete-account
+Authorization: {{ashRaisa}}
+
 # send forgot password otp
 
 POST {{port6011}}/auth/send-forgot-otp
