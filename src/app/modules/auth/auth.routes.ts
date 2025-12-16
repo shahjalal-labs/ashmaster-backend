@@ -54,12 +54,15 @@ router.put(
   auth(),
   authController.updateProfile,
 );
+
+//w: (start)╭──────────── router ────────────╮
 router.patch(
   "/profile-image",
   auth(),
   fileUploader.profileImage,
   authController.updateProfileImage,
 );
+//w: (end)  ╰──────────── router ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
 router.post(
@@ -74,10 +77,7 @@ router.post(
 router.put(
   "/profile",
   auth(),
-  validateRequest(authValidation.updateProfileSche
-
-
-  ),
+  validateRequest(authValidation.updateProfileSche),
   authController.updateProfile,
 );
 

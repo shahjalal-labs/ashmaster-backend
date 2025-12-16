@@ -10,6 +10,7 @@ import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
+import { UpdateProfileInput } from "./auth.validation";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮

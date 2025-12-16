@@ -249,3 +249,239 @@ Content-Type: application/json
   },
   "role": "ADMIN"
 }
+
+
+##-------### ------###----## update profile
+# ... existing tests ...
+
+###
+# Update Profile - Update only user fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "Raisa Ahmed Updated",
+  "fcmToken": "new-fcm-token-12345",
+  "role": "MENTOR"
+}
+
+###
+# Update Profile - Update only profile fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Updated about section with more details about my experience and goals.",
+    "age": 23,
+    "profession": "Senior Software Developer",
+    "experienceYear": 2,
+    "interests": ["Web Development", "Mobile Apps", "UI/UX Design", "Databases", "Cloud Computing"],
+    "availability": {
+      "monday": [
+        { "start": "10:00", "end": "13:00" },
+        { "start": "15:00", "end": "18:00" }
+      ],
+      "wednesday": [
+        { "start": "09:00", "end": "12:00" }
+      ]
+    }
+  }
+}
+
+###
+# Update Profile - Update only preference fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "career": "Tech Startup",
+    "gender": "FEMALE",
+    "ethnicity": "EAST_ASIAN",
+    "notes": "Looking for someone with startup experience",
+    "age": {
+      "min": 28,
+      "max": 45
+    }
+  }
+}
+
+###
+# Update Profile - Update mixed fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "Raisa Ahmed Pro",
+  "profile": {
+    "profession": "Lead Developer",
+    "experienceYear": 3
+  },
+  "preference": {
+    "career": "Enterprise Software",
+    "age": {
+      "min": 30
+    }
+  }
+}
+
+###
+# Update Profile - Clear profile image (set to empty string)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "profileImage": ""
+  }
+}
+
+###
+# Update Profile - Clear notes
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "notes": ""
+  }
+}
+
+###
+# Update Profile - Invalid data (should fail validation)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "A",  // Too short
+  "profile": {
+    "age": 17  // Too young
+  }
+}
+
+###
+# Update Profile - Empty request (should fail)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{}
+
+###
+# Update Profile - Try to update email (should not be allowed)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"  // This should be ignored or cause error
+}
+
+###
+# Update Profile - Update availability with invalid time format
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "availability": {
+      "monday": [
+        { "start": "25:00", "end": "26:00" }  // Invalid time
+      ]
+    }
+  }
+}
+
+###
+# Update Profile - Update with invalid age range
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "age": {
+      "min": 50,
+      "max": 30  // min > max
+    }
+  }
+}
+
+###
+# Update Profile - User without profile/preference (should fail)
+# First create a user without completing profile
+POST {{port6011}}/auth/auth-login
+{
+  "email": "newuser@example.com",
+  "fullname": "New User",
+  "fcmToken": ""
+}
+
+@newUserToken = {{response.body.data.accessToken}}
+
+# Try to update profile (should fail because profile doesn't exist)
+PUT {{port6011}}/auth/profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Trying to update without completing profile"
+  }
+}
+
+# Complete the profile first
+POST {{port6011}}/auth/complete-profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "I am a new user",
+    "age": 25,
+    "ethnicity": "EAST_ASIAN",
+    "gender": "NO_ANSWER",
+    "profession": "Developer",
+    "experienceYear": 1,
+    "availability": {
+      "monday": [
+        { "start": "09:00", "end": "12:00" }
+      ]
+    },
+    "interests": ["Programming"]
+  },
+  "preference": {
+    "career": "Software",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "age": {
+      "min": 20,
+      "max": 30
+    }
+  }
+}
+
+# Now update should work
+PUT {{port6011}}/auth/profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "profession": "Senior Developer"
+  }
+}
+
+###
+# Update Profile - Get updated profile to verify
+GET {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
