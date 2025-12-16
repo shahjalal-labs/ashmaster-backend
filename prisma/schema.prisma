@@ -49,7 +49,7 @@ model Profile {
   ethnicity      Ethnicity
   gender         Gender
   profession     String
-  experienceYear String
+  experienceYear Int
   availability   Json
   profileImage   String?
   interests      String[]  @default([])
