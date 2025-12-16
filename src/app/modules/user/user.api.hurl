@@ -15,5 +15,5 @@ POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
    "email":"raisaahmed@merepost.com",
-   "otp":"3125"
+   "otp":"4016"
 }

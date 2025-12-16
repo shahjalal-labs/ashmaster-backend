@@ -378,7 +378,7 @@ const completeProfile = async (
 };
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
-//w: (start)╭──────────── deleteAccountFromDB ────────────╮
+//w: (start)╭──────────── deleteAccount ────────────╮
 const deleteAccountFromDB = async (userId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
@@ -391,13 +391,14 @@ const deleteAccountFromDB = async (userId: string) => {
   if (!existingUser) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
-  await prisma.user.delete({
+  const deletedUser = await prisma.user.delete({
     where: { id: userId },
   });
 
-  return { message: "Account deleted successfully" };
+  console.log(deletedUser, "auth.service.ts", 395);
+  return null;
 };
-//w: (end)  ╰──────────── deleteAccountFromDB ────────────╯
+//w: (end)  ╰──────────── deleteAccount ────────────╯
 
 export const authService = {
   loginUserIntoDB,

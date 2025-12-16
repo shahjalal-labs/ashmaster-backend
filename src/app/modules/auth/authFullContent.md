@@ -661,6 +661,28 @@ const completeProfile = async (
 };
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
+//w: (start)╭──────────── deleteAccount ────────────╮
+const deleteAccountFromDB = async (userId: string) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      profile: true,
+      preference: true,
+    },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+  const deletedUser = await prisma.user.delete({
+    where: { id: userId },
+  });
+
+  console.log(deletedUser, "auth.service.ts", 395);
+  return null;
+};
+//w: (end)  ╰──────────── deleteAccount ────────────╯
+
 export const authService = {
   loginUserIntoDB,
   authLogin,
@@ -672,6 +694,7 @@ export const authService = {
   resetForgotPasswordDB,
   updateProfileImage,
   completeProfile,
+  deleteAccountFromDB,
 };
 ```
 
@@ -749,6 +772,11 @@ router.post(
   authController.completeProfile,
 );
 //w: (end)  ╰──────────── completeProfile ────────────╯
+//
+//
+//w: (start)╭──────────── deleteAccount ────────────╮
+router.delete("/delete-account", auth(), authController.deleteAccount);
+//w: (end)  ╰──────────── deleteAccount ────────────╯
 
 export const AuthRoutes = router;
 ```
@@ -1140,6 +1168,20 @@ const completeProfile = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
+//w: (start)╭──────────── deleteAccount ────────────╮
+const deleteAccount = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.user;
+  const result = await authService.deleteAccountFromDB(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Account deleted successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── deleteAccount ────────────╯
+
 export const authController = {
   loginUser,
   authLogin,
@@ -1151,6 +1193,7 @@ export const authController = {
   resetPassword,
   updateProfileImage,
   completeProfile,
+  deleteAccount,
 };
 ```
 
@@ -1178,11 +1221,16 @@ POST {{port6011}}/auth/auth-login
   "fcmToken":""
 }
 
+# Delete Account
+# Note: This will permanently delete the user account and all associated data
+DELETE {{port6011}}/auth/delete-account
+Authorization: {{ashRaisa}}
+
 # send forgot password otp
 
 POST {{port6011}}/auth/send-forgot-otp
 {
-   "email":"yousufbinhadi@merepost.com"
+   "email":"yousufbinhadi@merepost.com" 
 }
 
 # verify forgot password otp
@@ -1190,7 +1238,7 @@ POST {{port6011}}/auth/verify-forgot-otp
 {
    "email":"yousufbinhadi@merepost.com",
    "otp":"7565"
-}
+} 
 
 
 # reset password
@@ -1404,5 +1452,3 @@ Content-Type: application/json
   "role": "ADMIN"
 }
 ```
-
-give a new api for delete account, purpose delete the fully from the db. no recored keep.
