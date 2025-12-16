@@ -6,7 +6,7 @@ POST {{port6011}}/auth/login
 
 {
   "email":"raisaahmed@merepost.com",
-  "password":"SjAbc1@Bad3",
+  "password":"SjAbc1@Bad",
   "fcmToken":""
 }
 
@@ -45,7 +45,7 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{accessToken}}
+Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
@@ -53,9 +53,9 @@ Content-Type: application/json
     "about": "I am a passionate learner looking for guidance in software development and career growth. I have basic programming knowledge and want to specialize in full-stack development.",
     "age": 22,
     "ethnicity": "EAST_ASIAN",
-    "gender": "MALE",
+    "gender": "FEMALE",
     "profession": "Software Developer",
-    "experienceYear": "1",
+    "experienceYear": 1,
     "availability": {
       "monday": [
         { "start": "09:00", "end": "12:00" },

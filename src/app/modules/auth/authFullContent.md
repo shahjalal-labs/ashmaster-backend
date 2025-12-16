@@ -24,6 +24,7 @@
 │   │   │   └── validateRequest.ts
 │   │   ├── modules
 │   │   │   ├── auth
+│   │   │   │   ├── auth.api.hurl
 │   │   │   │   ├── auth.controller.ts
 │   │   │   │   ├── auth.routes.ts
 │   │   │   │   ├── auth.service.ts
@@ -87,19 +88,20 @@
 │   └── google.png
 └── vercel.json
 
-20 directories, 63 files
+20 directories, 64 files
 ```
 
 ## 📁 auth Module Tree
 
 ```bash
 /home/sj/web/smt_project/ashmaster_backend/src/app/modules/auth
+├── auth.api.hurl
 ├── auth.controller.ts
 ├── auth.routes.ts
 ├── auth.service.ts
 └── auth.validation.ts
 
-1 directory, 4 files
+1 directory, 5 files
 ```
 
 ## 📋 schema.prisma
@@ -156,7 +158,7 @@ model Profile {
   ethnicity      Ethnicity
   gender         Gender
   profession     String
-  experienceYear String
+  experienceYear Int
   availability   Json
   profileImage   String?
   interests      String[]  @default([])
@@ -180,6 +182,8 @@ model Preference {
   age       AgeRange
   userId    String    @unique @db.ObjectId
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
@@ -282,7 +286,7 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { Profile, User } from "@prisma/client";
+import { Ethnicity, Gender, Profile, User, UserRole } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
@@ -334,29 +338,6 @@ const loginUserIntoDB = async (payload: {
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
-
-//w: (start)╭──────────── completeProfile ────────────╮
-const completeProfile = async (userId: string, payload: Profile) => {
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-
-  if (!existingUser) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-
-  await prisma.$transaction(async (tx) => {
-    await tx.profile.create({
-      where: {
-        userId,
-      },
-      data: {
-        ...payload,
-      },
-    });
-  });
-};
-//w: (end)  ╰──────────── completeProfile ────────────╯
 
 // google login
 //w: (start)╭──────────── authLogin ────────────╮
@@ -559,6 +540,127 @@ const updateProfileImage = async (
 };
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
 
+interface CompleteProfileInput {
+  profile: {
+    about: string;
+    age: number;
+    ethnicity: Ethnicity;
+    gender: Gender;
+    profession: string;
+    experienceYear: number;
+    availability: Record<string, { start: string; end: string }[]>;
+    profileImage?: string;
+    interests: string[];
+  };
+  preference: {
+    career: string;
+    gender: Gender;
+    ethnicity: Ethnicity;
+    notes?: string;
+    age: {
+      min: number;
+      max: number;
+    };
+  };
+  role?: UserRole;
+}
+
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = async (
+  userId: string,
+  payload: CompleteProfileInput,
+) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Check if profile already exists
+  const existingProfile = await prisma.profile.findUnique({
+    where: { userId },
+  });
+
+  if (existingProfile) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Profile already exists. Use update profile instead.",
+    );
+  }
+
+  // Check if preference already exists
+  const existingPreference = await prisma.preference.findUnique({
+    where: { userId },
+  });
+
+  if (existingPreference) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Preference already exists. Use update preference instead.",
+    );
+  }
+
+  // Use transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Create profile
+    const profile = await tx.profile.create({
+      data: {
+        about: payload.profile.about,
+        age: payload.profile.age,
+        ethnicity: payload.profile.ethnicity,
+        gender: payload.profile.gender,
+        profession: payload.profile.profession,
+        experienceYear: payload.profile.experienceYear,
+        availability: payload.profile.availability,
+        profileImage: payload.profile.profileImage,
+        interests: payload.profile.interests,
+        userId: userId,
+      },
+    });
+
+    // Create preference
+    const preference = await tx.preference.create({
+      data: {
+        career: payload.preference.career,
+        gender: payload.preference.gender,
+        ethnicity: payload.preference.ethnicity,
+        notes: payload.preference.notes,
+        age: payload.preference.age,
+        userId: userId,
+      },
+    });
+
+    // Update user role if provided and profile status to COMPLETE
+    const user = await tx.user.update({
+      where: { id: userId },
+      data: {
+        role: payload.role || existingUser.role,
+        profilStatus: "COMPLETE",
+      },
+      select: {
+        id: true,
+        email: true,
+        fullname: true,
+        role: true,
+        profilStatus: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      user,
+      profile,
+      preference,
+    };
+  });
+
+  return result;
+};
+//w: (end)  ╰──────────── completeProfile ────────────╯
+
 export const authService = {
   loginUserIntoDB,
   authLogin,
@@ -639,12 +741,22 @@ router.patch(
   authController.updateProfileImage,
 );
 
+//w: (start)╭──────────── completeProfile ────────────╮
+router.post(
+  "/complete-profile",
+  auth(),
+  validateRequest(authValidation.completeProfileSchema),
+  authController.completeProfile,
+);
+//w: (end)  ╰──────────── completeProfile ────────────╯
+
 export const AuthRoutes = router;
 ```
 
 ## 📝 auth.validation.ts
 
 ```ts
+import { Ethnicity, Gender, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── login ────────────╮
@@ -725,6 +837,153 @@ const resetPasswordSchema = z
   .strict();
 //w: (end)  ╰──────────── resetPassword ────────────╯
 
+// Define days of the week
+const weekDays = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+// Time slot validation
+const timeSlotSchema = z
+  .object({
+    start: z.string().regex(/^([0-1][0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "Start time must be in HH:MM format (24-hour)",
+    }),
+    end: z.string().regex(/^([0-1][0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "End time must be in HH:MM format (24-hour)",
+    }),
+  })
+  .refine(
+    (data) => {
+      const start = parseInt(data.start.replace(":", ""));
+      const end = parseInt(data.end.replace(":", ""));
+      return start < end;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["end"],
+    },
+  );
+
+// Availability validation
+const availabilitySchema = z
+  .object({
+    monday: z.array(timeSlotSchema).optional().default([]),
+    tuesday: z.array(timeSlotSchema).optional().default([]),
+    wednesday: z.array(timeSlotSchema).optional().default([]),
+    thursday: z.array(timeSlotSchema).optional().default([]),
+    friday: z.array(timeSlotSchema).optional().default([]),
+    saturday: z.array(timeSlotSchema).optional().default([]),
+    sunday: z.array(timeSlotSchema).optional().default([]),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      // At least one day should have availability
+      return Object.values(data).some((slots) => slots && slots.length > 0);
+    },
+    {
+      message: "At least one day must have time slots",
+    },
+  );
+
+// Age range validation
+const ageRangeSchema = z
+  .object({
+    min: z
+      .number()
+      .int()
+      .min(18, "Minimum age must be at least 18")
+      .max(100, "Minimum age must be at most 100"),
+    max: z
+      .number()
+      .int()
+      .min(18, "Maximum age must be at least 18")
+      .max(100, "Maximum age must be at most 100"),
+  })
+  .refine((data) => data.min <= data.max, {
+    message: "Minimum age must be less than or equal to maximum age",
+    path: ["max"],
+  });
+
+//w: (start)╭──────────── completeProfileSchema ────────────╮
+const completeProfileSchema = z
+  .object({
+    // Profile data
+    profile: z.object({
+      about: z
+        .string()
+        .min(10, "About must be at least 10 characters long")
+        .max(500, "About must be at most 500 characters long"),
+      age: z
+        .number()
+        .int()
+        .min(18, "Age must be at least 18")
+        .max(100, "Age must be at most 100"),
+      ethnicity: z.nativeEnum(Ethnicity, {
+        errorMap: () => ({ message: "Invalid ethnicity value" }),
+      }),
+      gender: z.nativeEnum(Gender, {
+        errorMap: () => ({ message: "Invalid gender value" }),
+      }),
+      profession: z
+        .string()
+        .min(2, "Profession must be at least 2 characters long")
+        .max(100, "Profession must be at most 100 characters long"),
+      experienceYear: z
+        .number()
+        .positive()
+        .max(50, "Experience year must be at most 50 characters long"),
+      availability: availabilitySchema,
+      profileImage: z
+        .string()
+        .url("Profile image must be a valid URL")
+        .optional(),
+      interests: z
+        .array(
+          z
+            .string()
+            .min(2, "Interest must be at least 2 characters long")
+            .max(50, "Interest must be at most 50 characters long"),
+        )
+        .min(1, "At least one interest is required")
+        .max(10, "Maximum 10 interests allowed"),
+    }),
+
+    // Preference data
+    preference: z.object({
+      career: z
+        .string()
+        .min(2, "Career preference must be at least 2 characters long")
+        .max(100, "Career preference must be at most 100 characters long"),
+      gender: z.nativeEnum(Gender, {
+        errorMap: () => ({ message: "Invalid preferred gender value" }),
+      }),
+      ethnicity: z.nativeEnum(Ethnicity, {
+        errorMap: () => ({ message: "Invalid preferred ethnicity value" }),
+      }),
+      notes: z
+        .string()
+        .max(500, "Notes must be at most 500 characters long")
+        .optional(),
+      age: ageRangeSchema,
+    }),
+
+    // User role (optional, defaults to current role)
+    role: z
+      .nativeEnum(UserRole, {
+        errorMap: () => ({ message: "Invalid role value" }),
+      })
+      .optional(),
+  })
+  .strict();
+//w: (end)  ╰──────────── completeProfileSchema ────────────╯
+
 export const authValidation = {
   updateProfileSchema,
   authLoginSchema,
@@ -732,6 +991,7 @@ export const authValidation = {
   loginSchema,
   verifyForgotPasswordOtpCodeDB,
   resetPasswordSchema,
+  completeProfileSchema,
 };
 ```
 
@@ -742,6 +1002,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import { authService } from "./auth.service";
 import sendResponse from "../../../shared/sendResponse";
+import httpStatus from "http-status";
 
 //login user
 const loginUser = catchAsync(async (req: Request, res: Response) => {
@@ -865,6 +1126,20 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   });
 });
 
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.user;
+  const result = await authService.completeProfile(id, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Profile completed successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── completeProfile ────────────╯
+
 export const authController = {
   loginUser,
   authLogin,
@@ -875,24 +1150,259 @@ export const authController = {
   verifyForgotPasswordOtpCode,
   resetPassword,
   updateProfileImage,
+  completeProfile,
 };
 ```
 
-I need an api for complete profile it's task is complete profile with, profile data creation and preference creation, and change the user model complete profile status to complete. you need must strict zod validation with proper message.
-and availability data pattern is like:
+## 🧪 auth.api.hurl
+
+```bash
+SjAbc1@Bad
+
+# email password  login
+
+POST {{port6011}}/auth/login
 
 {
-"monday": [
-{"start": "09:00", "end": "12:00"},
-{"start": "14:00", "end": "17:00"}
-],
-"tuesday": [
-{"start": "10:00", "end": "15:00"}
-],
-// ... other days
+  "email":"raisaahmed@merepost.com",
+  "password":"SjAbc1@Bad",
+  "fcmToken":""
 }
 
-here days mainly week days like saturday, sunday,, not all.
+# auth login / google login
 
-currently availability is only a json data in prisma, as json type is typescript friendly i prefer a new way without create a new model.
-and must validate through zod so that front end can't send false validated data.
+POST {{port6011}}/auth/auth-login
+{
+  "email":"koyelot367@roastic.com",
+  "fullname":"Hasan Bin Ali",
+  "fcmToken":""
+}
+
+# send forgot password otp
+
+POST {{port6011}}/auth/send-forgot-otp
+{
+   "email":"yousufbinhadi@merepost.com"
+}
+
+# verify forgot password otp
+POST {{port6011}}/auth/verify-forgot-otp
+{
+   "email":"yousufbinhadi@merepost.com",
+   "otp":"7565"
+}
+
+
+# reset password
+
+PATCH {{port6011}}/auth/reset-password
+Authorization: {{tempToken}}
+{
+   "newPassword":"SjAbc1@Bad"
+}
+
+
+# Complete Profile (Mentee Example)
+POST {{port6011}}/auth/complete-profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "I am a passionate learner looking for guidance in software development and career growth. I have basic programming knowledge and want to specialize in full-stack development.",
+    "age": 22,
+    "ethnicity": "EAST_ASIAN",
+    "gender": "FEMALE",
+    "profession": "Software Developer",
+    "experienceYear": 1,
+    "availability": {
+      "monday": [
+        { "start": "09:00", "end": "12:00" },
+        { "start": "14:00", "end": "17:00" }
+      ],
+      "tuesday": [
+        { "start": "10:00", "end": "15:00" }
+      ],
+      "wednesday": [
+        { "start": "13:00", "end": "18:00" }
+      ],
+      "friday": [
+        { "start": "09:00", "end": "16:00" }
+      ]
+    },
+    "profileImage": "https://example.com/profile.jpg",
+    "interests": ["Web Development", "Mobile Apps", "UI/UX Design", "Databases"]
+  },
+  "preference": {
+    "career": "Software Development",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "notes": "Looking for a mentor with experience in full-stack development and career guidance",
+    "age": {
+      "min": 25,
+      "max": 40
+    }
+  },
+  "role": "MENTEE"
+}
+
+###
+# Complete Profile (Mentor Example)
+POST {{port6011}}/auth/complete-profile
+Authorization: {{accessToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Senior software engineer with 8 years of experience in backend systems, cloud infrastructure, and team leadership. Passionate about mentoring and helping junior developers grow.",
+    "age": 32,
+    "ethnicity": "HISPANIC",
+    "gender": "FEMALE",
+    "profession": "Senior Software Engineer",
+    "experienceYear": "8+ years",
+    "availability": {
+      "monday": [
+        { "start": "10:00", "end": "12:00" },
+        { "start": "14:00", "end": "16:00" }
+      ],
+      "wednesday": [
+        { "start": "09:00", "end": "11:00" },
+        { "start": "13:00", "end": "17:00" }
+      ],
+      "thursday": [
+        { "start": "15:00", "end": "18:00" }
+      ]
+    },
+    "profileImage": "https://example.com/mentor-profile.jpg",
+    "interests": ["Backend Development", "Cloud Computing", "System Design", "Leadership"]
+  },
+  "preference": {
+    "career": "Tech Industry",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "notes": "Looking to mentor someone who is committed and has basic programming knowledge",
+    "age": {
+      "min": 20,
+      "max": 30
+    }
+  },
+  "role": "MENTOR"
+}
+
+###
+# Complete Profile (Minimal Example - MENTEE)
+POST {{port6011}}/auth/complete-profile
+Authorization: {{accessToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Looking to learn and grow in my career",
+    "age": 24,
+    "ethnicity": "BLACK",
+    "gender": "NO_ANSWER",
+    "profession": "Junior Developer",
+    "experienceYear": "6 months",
+    "availability": {
+      "saturday": [
+        { "start": "10:00", "end": "14:00" }
+      ],
+      "sunday": [
+        { "start": "13:00", "end": "17:00" }
+      ]
+    },
+    "interests": ["Programming", "Learning"]
+  },
+  "preference": {
+    "career": "Software Engineering",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "age": {
+      "min": 28,
+      "max": 45
+    }
+  }
+}
+
+###
+# Complete Profile (Without role - uses existing role)
+POST {{port6011}}/auth/complete-profile
+Authorization: {{accessToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "I am a product manager looking to mentor aspiring product managers",
+    "age": 35,
+    "ethnicity": "MIDDLE_EASTERN",
+    "gender": "MALE",
+    "profession": "Product Manager",
+    "experienceYear": "7 years",
+    "availability": {
+      "tuesday": [
+        { "start": "19:00", "end": "21:00" }
+      ],
+      "thursday": [
+        { "start": "20:00", "end": "22:00" }
+      ]
+    },
+    "interests": ["Product Management", "Business Strategy", "User Research"]
+  },
+  "preference": {
+    "career": "Product Management",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "age": {
+      "min": 22,
+      "max": 35
+    }
+  }
+}
+
+###
+# Complete Profile (For ADMIN role - optional)
+POST {{port6011}}/auth/complete-profile
+Authorization: {{accessToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Platform administrator with system management responsibilities",
+    "age": 40,
+    "ethnicity": "WHITE",
+    "gender": "FEMALE",
+    "profession": "System Administrator",
+    "experienceYear": "12 years",
+    "availability": {
+      "monday": [
+        { "start": "09:00", "end": "17:00" }
+      ],
+      "tuesday": [
+        { "start": "09:00", "end": "17:00" }
+      ],
+      "wednesday": [
+        { "start": "09:00", "end": "17:00" }
+      ],
+      "thursday": [
+        { "start": "09:00", "end": "17:00" }
+      ],
+      "friday": [
+        { "start": "09:00", "end": "17:00" }
+      ]
+    },
+    "interests": ["System Administration", "Security", "DevOps"]
+  },
+  "preference": {
+    "career": "IT Administration",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "age": {
+      "min": 25,
+      "max": 50
+    }
+  },
+  "role": "ADMIN"
+}
+```
+
+give a new api for delete account, purpose delete the fully from the db. no recored keep.
