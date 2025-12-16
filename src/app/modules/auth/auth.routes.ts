@@ -61,4 +61,13 @@ router.patch(
   authController.updateProfileImage,
 );
 
+//w: (start)╭──────────── completeProfile ────────────╮
+router.post(
+  "/complete-profile",
+  auth(),
+  validateRequest(authValidation.completeProfileSchema),
+  authController.completeProfile,
+);
+//w: (end)  ╰──────────── completeProfile ────────────╯
+
 export const AuthRoutes = router;

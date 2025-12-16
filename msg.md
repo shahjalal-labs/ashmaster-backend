@@ -21,3 +21,11 @@ Thank you for your patience and help.
 ---
 
 For better clarity, we propose a meeting to review the overall app flow. This discussion will help ensure the application remains fully aligned with your mission and vision. Please let us know your availability.
+
+This is truly an outstanding, high-quality tutorial 👏
+I’ve been following your Node.js playlist and honestly, your explanations of JWT, OAuth, 2FA, RBAC, and real VPS deployment set a very high standard. Everything is clear, practical, and exactly how things work in real production systems.
+
+I’m really excited to be joining your bootcamp course and learning more directly under your guidance. Your teaching has already helped me grow a lot, and I know the bootcamp will take things to the next level.
+
+Massive respect for your consistency, clarity, and dedication to the developer community.
+Love & respect from Bangladesh 🇧🇩 ❤️
