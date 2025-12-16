@@ -1,3 +1,4 @@
+import { Ethnicity, Gender, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── login ────────────╮
@@ -78,6 +79,153 @@ const resetPasswordSchema = z
   .strict();
 //w: (end)  ╰──────────── resetPassword ────────────╯
 
+// Define days of the week
+const weekDays = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+] as const;
+
+// Time slot validation
+const timeSlotSchema = z
+  .object({
+    start: z.string().regex(/^([0-1][0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "Start time must be in HH:MM format (24-hour)",
+    }),
+    end: z.string().regex(/^([0-1][0-9]|2[0-3]):([0-5][0-9])$/, {
+      message: "End time must be in HH:MM format (24-hour)",
+    }),
+  })
+  .refine(
+    (data) => {
+      const start = parseInt(data.start.replace(":", ""));
+      const end = parseInt(data.end.replace(":", ""));
+      return start < end;
+    },
+    {
+      message: "End time must be after start time",
+      path: ["end"],
+    },
+  );
+
+// Availability validation
+const availabilitySchema = z
+  .object({
+    monday: z.array(timeSlotSchema).optional().default([]),
+    tuesday: z.array(timeSlotSchema).optional().default([]),
+    wednesday: z.array(timeSlotSchema).optional().default([]),
+    thursday: z.array(timeSlotSchema).optional().default([]),
+    friday: z.array(timeSlotSchema).optional().default([]),
+    saturday: z.array(timeSlotSchema).optional().default([]),
+    sunday: z.array(timeSlotSchema).optional().default([]),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      // At least one day should have availability
+      return Object.values(data).some((slots) => slots && slots.length > 0);
+    },
+    {
+      message: "At least one day must have time slots",
+    },
+  );
+
+// Age range validation
+const ageRangeSchema = z
+  .object({
+    min: z
+      .number()
+      .int()
+      .min(18, "Minimum age must be at least 18")
+      .max(100, "Minimum age must be at most 100"),
+    max: z
+      .number()
+      .int()
+      .min(18, "Maximum age must be at least 18")
+      .max(100, "Maximum age must be at most 100"),
+  })
+  .refine((data) => data.min <= data.max, {
+    message: "Minimum age must be less than or equal to maximum age",
+    path: ["max"],
+  });
+
+//w: (start)╭──────────── completeProfileSchema ────────────╮
+const completeProfileSchema = z
+  .object({
+    // Profile data
+    profile: z.object({
+      about: z
+        .string()
+        .min(10, "About must be at least 10 characters long")
+        .max(500, "About must be at most 500 characters long"),
+      age: z
+        .number()
+        .int()
+        .min(18, "Age must be at least 18")
+        .max(100, "Age must be at most 100"),
+      ethnicity: z.nativeEnum(Ethnicity, {
+        errorMap: () => ({ message: "Invalid ethnicity value" }),
+      }),
+      gender: z.nativeEnum(Gender, {
+        errorMap: () => ({ message: "Invalid gender value" }),
+      }),
+      profession: z
+        .string()
+        .min(2, "Profession must be at least 2 characters long")
+        .max(100, "Profession must be at most 100 characters long"),
+      experienceYear: z
+        .string()
+        .min(1, "Experience year is required")
+        .max(50, "Experience year must be at most 50 characters long"),
+      availability: availabilitySchema,
+      profileImage: z
+        .string()
+        .url("Profile image must be a valid URL")
+        .optional(),
+      interests: z
+        .array(
+          z
+            .string()
+            .min(2, "Interest must be at least 2 characters long")
+            .max(50, "Interest must be at most 50 characters long"),
+        )
+        .min(1, "At least one interest is required")
+        .max(10, "Maximum 10 interests allowed"),
+    }),
+
+    // Preference data
+    preference: z.object({
+      career: z
+        .string()
+        .min(2, "Career preference must be at least 2 characters long")
+        .max(100, "Career preference must be at most 100 characters long"),
+      gender: z.nativeEnum(Gender, {
+        errorMap: () => ({ message: "Invalid preferred gender value" }),
+      }),
+      ethnicity: z.nativeEnum(Ethnicity, {
+        errorMap: () => ({ message: "Invalid preferred ethnicity value" }),
+      }),
+      notes: z
+        .string()
+        .max(500, "Notes must be at most 500 characters long")
+        .optional(),
+      age: ageRangeSchema,
+    }),
+
+    // User role (optional, defaults to current role)
+    role: z
+      .nativeEnum(UserRole, {
+        errorMap: () => ({ message: "Invalid role value" }),
+      })
+      .optional(),
+  })
+  .strict();
+//w: (end)  ╰──────────── completeProfileSchema ────────────╯
+
 export const authValidation = {
   updateProfileSchema,
   authLoginSchema,
@@ -85,4 +233,5 @@ export const authValidation = {
   loginSchema,
   verifyForgotPasswordOtpCodeDB,
   resetPasswordSchema,
+  completeProfileSchema,
 };

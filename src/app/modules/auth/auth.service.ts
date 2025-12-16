@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { Profile, User } from "@prisma/client";
+import { Ethnicity, Gender, Profile, User, UserRole } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
@@ -55,29 +55,6 @@ const loginUserIntoDB = async (payload: {
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
-
-//w: (start)╭──────────── completeProfile ────────────╮
-const completeProfile = async (userId: string, payload: Profile) => {
-  const existingUser = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-
-  if (!existingUser) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-
-  await prisma.$transaction(async (tx) => {
-    await tx.profile.create({
-      where: {
-        userId,
-      },
-      data: {
-        ...payload,
-      },
-    });
-  });
-};
-//w: (end)  ╰──────────── completeProfile ────────────╯
 
 // google login
 //w: (start)╭──────────── authLogin ────────────╮
@@ -279,6 +256,127 @@ const updateProfileImage = async (
   return;
 };
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
+
+interface CompleteProfileInput {
+  profile: {
+    about: string;
+    age: number;
+    ethnicity: Ethnicity;
+    gender: Gender;
+    profession: string;
+    experienceYear: string;
+    availability: Record<string, { start: string; end: string }[]>;
+    profileImage?: string;
+    interests: string[];
+  };
+  preference: {
+    career: string;
+    gender: Gender;
+    ethnicity: Ethnicity;
+    notes?: string;
+    age: {
+      min: number;
+      max: number;
+    };
+  };
+  role?: UserRole;
+}
+
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = async (
+  userId: string,
+  payload: CompleteProfileInput,
+) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Check if profile already exists
+  const existingProfile = await prisma.profile.findUnique({
+    where: { userId },
+  });
+
+  if (existingProfile) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Profile already exists. Use update profile instead.",
+    );
+  }
+
+  // Check if preference already exists
+  const existingPreference = await prisma.preference.findUnique({
+    where: { userId },
+  });
+
+  if (existingPreference) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Preference already exists. Use update preference instead.",
+    );
+  }
+
+  // Use transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Create profile
+    const profile = await tx.profile.create({
+      data: {
+        about: payload.profile.about,
+        age: payload.profile.age,
+        ethnicity: payload.profile.ethnicity,
+        gender: payload.profile.gender,
+        profession: payload.profile.profession,
+        experienceYear: payload.profile.experienceYear,
+        availability: payload.profile.availability,
+        profileImage: payload.profile.profileImage,
+        interests: payload.profile.interests,
+        userId: userId,
+      },
+    });
+
+    // Create preference
+    const preference = await tx.preference.create({
+      data: {
+        career: payload.preference.career,
+        gender: payload.preference.gender,
+        ethnicity: payload.preference.ethnicity,
+        notes: payload.preference.notes,
+        age: payload.preference.age,
+        userId: userId,
+      },
+    });
+
+    // Update user role if provided and profile status to COMPLETE
+    const user = await tx.user.update({
+      where: { id: userId },
+      data: {
+        role: payload.role || existingUser.role,
+        profilStatus: "COMPLETE",
+      },
+      select: {
+        id: true,
+        email: true,
+        fullname: true,
+        role: true,
+        profilStatus: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+
+    return {
+      user,
+      profile,
+      preference,
+    };
+  });
+
+  return result;
+};
+//w: (end)  ╰──────────── completeProfile ────────────╯
 
 export const authService = {
   loginUserIntoDB,

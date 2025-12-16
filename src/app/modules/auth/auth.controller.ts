@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import catchAsync from "../../../shared/catchAsync";
 import { authService } from "./auth.service";
 import sendResponse from "../../../shared/sendResponse";
+import httpStatus from "http-status";
 
 //login user
 const loginUser = catchAsync(async (req: Request, res: Response) => {
@@ -125,6 +126,20 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   });
 });
 
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.user;
+  const result = await authService.completeProfile(id, req.body);
+
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Profile completed successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── completeProfile ────────────╯
+
 export const authController = {
   loginUser,
   authLogin,
@@ -135,4 +150,5 @@ export const authController = {
   verifyForgotPasswordOtpCode,
   resetPassword,
   updateProfileImage,
+  completeProfile,
 };
