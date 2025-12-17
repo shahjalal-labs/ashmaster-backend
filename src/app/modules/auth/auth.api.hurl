@@ -23,6 +23,10 @@ POST {{port6011}}/auth/auth-login
 GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}
 
+# get other profile
+GET {{port6011}}/auth/profile/89417bacdfe265d4f5fc990a
+Authorization: {{ashRaisa}}
+
 # Delete Account
 # Note: This will permanently delete the user account and all associated data
 

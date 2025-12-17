@@ -103,6 +103,20 @@ const getProfile = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── getProfile ────────────╯
 
+//w: (start)╭──────────── getOtherProfile ────────────╮
+const getOtherProfile = catchAsync(async (req, res) => {
+  const id = req.query.id as string;
+
+  const user = await authService.getProfileFromDB(id);
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User profile retrieved successfully",
+    data: user,
+  });
+});
+//w: (end)  ╰──────────── getOtherProfile ────────────╯
+
 //w: (start)╭──────────── updateProfile ────────────╮
 const updateProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
@@ -163,6 +177,7 @@ export const authController = {
   loginUser,
   authLogin,
   getProfile,
+  getOtherProfile,
   updateProfile,
   updateUserLocation,
   sendForgotPasswordOtp,

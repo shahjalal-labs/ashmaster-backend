@@ -280,17 +280,22 @@ const getProfileFromDB = async (userId: string) => {
   // If not in cache, fetch from database
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    omit: {
+      fcmToken: true,
+    },
     include: {
       profile: {
         omit: {
           createdAt: true,
           updatedAt: true,
+          userId: true,
         },
       },
       preference: {
         omit: {
           createdAt: true,
           updatedAt: true,
+          userId: true,
         },
       },
     },

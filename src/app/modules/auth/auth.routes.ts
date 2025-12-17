@@ -23,6 +23,8 @@ router.post(
 
 router.get("/profile", auth(), authController.getProfile);
 
+router.get("/profile/:id", auth(), authController.getProfile);
+
 router.patch(
   "/update/user-location",
   auth(),
