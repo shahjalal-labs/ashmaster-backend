@@ -105,7 +105,8 @@ const getProfile = catchAsync(async (req: any, res: Response) => {
 
 //w: (start)╭──────────── getOtherProfile ────────────╮
 const getOtherProfile = catchAsync(async (req, res) => {
-  const id = req.query.id as string;
+  const id = req.params.id as string;
+  console.log(id, "auth.controller.ts", 109);
 
   const user = await authService.getProfileFromDB(id);
   sendResponse(res, {

@@ -24,7 +24,8 @@ GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}
 
 # get other profile
-GET {{port6011}}/auth/profile/89417bacdfe265d4f5fc990a
+# profile/userId
+GET {{port6011}}/auth/profile/69417bacdfe265d4f5fc920a
 Authorization: {{ashRaisa}}
 
 # Delete Account
@@ -103,7 +104,7 @@ Content-Type: application/json
     }
   },
 
-  "role": "MENTEE"
+  "role": "MENTOR"
 }
 
 
