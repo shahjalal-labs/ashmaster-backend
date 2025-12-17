@@ -3,7 +3,14 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { Ethnicity, Gender, Profile, User, UserRole } from "@prisma/client";
+import {
+  Ethnicity,
+  Gender,
+  Profile,
+  ProfilStatus,
+  User,
+  UserRole,
+} from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
@@ -82,6 +89,7 @@ const authLogin = async (payload: User) => {
 
     return {
       accessToken,
+      profileStatus: user.profilStatus,
     };
   } else {
     const user = await prisma.user.create({
@@ -98,6 +106,7 @@ const authLogin = async (payload: User) => {
 
     return {
       accessToken,
+      profileStatus: ProfilStatus.INCOMPLETE,
     };
   }
 };
@@ -522,10 +531,6 @@ const completeProfile = async (
 const deleteAccountFromDB = async (userId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      profile: true,
-      preference: true,
-    },
   });
 
   if (!existingUser) {

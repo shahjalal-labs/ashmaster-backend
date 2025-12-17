@@ -22,7 +22,7 @@ POST {{port6011}}/auth/auth-login
 # Delete Account
 # Note: This will permanently delete the user account and all associated data
 DELETE {{port6011}}/auth/delete-account
-Authorization: {{ashRaisa}}
+Authorization: {{ashSara}}
 
 # send forgot password otp
 
