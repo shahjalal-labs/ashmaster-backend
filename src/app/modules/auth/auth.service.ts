@@ -448,25 +448,10 @@ const updateProfileIntoDB = async (
       );
     }
 
-    const resultData = {
-      user: {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        fullname: updatedUser.fullname,
-        role: updatedUser.role,
-        profilStatus: updatedUser.profilStatus,
-        fcmToken: updatedUser.fcmToken,
-        createdAt: updatedUser.createdAt,
-        updatedAt: updatedUser.updatedAt,
-      },
-      profile: updatedProfile,
-      preference: updatedPreference,
-    };
-
     // Clear cache after update
     await clearProfileCache(userId);
 
-    return resultData;
+    return null;
   });
 
   return result;

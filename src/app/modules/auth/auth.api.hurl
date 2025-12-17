@@ -273,8 +273,7 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "fullname": "Raisa Ahmed Updated",
-  "fcmToken": "new-fcm-token-12345",
+  "fullname": "Raisa Ahmed",
   "role": "MENTOR"
 }
 
