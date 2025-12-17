@@ -286,13 +286,21 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { Ethnicity, Gender, Profile, User, UserRole } from "@prisma/client";
+import {
+  Ethnicity,
+  Gender,
+  Profile,
+  ProfilStatus,
+  User,
+  UserRole,
+} from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
+import { UpdateProfileInput } from "./auth.validation";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -335,6 +343,7 @@ const loginUserIntoDB = async (payload: {
 
   return {
     accessToken,
+    profileStatus: user.profilStatus,
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
@@ -364,6 +373,7 @@ const authLogin = async (payload: User) => {
 
     return {
       accessToken,
+      profileStatus: user.profilStatus,
     };
   } else {
     const user = await prisma.user.create({
@@ -380,6 +390,7 @@ const authLogin = async (payload: User) => {
 
     return {
       accessToken,
+      profileStatus: ProfilStatus.INCOMPLETE,
     };
   }
 };
@@ -489,10 +500,24 @@ const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
 };
 //w: (end)  ╰──────────── resetForgotPasswordDB ────────────╯
 
-//w: (start)╭──────────── getProfileFromDB ────────────╮
+//w: (start)╭──────────── getProfile ────────────╮
 const getProfileFromDB = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
+    include: {
+      profile: {
+        omit: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      preference: {
+        omit: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+    },
   });
   if (!user) {
     throw new ApiError(404, "user not found!");
@@ -502,20 +527,164 @@ const getProfileFromDB = async (userId: string) => {
 
   return sanitizedUser;
 };
-//w: (end)  ╰──────────── getProfileFromDB ────────────╯
+//w: (end)  ╰──────────── getProfile ────────────╯
 
 //w: (start)╭──────────── updateProfileIntoDB ────────────╮
-const updateProfileIntoDB = async (userId: string, userData: User) => {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    throw new ApiError(404, "user not found for edit user");
-  }
-  const updatedUser = await prisma.user.update({
+const updateProfileIntoDB = async (
+  userId: string,
+  payload: UpdateProfileInput,
+) => {
+  const existingUser = await prisma.user.findUnique({
     where: { id: userId },
-    data: userData,
+    include: {
+      profile: true,
+      preference: true,
+    },
   });
 
-  return updatedUser;
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Use transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Update user fields if provided
+    const userUpdateData: any = {};
+
+    if (payload.fullname !== undefined) {
+      userUpdateData.fullname = payload.fullname;
+    }
+
+    if (payload.fcmToken !== undefined) {
+      userUpdateData.fcmToken = payload.fcmToken;
+    }
+
+    if (payload.role !== undefined) {
+      userUpdateData.role = payload.role;
+    }
+
+    // Update user if there are user fields to update
+    let updatedUser = existingUser;
+    if (Object.keys(userUpdateData).length > 0) {
+      updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: userUpdateData,
+        include: {
+          profile: true,
+          preference: true,
+        },
+      });
+    }
+
+    // Update profile if provided and exists
+    let updatedProfile = existingUser.profile;
+    if (payload.profile && existingUser.profile) {
+      const profileUpdateData: any = {};
+
+      if (payload.profile.about !== undefined) {
+        profileUpdateData.about = payload.profile.about;
+      }
+
+      if (payload.profile.age !== undefined) {
+        profileUpdateData.age = payload.profile.age;
+      }
+
+      if (payload.profile.ethnicity !== undefined) {
+        profileUpdateData.ethnicity = payload.profile.ethnicity;
+      }
+
+      if (payload.profile.gender !== undefined) {
+        profileUpdateData.gender = payload.profile.gender;
+      }
+
+      if (payload.profile.profession !== undefined) {
+        profileUpdateData.profession = payload.profile.profession;
+      }
+
+      if (payload.profile.experienceYear !== undefined) {
+        profileUpdateData.experienceYear = payload.profile.experienceYear;
+      }
+
+      if (payload.profile.availability !== undefined) {
+        profileUpdateData.availability = payload.profile.availability;
+      }
+
+      if (payload.profile.profileImage !== undefined) {
+        profileUpdateData.profileImage = payload.profile.profileImage;
+      }
+
+      if (payload.profile.interests !== undefined) {
+        profileUpdateData.interests = payload.profile.interests;
+      }
+
+      if (Object.keys(profileUpdateData).length > 0) {
+        updatedProfile = await tx.profile.update({
+          where: { userId: userId },
+          data: profileUpdateData,
+        });
+      }
+    } else if (payload.profile && !existingUser.profile) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Profile does not exist. Please complete your profile first.",
+      );
+    }
+
+    // Update preference if provided and exists
+    let updatedPreference = existingUser.preference;
+    if (payload.preference && existingUser.preference) {
+      const preferenceUpdateData: any = {};
+
+      if (payload.preference.career !== undefined) {
+        preferenceUpdateData.career = payload.preference.career;
+      }
+
+      if (payload.preference.gender !== undefined) {
+        preferenceUpdateData.gender = payload.preference.gender;
+      }
+
+      if (payload.preference.ethnicity !== undefined) {
+        preferenceUpdateData.ethnicity = payload.preference.ethnicity;
+      }
+
+      if (payload.preference.notes !== undefined) {
+        preferenceUpdateData.notes = payload.preference.notes;
+      }
+
+      if (payload.preference.age !== undefined) {
+        preferenceUpdateData.age = payload.preference.age;
+      }
+
+      if (Object.keys(preferenceUpdateData).length > 0) {
+        updatedPreference = await tx.preference.update({
+          where: { userId: userId },
+          data: preferenceUpdateData,
+        });
+      }
+    } else if (payload.preference && !existingUser.preference) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Preference does not exist. Please complete your profile first.",
+      );
+    }
+
+    return {
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        fullname: updatedUser.fullname,
+        role: updatedUser.role,
+        profilStatus: updatedUser.profilStatus,
+        fcmToken: updatedUser.fcmToken,
+        createdAt: updatedUser.createdAt,
+        updatedAt: updatedUser.updatedAt,
+      },
+      profile: updatedProfile,
+      preference: updatedPreference,
+    };
+  });
+
+  return result;
 };
 //w: (end)  ╰──────────── updateProfileIntoDB ────────────╯
 
@@ -528,7 +697,7 @@ const updateProfileImage = async (
     throw new ApiError(400, "Please select an image");
   }
   const fileUrl = await uploadInSpace(file, "users/profileImage");
-  await prisma.user.update({
+  await prisma.profile.update({
     where: {
       id: userId,
     },
@@ -639,21 +808,16 @@ const completeProfile = async (
         role: payload.role || existingUser.role,
         profilStatus: "COMPLETE",
       },
-      select: {
-        id: true,
-        email: true,
-        fullname: true,
-        role: true,
-        profilStatus: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
+    const accessToken = jwtHelpers.generateToken(
+      { id: user.id, email: user.email, role: user.role },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string,
+    );
+
     return {
-      user,
-      profile,
-      preference,
+      accessToken,
     };
   });
 
@@ -665,10 +829,6 @@ const completeProfile = async (
 const deleteAccountFromDB = async (userId: string) => {
   const existingUser = await prisma.user.findUnique({
     where: { id: userId },
-    include: {
-      profile: true,
-      preference: true,
-    },
   });
 
   if (!existingUser) {
@@ -723,7 +883,9 @@ router.post(
   validateRequest(authValidation.authLoginSchema),
   authController.authLogin,
 );
+
 router.get("/profile", auth(), authController.getProfile);
+
 router.patch(
   "/update/user-location",
   auth(),
@@ -751,18 +913,14 @@ router.patch(
   authController.resetPassword,
 );
 
-router.put(
-  "/profile",
-  validateRequest(authValidation.updateProfileSchema),
-  auth(),
-  authController.updateProfile,
-);
+//w: (start)╭──────────── router ────────────╮
 router.patch(
   "/profile-image",
   auth(),
   fileUploader.profileImage,
   authController.updateProfileImage,
 );
+//w: (end)  ╰──────────── router ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
 router.post(
@@ -772,6 +930,15 @@ router.post(
   authController.completeProfile,
 );
 //w: (end)  ╰──────────── completeProfile ────────────╯
+
+// Update user profile (replaces the old route)
+router.put(
+  "/profile",
+  auth(),
+  validateRequest(authValidation.updateProfileSchema),
+  authController.updateProfile,
+);
+
 //
 //
 //w: (start)╭──────────── deleteAccount ────────────╮
@@ -809,25 +976,6 @@ const authLoginSchema = z
   .strict()
   .strict();
 //w: (end)  ╰──────────── authLogin ────────────╯
-
-//w: (start)╭──────────── updateProfile ────────────╮
-const updateProfileSchema = z
-  .object({
-    firstName: z
-      .string()
-      .min(2, "First name must be at least 2 characters long")
-      .optional(),
-    lastName: z
-      .string()
-      .min(2, "Last name must be at least 2 characters long")
-      .optional(),
-    mobile: z
-      .string()
-      .min(10, "Mobile must be at least 10 characters long")
-      .optional(),
-  })
-  .strict();
-//w: (end)  ╰──────────── updateProfile ────────────╯
 
 //w: (start)╭──────────── sendForgotPassOtp ────────────╮
 const sendForgotPassOtp = z
@@ -1012,6 +1160,56 @@ const completeProfileSchema = z
   .strict();
 //w: (end)  ╰──────────── completeProfileSchema ────────────╯
 
+//w: (start)╭──────────── updateProfileSchema ────────────╮
+// Create partial versions of complete schemas for update
+const partialProfileSchema = completeProfileSchema.shape.profile.partial();
+const partialPreferenceSchema =
+  completeProfileSchema.shape.preference.partial();
+
+// Update profile schema (all fields optional except structure)
+const updateProfileSchema = z
+  .object({
+    // User fields that can be updated (from existing user model)
+    fullname: z
+      .string()
+      .min(2, "Full name must be at least 2 characters long")
+      .max(101, "Full name must be at most 100 characters long")
+      .optional(),
+    fcmToken: z.string().optional(),
+    role: z
+      .nativeEnum(UserRole, {
+        errorMap: () => ({ message: "Invalid role value" }),
+      })
+      .optional(),
+
+    // Profile fields (all optional, using partial schema)
+    profile: partialProfileSchema.optional(),
+
+    // Preference fields (all optional, using partial schema)
+    preference: partialPreferenceSchema.optional(),
+  })
+  .strict()
+  .refine(
+    (data) => {
+      // At least one field should be provided for update
+      const hasUserFields = data.fullname || data.fcmToken || data.role;
+      const hasProfileFields =
+        data.profile && Object.keys(data.profile).length > 0;
+      const hasPreferenceFields =
+        data.preference && Object.keys(data.preference).length > 0;
+
+      return hasUserFields || hasProfileFields || hasPreferenceFields;
+    },
+    {
+      message: "At least one field must be provided for update",
+    },
+  );
+//w: (end)  ╰──────────── updateProfileSchema ────────────╯
+
+// Generate TypeScript types from the schemas
+export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>; // Generate TypeScript type from the schema
+
 export const authValidation = {
   updateProfileSchema,
   authLoginSchema,
@@ -1117,6 +1315,7 @@ const resetPassword = catchAsync(async (req: Request, res: Response) => {
 //w: (end)  ╰──────────── resetPassword ────────────╯
 
 // get profile for logged in user
+//w: (start)╭──────────── getProfile ────────────╮
 const getProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
   const user = await authService.getProfileFromDB(id);
@@ -1128,21 +1327,24 @@ const getProfile = catchAsync(async (req: any, res: Response) => {
     data: user,
   });
 });
+//w: (end)  ╰──────────── getProfile ────────────╯
 
-// update user profile only logged in user
+//w: (start)╭──────────── updateProfile ────────────╮
 const updateProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
-  const updatedUser = await authService.updateProfileIntoDB(id, req.body);
+  const result = await authService.updateProfileIntoDB(id, req.body);
 
   sendResponse(res, {
-    statusCode: 200,
+    statusCode: httpStatus.OK,
     success: true,
-    message: "User profile updated successfully",
-    data: updatedUser,
+    message: "Profile updated successfully",
+    data: result,
   });
 });
+//w: (end)  ╰──────────── updateProfile ────────────╯
 
 // update user profile only logged in user
+//w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
   await authService.updateProfileImage(id, req.file);
@@ -1153,6 +1355,7 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
     message: "User profile image updated successfully",
   });
 });
+//w: (end)  ╰──────────── updateProfileImage ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
 const completeProfile = catchAsync(async (req: any, res: Response) => {
@@ -1207,7 +1410,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"raisaahmed@merepost.com",
+  "email":"esha@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }
@@ -1216,15 +1419,20 @@ POST {{port6011}}/auth/login
 
 POST {{port6011}}/auth/auth-login
 {
-  "email":"koyelot367@roastic.com",
-  "fullname":"Hasan Bin Ali",
+  "email":"sara@merepost.com",
+  "fullname":"Sara Ahmed",
   "fcmToken":""
 }
 
+# get my profile
+GET {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+
 # Delete Account
 # Note: This will permanently delete the user account and all associated data
+
 DELETE {{port6011}}/auth/delete-account
-Authorization: {{ashRaisa}}
+Authorization: {{ashEsha}}
 
 # send forgot password otp
 
@@ -1252,47 +1460,54 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashRaisa}}
+Authorization: {{ashEsha}}
 Content-Type: application/json
 
 {
   "profile": {
-    "about": "I am a passionate learner looking for guidance in software development and career growth. I have basic programming knowledge and want to specialize in full-stack development.",
-    "age": 22,
-    "ethnicity": "EAST_ASIAN",
+    "about": "I am a marketing strategist focused on brand growth, digital campaigns, and data-driven storytelling.",
+    "age": 29,
+    "ethnicity": "MIDDLE_EASTERN",
     "gender": "FEMALE",
-    "profession": "Software Developer",
-    "experienceYear": 1,
+    "profession": "Marketing Strategist",
+    "experienceYear": 6,
     "availability": {
-      "monday": [
-        { "start": "09:00", "end": "12:00" },
-        { "start": "14:00", "end": "17:00" }
-      ],
       "tuesday": [
-        { "start": "10:00", "end": "15:00" }
+        { "start": "10:00", "end": "13:00" },
+        { "start": "17:00", "end": "19:00" }
+
       ],
-      "wednesday": [
-        { "start": "13:00", "end": "18:00" }
+      "thursday": [
+        { "start": "15:00", "end": "19:00" }
       ],
-      "friday": [
-        { "start": "09:00", "end": "16:00" }
+      "saturday": [
+        { "start": "11:00", "end": "14:00" }
       ]
     },
-    "profileImage": "https://example.com/profile.jpg",
-    "interests": ["Web Development", "Mobile Apps", "UI/UX Design", "Databases"]
+    "profileImage": "https://cdn.example.com/profiles/esha.jpg",
+    "interests": [
+      "Digital Marketing",
+      "Brand Strategy",
+      "Content Planning",
+      "Market Research"
+    ]
   },
+
   "preference": {
-    "career": "Software Development",
-    "gender": "NO_ANSWER",
-    "ethnicity": "NO_ANSWER",
-    "notes": "Looking for a mentor with experience in full-stack development and career guidance",
+    "career": "Business & Marketing",
+    "gender": "MALE",
+    "ethnicity": "EAST_ASIAN",
+    "notes": "Interested in professionals with leadership and startup experience",
     "age": {
-      "min": 25,
+      "min": 27,
       "max": 40
     }
   },
+
   "role": "MENTEE"
 }
+
+
 
 ###
 # Complete Profile (Mentor Example)
@@ -1451,6 +1666,242 @@ Content-Type: application/json
   },
   "role": "ADMIN"
 }
+
+
+##-------### ------###----## update profile
+# ... existing tests ...
+
+###
+# Update Profile - Update only user fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "Raisa Ahmed Updated",
+  "fcmToken": "new-fcm-token-12345",
+  "role": "MENTOR"
+}
+
+###
+# Update Profile - Update only profile fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Updated about section with more details about my experience and goals.",
+    "age": 23,
+    "profession": "Senior Software Developer",
+    "experienceYear": 2,
+    "interests": ["Web Development", "Mobile Apps", "UI/UX Design", "Databases", "Cloud Computing"],
+    "availability": {
+      "monday": [
+        { "start": "10:00", "end": "13:00" },
+        { "start": "15:00", "end": "18:00" }
+      ],
+      "wednesday": [
+        { "start": "09:00", "end": "12:00" }
+      ]
+    }
+  }
+}
+
+###
+# Update Profile - Update only preference fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "career": "Tech Startup",
+    "gender": "FEMALE",
+    "ethnicity": "EAST_ASIAN",
+    "notes": "Looking for someone with startup experience",
+    "age": {
+      "min": 28,
+      "max": 45
+    }
+  }
+}
+
+###
+# Update Profile - Update mixed fields
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "Raisa Ahmed Pro",
+  "profile": {
+    "profession": "Lead Developer",
+    "experienceYear": 3
+  },
+  "preference": {
+    "career": "Enterprise Software",
+    "age": {
+      "min": 30
+    }
+  }
+}
+
+###
+# Update Profile - Clear profile image (set to empty string)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "profileImage": ""
+  }
+}
+
+###
+# Update Profile - Clear notes
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "notes": ""
+  }
+}
+
+###
+# Update Profile - Invalid data (should fail validation)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "fullname": "A",  // Too short
+  "profile": {
+    "age": 17  // Too young
+  }
+}
+
+###
+# Update Profile - Empty request (should fail)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{}
+
+###
+# Update Profile - Try to update email (should not be allowed)
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "email": "newemail@example.com"  // This should be ignored or cause error
+}
+
+###
+# Update Profile - Update availability with invalid time format
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "availability": {
+      "monday": [
+        { "start": "25:00", "end": "26:00" }  // Invalid time
+      ]
+    }
+  }
+}
+
+###
+# Update Profile - Update with invalid age range
+PUT {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "preference": {
+    "age": {
+      "min": 50,
+      "max": 30  // min > max
+    }
+  }
+}
+
+###
+# Update Profile - User without profile/preference (should fail)
+# First create a user without completing profile
+POST {{port6011}}/auth/auth-login
+{
+  "email": "newuser@example.com",
+  "fullname": "New User",
+  "fcmToken": ""
+}
+
+@newUserToken = {{response.body.data.accessToken}}
+
+# Try to update profile (should fail because profile doesn't exist)
+PUT {{port6011}}/auth/profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "Trying to update without completing profile"
+  }
+}
+
+# Complete the profile first
+POST {{port6011}}/auth/complete-profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "about": "I am a new user",
+    "age": 25,
+    "ethnicity": "EAST_ASIAN",
+    "gender": "NO_ANSWER",
+    "profession": "Developer",
+    "experienceYear": 1,
+    "availability": {
+      "monday": [
+        { "start": "09:00", "end": "12:00" }
+      ]
+    },
+    "interests": ["Programming"]
+  },
+  "preference": {
+    "career": "Software",
+    "gender": "NO_ANSWER",
+    "ethnicity": "NO_ANSWER",
+    "age": {
+      "min": 20,
+      "max": 30
+    }
+  }
+}
+
+# Now update should work
+PUT {{port6011}}/auth/profile
+Authorization: Bearer {{newUserToken}}
+Content-Type: application/json
+
+{
+  "profile": {
+    "profession": "Senior Developer"
+  }
+}
+
+###
+# Update Profile - Get updated profile to verify
+GET {{port6011}}/auth/profile
+Authorization: {{ashRaisa}}
 ```
 
-I need an profile update api, where data can be update, without email update field, make sure update validation through zod. and instead of creating interface take it from zode typeof
+I wanna use redis caching for get my profile. for faster api response, how can i use it.

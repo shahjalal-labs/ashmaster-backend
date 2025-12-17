@@ -20,6 +20,7 @@ router.post(
   validateRequest(authValidation.authLoginSchema),
   authController.authLogin,
 );
+
 router.get("/profile", auth(), authController.getProfile);
 
 router.patch(

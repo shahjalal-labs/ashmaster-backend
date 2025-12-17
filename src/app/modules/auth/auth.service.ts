@@ -217,13 +217,23 @@ const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
 };
 //w: (end)  ╰──────────── resetForgotPasswordDB ────────────╯
 
-//w: (start)╭──────────── getProfileFromDB ────────────╮
+//w: (start)╭──────────── getProfile ────────────╮
 const getProfileFromDB = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
-      profile: true,
-      preference: true,
+      profile: {
+        omit: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
+      preference: {
+        omit: {
+          createdAt: true,
+          updatedAt: true,
+        },
+      },
     },
   });
   if (!user) {
@@ -234,7 +244,7 @@ const getProfileFromDB = async (userId: string) => {
 
   return sanitizedUser;
 };
-//w: (end)  ╰──────────── getProfileFromDB ────────────╯
+//w: (end)  ╰──────────── getProfile ────────────╯
 
 //w: (start)╭──────────── updateProfileIntoDB ────────────╮
 const updateProfileIntoDB = async (
