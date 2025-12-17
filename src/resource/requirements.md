@@ -79,4 +79,6 @@ end goals
 5.1 business email pricing: https://www.hostinger.com/pricing/email-hosting
 
 You should know that we will be required this credential for running the app that you need to purchase with subscription.
-We prefer hostinger for vps, domain and business email, and database from mongodb. and s3 bucket from digital ocean.
+We prefer hostinger for vps, domain and business email, and database from mongodb. and s3 bucket from digital ocean. You can purchase now or must before finalizing deploy the app. if purchase now any issue come it will be fix instantly. or you can buy when final deploy, in the mean time we will use our own credential.
+
+note: video chat

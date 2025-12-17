@@ -501,21 +501,16 @@ const completeProfile = async (
         role: payload.role || existingUser.role,
         profilStatus: "COMPLETE",
       },
-      select: {
-        id: true,
-        email: true,
-        fullname: true,
-        role: true,
-        profilStatus: true,
-        createdAt: true,
-        updatedAt: true,
-      },
     });
 
+    const accessToken = jwtHelpers.generateToken(
+      { id: user.id, email: user.email, role: user.role },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string,
+    );
+
     return {
-      user,
-      profile,
-      preference,
+      accessToken,
     };
   });
 
