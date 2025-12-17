@@ -18,6 +18,7 @@ import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
 import { UpdateProfileInput } from "./auth.validation";
+import redisClient from "../../../shared/redis";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -217,8 +218,66 @@ const resetForgotPasswordDB = async (newPassword: string, userId: string) => {
 };
 //w: (end)  ╰──────────── resetForgotPasswordDB ────────────╯
 
-//w: (start)╭──────────── getProfile ────────────╮
+// Cache keys
+const CACHE_PREFIX = "user:profile:";
+const CACHE_TTL = 3600; // 1 hour in seconds
+
+// Helper function to get cache key
+const getProfileCacheKey = (userId: string): string => {
+  return `${CACHE_PREFIX}${userId}`;
+};
+
+// Helper function to clear profile cache
+const clearProfileCache = async (userId: string): Promise<void> => {
+  try {
+    await redisClient.del(getProfileCacheKey(userId));
+    console.log(`Cleared cache for user: ${userId}`);
+  } catch (error) {
+    console.error("Failed to clear profile cache:", error);
+    // Don't throw error, just log it - cache clearing failure shouldn't break the main flow
+  }
+};
+
+// Helper function to set profile cache
+const setProfileCache = async (userId: string, data: any): Promise<void> => {
+  try {
+    await redisClient.setex(
+      getProfileCacheKey(userId),
+      CACHE_TTL,
+      JSON.stringify(data),
+    );
+    console.log(`Cached profile for user: ${userId}`);
+  } catch (error) {
+    console.error("Failed to cache profile:", error);
+    // Don't throw error, just log it - cache failure shouldn't break the main flow
+  }
+};
+
+// Helper function to get profile from cache
+const getProfileFromCache = async (userId: string): Promise<any | null> => {
+  try {
+    const cachedData = await redisClient.get(getProfileCacheKey(userId));
+    if (cachedData) {
+      console.log(`Cache hit for user: ${userId}`);
+      return JSON.parse(cachedData);
+    }
+    console.log(`Cache miss for user: ${userId}`);
+    return null;
+  } catch (error) {
+    console.error("Failed to get profile from cache:", error);
+    return null;
+  }
+};
+
+//w: (start)╭──────────── getProfileFromDB ────────────╮
 const getProfileFromDB = async (userId: string) => {
+  // Try to get from cache first
+  const cachedProfile = await getProfileFromCache(userId);
+  if (cachedProfile) {
+    return cachedProfile;
+  }
+
+  // If not in cache, fetch from database
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
@@ -236,15 +295,19 @@ const getProfileFromDB = async (userId: string) => {
       },
     },
   });
+
   if (!user) {
     throw new ApiError(404, "user not found!");
   }
 
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
+  // Store in cache for future requests
+  await setProfileCache(userId, sanitizedUser);
+
   return sanitizedUser;
 };
-//w: (end)  ╰──────────── getProfile ────────────╯
+//w: (end)  ╰──────────── getProfileFromDB ────────────╯
 
 //w: (start)╭──────────── updateProfileIntoDB ────────────╮
 const updateProfileIntoDB = async (
@@ -385,7 +448,7 @@ const updateProfileIntoDB = async (
       );
     }
 
-    return {
+    const resultData = {
       user: {
         id: updatedUser.id,
         email: updatedUser.email,
@@ -399,13 +462,111 @@ const updateProfileIntoDB = async (
       profile: updatedProfile,
       preference: updatedPreference,
     };
+
+    // Clear cache after update
+    await clearProfileCache(userId);
+
+    return resultData;
   });
 
   return result;
 };
 //w: (end)  ╰──────────── updateProfileIntoDB ────────────╯
 
-//w: (start)╭──────────── updateProfileImage ────────────╮
+//w: (start)╭──────────── completeProfile ────────────╮
+const completeProfile = async (
+  userId: string,
+  payload: CompleteProfileInput,
+) => {
+  const existingUser = await prisma.user.findUnique({
+    where: { id: userId },
+  });
+
+  if (!existingUser) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // Check if profile already exists
+  const existingProfile = await prisma.profile.findUnique({
+    where: { userId },
+  });
+
+  if (existingProfile) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Profile already exists. Use update profile instead.",
+    );
+  }
+
+  // Check if preference already exists
+  const existingPreference = await prisma.preference.findUnique({
+    where: { userId },
+  });
+
+  if (existingPreference) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Preference already exists. Use update preference instead.",
+    );
+  }
+
+  // Use transaction to ensure atomicity
+  const result = await prisma.$transaction(async (tx) => {
+    // Create profile
+    const profile = await tx.profile.create({
+      data: {
+        about: payload.profile.about,
+        age: payload.profile.age,
+        ethnicity: payload.profile.ethnicity,
+        gender: payload.profile.gender,
+        profession: payload.profile.profession,
+        experienceYear: payload.profile.experienceYear,
+        availability: payload.profile.availability,
+        profileImage: payload.profile.profileImage,
+        interests: payload.profile.interests,
+        userId: userId,
+      },
+    });
+
+    // Create preference
+    const preference = await tx.preference.create({
+      data: {
+        career: payload.preference.career,
+        gender: payload.preference.gender,
+        ethnicity: payload.preference.ethnicity,
+        notes: payload.preference.notes,
+        age: payload.preference.age,
+        userId: userId,
+      },
+    });
+
+    // Update user role if provided and profile status to COMPLETE
+    const user = await tx.user.update({
+      where: { id: userId },
+      data: {
+        role: payload.role || existingUser.role,
+        profilStatus: "COMPLETE",
+      },
+    });
+
+    const accessToken = jwtHelpers.generateToken(
+      { id: user.id, email: user.email, role: user.role },
+      config.jwt.jwt_secret as string,
+      config.jwt.expires_in as string,
+    );
+
+    // Clear cache after profile completion
+    await clearProfileCache(userId);
+
+    return {
+      accessToken,
+    };
+  });
+
+  return result;
+};
+//w: (end)  ╰──────────── completeProfile ────────────╯
+////w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = async (
   userId: string,
   file: Express.Multer.File,
@@ -452,7 +613,7 @@ interface CompleteProfileInput {
 }
 
 //w: (start)╭──────────── completeProfile ────────────╮
-const completeProfile = async (
+/* const completeProfile = async (
   userId: string,
   payload: CompleteProfileInput,
 ) => {
@@ -539,7 +700,7 @@ const completeProfile = async (
   });
 
   return result;
-};
+}; */
 //w: (end)  ╰──────────── completeProfile ────────────╯
 
 //w: (start)╭──────────── deleteAccount ────────────╮
