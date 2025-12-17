@@ -59,4 +59,24 @@ Please advise!
 ### Role: Mentor
 
 checklist
+
 end goals
+
+### Need credential:
+
+1. vps
+2. domain
+3. s3 bucket
+4. mongodb database
+5. node mailer (business email)
+
+---
+
+1.1 vps hosting pricing: https://www.hostinger.com/pricing/vps-hosting
+2.1 domain pricing: https://www.hostinger.com/pricing/domains
+3.1 s3 bucket pricing from digital ocean: https://cloud.digitalocean.com/spaces/new?i=50e9e3
+4.1 mongodb database pricing: https://cloud.mongodb.com/v2/68ca3af73cfded2878b61edf#/clusters/starterTemplates?from=ctaClusterHeader
+5.1 business email pricing: https://www.hostinger.com/pricing/email-hosting
+
+You should know that we will be required this credential for running the app that you need to purchase with subscription.
+We prefer hostinger for vps, domain and business email, and database from mongodb. and s3 bucket from digital ocean.
