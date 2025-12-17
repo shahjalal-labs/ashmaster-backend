@@ -220,7 +220,7 @@ const updateProfileSchema = z
     fullname: z
       .string()
       .min(2, "Full name must be at least 2 characters long")
-      .max(100, "Full name must be at most 100 characters long")
+      .max(101, "Full name must be at most 100 characters long")
       .optional(),
     fcmToken: z.string().optional(),
     role: z

@@ -21,6 +21,7 @@ router.post(
   authController.authLogin,
 );
 router.get("/profile", auth(), authController.getProfile);
+
 router.patch(
   "/update/user-location",
   auth(),
@@ -48,13 +49,6 @@ router.patch(
   authController.resetPassword,
 );
 
-router.put(
-  "/profile",
-  validateRequest(authValidation.updateProfileSchema),
-  auth(),
-  authController.updateProfile,
-);
-
 //w: (start)╭──────────── router ────────────╮
 router.patch(
   "/profile-image",
@@ -77,7 +71,7 @@ router.post(
 router.put(
   "/profile",
   auth(),
-  validateRequest(authValidation.updateProfileSche),
+  validateRequest(authValidation.updateProfileSchema),
   authController.updateProfile,
 );
 
