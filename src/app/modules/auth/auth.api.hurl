@@ -5,7 +5,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"raisaahmed@merepost.com",
+  "email":"esha@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }
@@ -21,6 +21,7 @@ POST {{port6011}}/auth/auth-login
 
 # Delete Account
 # Note: This will permanently delete the user account and all associated data
+
 DELETE {{port6011}}/auth/delete-account
 Authorization: {{ashSara}}
 
@@ -50,44 +51,53 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashSara}}
+Authorization: {{ashEsha}}
 Content-Type: application/json
-
 
 {
   "profile": {
-    "about": "I am a passionate software engineer with experience in backend development and cloud systems.",
-    "age": 26,
-    "ethnicity": "EAST_ASIAN",
+    "about": "I am a marketing strategist focused on brand growth, digital campaigns, and data-driven storytelling.",
+    "age": 29,
+    "ethnicity": "MIDDLE_EASTERN",
     "gender": "FEMALE",
-    "profession": "Software Engineer",
-    "experienceYear": 4,
+    "profession": "Marketing Strategist",
+    "experienceYear": 6,
     "availability": {
-      "monday": [
-        { "start": "09:00", "end": "12:00" },
-        { "start": "14:00", "end": "18:00" }
+      "tuesday": [
+        { "start": "10:00", "end": "13:00" },
+        { "start": "17:00", "end": "19:00" }
+
       ],
-      "wednesday": [
-        { "start": "10:00", "end": "16:00" }
+      "thursday": [
+        { "start": "15:00", "end": "19:00" }
+      ],
+      "saturday": [
+        { "start": "11:00", "end": "14:00" }
       ]
     },
-    "profileImage": "https://cdn.example.com/profiles/sara-ahmed.jpg",
-    "interests": ["Backend Development", "System Design", "Cloud Computing"]
+    "profileImage": "https://cdn.example.com/profiles/esha.jpg",
+    "interests": [
+      "Digital Marketing",
+      "Brand Strategy",
+      "Content Planning",
+      "Market Research"
+    ]
   },
 
   "preference": {
-    "career": "Technology",
+    "career": "Business & Marketing",
     "gender": "MALE",
-    "ethnicity": "MIDDLE_EASTERN",
-    "notes": "Looking for meaningful professional conversations",
+    "ethnicity": "EAST_ASIAN",
+    "notes": "Interested in professionals with leadership and startup experience",
     "age": {
-      "min": 25,
-      "max": 35
+      "min": 27,
+      "max": 40
     }
   },
 
-  "role": "MENTOR"
+  "role": "MENTEE"
 }
+
 
 
 ###

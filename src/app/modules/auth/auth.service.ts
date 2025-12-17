@@ -60,6 +60,7 @@ const loginUserIntoDB = async (payload: {
 
   return {
     accessToken,
+    profileStatus: user.profilStatus,
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯

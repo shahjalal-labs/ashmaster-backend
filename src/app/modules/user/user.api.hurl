@@ -2,8 +2,8 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Sara Ahmed",
-   "email":"sara@merepost.com",
+   "fullname":"Esha Rahman",
+   "email":"esha@merepost.com",
    "password":"SjAbc1@Bad",
    "fcmToken":""
 }
@@ -14,6 +14,6 @@ Content-type: application/json
 POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
-   "email":"raisaahmed@merepost.com",
-   "otp":"4016"
+   "email":"esha@merepost.com",
+   "otp":"9164"
 }
