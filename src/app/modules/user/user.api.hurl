@@ -2,8 +2,8 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Raisa Ahmed",
-   "email":"raisaahmed@merepost.com",
+   "fullname":"Sara Ahmed",
+   "email":"sara@merepost.com",
    "password":"SjAbc1@Bad",
    "fcmToken":""
 }

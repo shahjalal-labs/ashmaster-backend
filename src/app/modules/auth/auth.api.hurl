@@ -14,8 +14,8 @@ POST {{port6011}}/auth/login
 
 POST {{port6011}}/auth/auth-login
 {
-  "email":"koyelot367@roastic.com",
-  "fullname":"Hasan Bin Ali",
+  "email":"sara@merepost.com",
+  "fullname":"Sara Ahmed",
   "fcmToken":""
 }
 
@@ -50,47 +50,45 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashRaisa}}
+Authorization: {{ashSara}}
 Content-Type: application/json
+
 
 {
   "profile": {
-    "about": "I am a passionate learner looking for guidance in software development and career growth. I have basic programming knowledge and want to specialize in full-stack development.",
-    "age": 22,
+    "about": "I am a passionate software engineer with experience in backend development and cloud systems.",
+    "age": 26,
     "ethnicity": "EAST_ASIAN",
     "gender": "FEMALE",
-    "profession": "Software Developer",
-    "experienceYear": 1,
+    "profession": "Software Engineer",
+    "experienceYear": 4,
     "availability": {
       "monday": [
         { "start": "09:00", "end": "12:00" },
-        { "start": "14:00", "end": "17:00" }
-      ],
-      "tuesday": [
-        { "start": "10:00", "end": "15:00" }
+        { "start": "14:00", "end": "18:00" }
       ],
       "wednesday": [
-        { "start": "13:00", "end": "18:00" }
-      ],
-      "friday": [
-        { "start": "09:00", "end": "16:00" }
+        { "start": "10:00", "end": "16:00" }
       ]
     },
-    "profileImage": "https://example.com/profile.jpg",
-    "interests": ["Web Development", "Mobile Apps", "UI/UX Design", "Databases"]
+    "profileImage": "https://cdn.example.com/profiles/sara-ahmed.jpg",
+    "interests": ["Backend Development", "System Design", "Cloud Computing"]
   },
+
   "preference": {
-    "career": "Software Development",
-    "gender": "NO_ANSWER",
-    "ethnicity": "NO_ANSWER",
-    "notes": "Looking for a mentor with experience in full-stack development and career guidance",
+    "career": "Technology",
+    "gender": "MALE",
+    "ethnicity": "MIDDLE_EASTERN",
+    "notes": "Looking for meaningful professional conversations",
     "age": {
       "min": 25,
-      "max": 40
+      "max": 35
     }
   },
-  "role": "MENTEE"
+
+  "role": "MENTOR"
 }
+
 
 ###
 # Complete Profile (Mentor Example)
