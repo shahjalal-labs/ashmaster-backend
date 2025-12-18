@@ -2,6 +2,7 @@
 import { Router } from "express";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { UserRoutes } from "../modules/user/user.route";
+import { NetworkRoutes } from "../modules/network/network.routes";
 
 type TAllRoutes = {
   path: string;
@@ -17,6 +18,10 @@ const allRoutes: TAllRoutes[] = [
   {
     path: "/user",
     route: UserRoutes,
+  },
+  {
+    path: "/network",
+    route: NetworkRoutes,
   },
 ];
 //w: (end)  ╰──────────── allRoutes ────────────╯
