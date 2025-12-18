@@ -386,5 +386,7 @@ export interface IUpdateUser {
 }
 ```
 
-this is an app for mentor and mentee. mentor and will match through their preference given in the profile completion. And get suggestions and can connect each other.
-guide me how can i implement, the mentee suggestion based on the preference he sets when logged in user is mentor, and similarly get mentor suggestion if logged in user mentee. it will be must faster api response with proper pagination,
+this is an app for mentor and mentee connection, network. mentor and mentee will match through their preference given in the profile completion. And get suggestions and can connect each other.
+guide me how can i implement, the mentee suggestion based on the preference he sets when logged in user is mentor, and similarly get mentor suggestion if logged in user is mentee. it will be must faster api response with proper pagination, and dynamic for mentee and mentor,and same api so front end can simply use it.
+
+so now i am wanting the api for home page network suggestion. then i need to send network request, see pending network request, and accept reject api, try to keep less api with more function based on context or query, use proper similar pagination need faster response, use redis caching where necessary. keep the process simple, don't make it complex. try to flow the dry principle.
