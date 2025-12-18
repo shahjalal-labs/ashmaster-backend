@@ -35,11 +35,14 @@ model User {
   preference                Preference?
   createdAt                 DateTime            @default(now())
   updatedAt                 DateTime            @updatedAt
-  connectionReqSender ConnectionRequest[] @@relation("SentRequests")
-  connectionReqReciever ConnectionRequest[]
-  Connection                Connection[]
-  Connection                Connection[]
-
+  
+  // Connection Requests (sent and received)
+  sentRequests              ConnectionRequest[] @relation("SentRequests")
+  receivedRequests          ConnectionRequest[] @relation("ReceivedRequests")
+  
+  // Connections (as user1 or user2)
+  connectionsAsUser1        Connection[]        @relation("Connections1")
+  connectionsAsUser2        Connection[]        @relation("Connections2")
   @@map("users")
 }
 
