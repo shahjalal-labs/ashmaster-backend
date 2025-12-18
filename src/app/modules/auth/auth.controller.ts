@@ -142,7 +142,7 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User profile image updated successfully",
+    message: "User profile image uploaded successfully",
     data: fileUrl,
   });
 });
