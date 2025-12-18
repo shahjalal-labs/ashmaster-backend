@@ -2,7 +2,7 @@ import { S3Client, S3ClientConfig, ObjectCannedACL } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
 import path from "path";
 
-const DO_CONFIG = {
+/* const DO_CONFIG = {
   endpoint: "https://nyc3.digitaloceanspaces.com",
   region: "nyc3",
   credentials: {
@@ -10,6 +10,22 @@ const DO_CONFIG = {
     secretAccessKey: "e5+/pko6Ojar51Hb8ojUKfq2HtXy+tnGKOfs3rIcEfo",
   },
   spaceName: "smtech-space",
+}; */
+
+const DO_CONFIG = {
+  endpoint: "https://api.zenexcloud.com",
+
+  region: "s3v4",
+
+  useSSL: false,
+
+  credentials: {
+    accessKeyId: "Be7vSXLGn1EuMzy55jLO",
+
+    secretAccessKey: "Gw2pW1gqVAG0GH8SXzrRJXi1036IMv5dBdgcwJme",
+  },
+
+  spaceName: "emdadullah",
 };
 
 const s3Config: S3ClientConfig = {
@@ -48,7 +64,7 @@ const ALLOWED_MIME_TYPES = [
  */
 export const uploadInSpace = async (
   file: Express.Multer.File,
-  folder: string
+  folder: string,
 ): Promise<string> => {
   try {
     if (!file) {
@@ -58,7 +74,7 @@ export const uploadInSpace = async (
     // Validate file size
     if (file.size > MAX_FILE_SIZE) {
       throw new Error(
-        `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`
+        `File size exceeds maximum limit of ${MAX_FILE_SIZE / 1024 / 1024}MB`,
       );
     }
 
@@ -98,7 +114,7 @@ export const uploadInSpace = async (
     throw new Error(
       error instanceof Error
         ? `Failed to upload file: ${error.message}`
-        : "Failed to upload file to DigitalOcean Spaces"
+        : "Failed to upload file to DigitalOcean Spaces",
     );
   }
 };
