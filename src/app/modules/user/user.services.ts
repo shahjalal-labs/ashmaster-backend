@@ -39,18 +39,7 @@ const createUserIntoDB = async (payload: User) => {
 
   // Generate OTP and expiry time
   const otp = generateOTP(); // 4-digit OTP
-  /*   const subject = "Signup Verification";
-  const html = `
-  <div style="font-family: Arial, sans-serif; color: #333;">
-    <h2>User Signup Verification</h2>
-    <p>Hi <b>${userInfo.fullname}</b>,</p>
-    <p>Your Signup Verification Code is:</p>
-    <h1 style="color: #007BFF;">${otp}</h1>
-    <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
-    <p>Thanks, <br>The Support Team</p>
-  </div>
-`;
- */
+
   await emailQueue.add("sendOtp", {
     email: payload.email,
     fullname: payload.fullname,
