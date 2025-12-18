@@ -24,25 +24,26 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id                        String              @id @default(auto()) @map("_id") @db.ObjectId
-  email                     String              @unique
-  password                  String?
-  fullname                  String
-  fcmToken                  String?
-  role                      UserRole            @default(MENTEE)
-  profilStatus              ProfilStatus        @default(INCOMPLETE)
-  profile                   Profile?
-  preference                Preference?
-  createdAt                 DateTime            @default(now())
-  updatedAt                 DateTime            @updatedAt
-  
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  email        String       @unique
+  password     String?
+  fullname     String
+  fcmToken     String?
+  role         UserRole     @default(MENTEE)
+  profilStatus ProfilStatus @default(INCOMPLETE)
+  profile      Profile?
+  preference   Preference?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
   // Connection Requests (sent and received)
-  sentRequests              ConnectionRequest[] @relation("SentRequests")
-  receivedRequests          ConnectionRequest[] @relation("ReceivedRequests")
-  
+  sentRequests     ConnectionRequest[] @relation("SentRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
+
   // Connections (as user1 or user2)
-  connectionsAsUser1        Connection[]        @relation("Connections1")
-  connectionsAsUser2        Connection[]        @relation("Connections2")
+  connectionsAsUser1 Connection[] @relation("Connections1")
+  connectionsAsUser2 Connection[] @relation("Connections2")
+
   @@map("users")
 }
 

@@ -60,7 +60,7 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashSharif}}
+Authorization: {{ashSabbir}}
 Content-Type: application/json
 
 
@@ -74,13 +74,13 @@ Content-Type: application/json
     "experienceYear": 3,
     "availability": {
       "monday": [
-        { "start": "19:00", "end": "21:00" }
+        { "start": "20:00", "end": "21:00" }
       ],
       "wednesday": [
-        { "start": "18:00", "end": "20:00" }
+        { "start": "16:00", "end": "20:00" }
       ],
       "sunday": [
-        { "start": "10:00", "end": "13:00" }
+        { "start": "08:00", "end": "13:00" }
       ]
     },
     "profileImage": "https://cdn.example.com/profiles/sharif-hasan.jpg",
