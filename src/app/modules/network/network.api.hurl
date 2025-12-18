@@ -6,7 +6,7 @@ Authorization: {{ashRaisa}}
 
 # Get suggestions (for home page)
 GET {{port6011}}/network/suggestions?page=1&limit=10
-Authorization: {{ashRaisa}}
+Authorization: {{ashSara}}
 
 # Get suggestions filtered by role
 GET {{port6011}}/network/suggestions?page=1&limit=10&filter=mentors

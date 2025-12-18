@@ -60,52 +60,52 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashEsha}}
+Authorization: {{ashSharif}}
 Content-Type: application/json
+
 
 {
   "profile": {
-    "about": "I am a marketing strategist focused on brand growth, digital campaigns, and data-driven storytelling.",
-    "age": 29,
-    "ethnicity": "MIDDLE_EASTERN",
-    "gender": "FEMALE",
-    "profession": "Marketing Strategist",
-    "experienceYear": 6,
+    "about": "I am an early-stage startup professional aiming to strengthen my marketing and growth strategy skills through expert mentorship and hands-on learning.",
+    "age": 26,
+    "ethnicity": "EAST_ASIAN",
+    "gender": "MALE",
+    "profession": "Startup Operations Associate",
+    "experienceYear": 3,
     "availability": {
-      "tuesday": [
-        { "start": "10:00", "end": "13:00" },
-        { "start": "17:00", "end": "19:00" }
-
+      "monday": [
+        { "start": "19:00", "end": "21:00" }
       ],
-      "thursday": [
-        { "start": "15:00", "end": "19:00" }
+      "wednesday": [
+        { "start": "18:00", "end": "20:00" }
       ],
-      "saturday": [
-        { "start": "11:00", "end": "14:00" }
+      "sunday": [
+        { "start": "10:00", "end": "13:00" }
       ]
     },
-    "profileImage": "https://cdn.example.com/profiles/esha.jpg",
+    "profileImage": "https://cdn.example.com/profiles/sharif-hasan.jpg",
     "interests": [
+      "Startup Growth",
       "Digital Marketing",
-      "Brand Strategy",
-      "Content Planning",
-      "Market Research"
+      "Business Strategy",
+      "Customer Acquisition"
     ]
   },
 
   "preference": {
     "career": "Business & Marketing",
     "gender": "MALE",
-    "ethnicity": "EAST_ASIAN",
-    "notes": "Interested in professionals with leadership and startup experience",
+    "ethnicity": "MIDDLE_EASTERN",
+    "notes": "Looking for a mentor with strong brand-building and data-driven marketing experience.",
     "age": {
-      "min": 27,
-      "max": 40
+      "min": 28,
+      "max": 45
     }
   },
 
-  "role": "MENTOR"
+  "role": "MENTEE"
 }
+
 
 
 
