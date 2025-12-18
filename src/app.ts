@@ -7,6 +7,8 @@ import path from "path";
 import { router } from "./app/routes";
 import { bullBoardRouter } from "./jobs/bullBoard";
 import basicAuth from "express-basic-auth";
+import { notFount } from "./app/middlewares/notFound";
+import { entryMessage } from "./app/middlewares/entry";
 
 const app: Application = express();
 app.use(cors());
@@ -15,11 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Route handler for root endpoint
-app.get("/", (req: Request, res: Response) => {
-  res.send({
-    Message: "Welcome to api main route",
-  });
-});
+app.get("/", entryMessage);
 
 // Router setup
 app.use("/api/v1", router);
@@ -36,16 +34,6 @@ app.use(
 // Global Error Handler
 app.use(GlobalErrorHandler);
 
-// API Not found handler
-app.use((req: Request, res: Response, next: NextFunction) => {
-  res.status(httpStatus.NOT_FOUND).json({
-    success: false,
-    message: "API NOT FOUND!",
-    error: {
-      path: req.originalUrl,
-      message: "Your requested path is not found!",
-    },
-  });
-});
+app.use(notFount);
 
 export default app;
