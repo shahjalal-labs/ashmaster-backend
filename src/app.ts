@@ -1,6 +1,4 @@
-import express, { Application, NextFunction, Request, Response } from "express";
-
-import httpStatus from "http-status";
+import express, { Application } from "express";
 import cors from "cors";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import path from "path";
@@ -18,10 +16,8 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 
 // Route handler for root endpoint
 app.get("/", entryMessage);
-
 // Router setup
 app.use("/api/v1", router);
-
 app.use(
   "/admin/queues",
   basicAuth({
@@ -34,6 +30,7 @@ app.use(
 // Global Error Handler
 app.use(GlobalErrorHandler);
 
+// not found handler
 app.use(notFount);
 
 export default app;
