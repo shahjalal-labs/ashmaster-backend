@@ -19,6 +19,14 @@ POST {{port6011}}/auth/auth-login
   "fcmToken":""
 }
 
+# upload profile image file
+
+PACTH {{port6011}}/auth/profile-image
+Authorization: {{ashRaisa}}
+
+
+
+
 # get my profile
 GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}

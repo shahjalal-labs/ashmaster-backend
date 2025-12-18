@@ -565,15 +565,9 @@ const updateProfileImage = async (
     throw new ApiError(400, "Please select an image");
   }
   const fileUrl = await uploadInSpace(file, "users/profileImage");
-  await prisma.profile.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      profileImage: fileUrl,
-    },
-  });
-  return;
+  console.log(fileUrl, "auth.service.ts", 568);
+
+  return fileUrl;
 };
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
 

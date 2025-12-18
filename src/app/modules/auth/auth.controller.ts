@@ -136,12 +136,14 @@ const updateProfile = catchAsync(async (req: any, res: Response) => {
 //w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
-  await authService.updateProfileImage(id, req.file);
+  const fileUrl = await authService.updateProfileImage(id, req.file);
+  console.log(fileUrl, "auth.controller.ts", 140);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "User profile image updated successfully",
+    data: fileUrl,
   });
 });
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
