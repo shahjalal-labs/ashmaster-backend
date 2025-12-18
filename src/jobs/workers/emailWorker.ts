@@ -5,7 +5,7 @@ import redisClient from "../../shared/redis";
 new Worker(
   "emails",
   async (job) => {
-    const { email, firstName, otp } = job.data;
+    const { email, fullname, otp } = job.data;
 
     let subject = "";
     let html = "";
@@ -15,7 +15,7 @@ new Worker(
       html = `
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2>Account verification</h2>
-          <p>Hi <b>${firstName}</b>,</p>
+          <p>Hi <b>${fullname}</b>,</p>
           <p>Your OTP for account verification is:</p>
           <h1 style="color: #007BFF;">${otp}</h1>
           <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
@@ -27,7 +27,7 @@ new Worker(
       html = `
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2>Password Reset Request</h2>
-          <p>Hi <b>${firstName}</b>,</p>
+          <p>Hi <b>${fullname}</b>,</p>
           <p>Your OTP for password reset is:</p>
           <h1 style="color: #007BFF;">${otp}</h1>
           <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>

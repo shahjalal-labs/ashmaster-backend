@@ -9,6 +9,7 @@ import generateOTP from "../../../helpers/generateOtp";
 import sendEmail from "../../../helpers/sendEmail";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
+import { emailQueue } from "../../../jobs/queues/emailQueue";
 
 //create new user
 const createUserIntoDB = async (payload: User) => {
@@ -38,7 +39,7 @@ const createUserIntoDB = async (payload: User) => {
 
   // Generate OTP and expiry time
   const otp = generateOTP(); // 4-digit OTP
-  const subject = "Signup Verification";
+  /*   const subject = "Signup Verification";
   const html = `
   <div style="font-family: Arial, sans-serif; color: #333;">
     <h2>User Signup Verification</h2>
@@ -49,7 +50,13 @@ const createUserIntoDB = async (payload: User) => {
     <p>Thanks, <br>The Support Team</p>
   </div>
 `;
-  await sendEmail(userInfo.email, subject, html);
+ */
+  await emailQueue.add("sendOtp", {
+    email: payload.email,
+    fullname: payload.fullname,
+    otp,
+  });
+  // await sendEmail(userInfo.email, subject, html);
   await redisOtpService.storeOtp(userInfo.email, otp);
   return;
 };

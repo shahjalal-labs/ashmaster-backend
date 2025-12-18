@@ -3,7 +3,7 @@ POST  {{port6011}}/user/create
 Content-type: application/json
 {
    "fullname":"Esha Rahman",
-   "email":"esha@merepost.com",
+   "email":"sharif@merepost.com",
    "password":"SjAbc1@Bad",
    "fcmToken":""
 }
