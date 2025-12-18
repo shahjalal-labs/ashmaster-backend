@@ -5,6 +5,8 @@ import cors from "cors";
 import GlobalErrorHandler from "./app/middlewares/globalErrorHandler";
 import path from "path";
 import { router } from "./app/routes";
+import { bullBoardRouter } from "./jobs/bullBoard";
+import basicAuth from "express-basic-auth";
 
 const app: Application = express();
 app.use(cors());
@@ -21,6 +23,15 @@ app.get("/", (req: Request, res: Response) => {
 
 // Router setup
 app.use("/api/v1", router);
+
+app.use(
+  "/admin/queues",
+  basicAuth({
+    users: { admin: process.env.BULLBOARD_PASSWORD || "supersecret" },
+    challenge: true,
+  }),
+  bullBoardRouter,
+);
 
 // Global Error Handler
 app.use(GlobalErrorHandler);
