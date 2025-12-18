@@ -2,11 +2,11 @@
 
 # Get network stats
 GET {{port6011}}/network/stats
-Authorization: {{ashRaisa}}
+Authorization: {{ashEsha}}
 
 # Get suggestions (for home page)
 GET {{port6011}}/network/suggestions?page=1&limit=10
-Authorization: {{ashEsha}}
+Authorization: {{ashRaisa}}
 
 # Get suggestions filtered by role
 GET {{port6011}}/network/suggestions?page=1&limit=10&filter=mentors
@@ -32,7 +32,7 @@ Authorization: {{ashEsha}} # This should be the receiver of the request
 Content-Type: application/json
 
 {
-  "requestId": "{{requestId}}",
+  "requestId": "69417bacdfe265d4f5fc920a",
   "status": "ACCEPTED"
 }
 
@@ -42,7 +42,7 @@ Authorization: {{ashEsha}}
 Content-Type: application/json
 
 {
-  "requestId": "{{requestId}}",
+  "requestId": "69417bacdfe265d4f5fc920a",
   "status": "REJECTED"
 }
 
@@ -51,5 +51,5 @@ GET {{port6011}}/network/connections?page=1&limit=10
 Authorization: {{ashRaisa}}
 
 # Remove connection
-DELETE {{port6011}}/network/connection/{{connectionId}}
+DELETE {{port6011}}/network/connection/39284920784901237
 Authorization: {{ashRaisa}}

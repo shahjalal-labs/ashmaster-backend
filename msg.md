@@ -4,11 +4,15 @@ similarly we are taking preference data from mentor so that the mentor also get 
 
 ---
 
+Hello there,  
+hope everything going nice and awesome. We need to inform you that:
+
 We’re aligned with the approach you outlined, and we’re implementing the matching logic accordingly.
 
 How the flow works:
 
-Mentee Onboarding & Preferences
+# Mentee Onboarding & Preferences
+
 During sign-up, the mentee will complete an onboarding flow where they select their preferences (such as agerange, ethnicity, interests, availability, etc.).
 These preferences will be used to generate a curated list of mentors who best match the mentee’s needs.
 
@@ -17,7 +21,8 @@ These preferences will be used to generate a curated list of mentors who best ma
 Similarly, mentors will also provide preference and profile data—covering areas they are most interested in mentoring, experience, and mentee types they prefer to work with.
 This ensures mentors also receive relevant mentee suggestions that align with their expertise and expectations.
 
-Two-Way Matching Logic
+# Two-Way Matching Logic
+
 By considering both mentee preferences and mentor preferences, the system creates a balanced, logical matching mechanism.
 This two-way approach improves relevance, increases engagement, and helps both mentors and mentees feel confident in the suggested connections.
 
