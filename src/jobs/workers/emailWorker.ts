@@ -1,6 +1,6 @@
 import { Worker } from "bullmq";
-import sendEmail from "../helpers/sendEmail";
-import redisClient from "../helpers/redis";
+import sendEmail from "../../helpers/sendEmail";
+import redisClient from "../../shared/redis";
 
 new Worker(
   "emails",
@@ -45,5 +45,5 @@ new Worker(
       console.error("Failed to send email:", err);
     }
   },
-  { connection: redisClient }
+  { connection: redisClient },
 );
