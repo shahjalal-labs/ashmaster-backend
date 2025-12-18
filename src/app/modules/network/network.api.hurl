@@ -18,7 +18,7 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "receiverId": "69417bacdfe265d4f5fc920a",
+  "receiverId": "69439c27b63cdd027fe1e8c6",
   "message": "Hi, I'd like to connect with you for mentorship."
 }
 
@@ -32,7 +32,7 @@ Authorization: {{ashEsha}} # This should be the receiver of the request
 Content-Type: application/json
 
 {
-  "requestId": "69417bacdfe265d4f5fc920a",
+  "requestId": "6943b9bcb63cdd027fe1e8c9",
   "status": "ACCEPTED"
 }
 
@@ -42,7 +42,7 @@ Authorization: {{ashEsha}}
 Content-Type: application/json
 
 {
-  "requestId": "69417bacdfe265d4f5fc920a",
+  "requestId": "6943b9bcb63cdd027fe1e8c9",
   "status": "REJECTED"
 }
 

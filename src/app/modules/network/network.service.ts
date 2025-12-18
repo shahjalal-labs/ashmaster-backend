@@ -369,10 +369,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
   const { page, limit, skip } = query;
 
   const whereClause = {
-    OR: [
-      { senderId: userId, status: "PENDING" },
-      { receiverId: userId, status: "PENDING" },
-    ],
+    receiverId: userId,
   };
 
   const [requests, total] = await Promise.all([
@@ -380,20 +377,6 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       where: whereClause,
       include: {
         sender: {
-          select: {
-            id: true,
-            fullname: true,
-            email: true,
-            role: true,
-            profile: {
-              select: {
-                profileImage: true,
-                profession: true,
-              },
-            },
-          },
-        },
-        receiver: {
           select: {
             id: true,
             fullname: true,
@@ -416,11 +399,6 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
   ]);
 
   // Format response
-  const formattedRequests = requests.map((request) => ({
-    ...request,
-    isSentByMe: request.senderId === userId,
-    otherUser: request.senderId === userId ? request.receiver : request.sender,
-  }));
 
   return {
     meta: {
@@ -430,7 +408,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       hasNextPage: total > skip + limit,
       hasPrevPage: page > 1,
     },
-    data: formattedRequests,
+    data: requests,
   };
 };
 
