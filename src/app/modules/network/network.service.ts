@@ -301,6 +301,15 @@ const sendConnectionRequest = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  const oppositeRole = sender.role === "MENTOR" ? "MENTEE" : "MENTOR";
+
+  if (sender.role === receiver.role) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      `You can connect with only ${oppositeRole}`,
+    );
+  }
+
   // Check if users are already connected
   const existingConnection = await prisma.connection.findFirst({
     where: {
