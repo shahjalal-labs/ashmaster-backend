@@ -50,6 +50,7 @@ const getUserWithDetails = async (userId: string) => {
   });
 };
 
+//w: (start)╭──────────── getSuggestions ────────────╮
 // Get suggestions based on user role and preference
 const getSuggestionsFromDB = async (
   userId: string,
@@ -285,7 +286,9 @@ const getSuggestionsFromDB = async (
     targetRole,
   };
 };
+//w: (end)  ╰──────────── getSuggestions ────────────╯
 
+//w: (start)╭──────────── sendConnectionRequest ────────────╮
 // Send connection request
 const sendConnectionRequest = async (
   senderId: string,
@@ -363,7 +366,9 @@ const sendConnectionRequest = async (
 
   return request;
 };
+//w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
+//w: (start)╭──────────── getPendingRequests ────────────╮
 // Get pending requests (sent and received)
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
   const { page, limit, skip } = query;
@@ -411,7 +416,9 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     data: requests,
   };
 };
+//w: (end)  ╰──────────── getPendingRequests ────────────╯
 
+//w: (start)╭──────────── updateRequestStatus ────────────╮
 // Update request status (accept/reject)
 const updateRequestStatus = async (
   userId: string,
@@ -472,7 +479,9 @@ const updateRequestStatus = async (
 
   return result;
 };
+//w: (end)  ╰──────────── updateRequestStatus ────────────╯
 
+//w: (start)╭──────────── getConnections ────────────╮
 // Get all connections
 const getConnections = async (userId: string, query: PaginationInput) => {
   const { page, limit, skip } = query;
@@ -570,7 +579,9 @@ const getConnections = async (userId: string, query: PaginationInput) => {
 
   return result;
 };
+//w: (end)  ╰──────────── getConnections ────────────╯
 
+//w: (start)╭──────────── getSuggestions ────────────╮
 // Get suggestions with caching
 const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
   const { page, limit, filter } = query;
@@ -602,7 +613,9 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
 
   return result;
 };
+//w: (end)  ╰──────────── getSuggestions ────────────╯
 
+//w: (start)╭──────────── removeConnection ────────────╮
 // Remove connection
 const removeConnection = async (userId: string, connectionId: string) => {
   const connection = await prisma.connection.findUnique({
@@ -633,7 +646,9 @@ const removeConnection = async (userId: string, connectionId: string) => {
 
   return null;
 };
+//w: (end)  ╰──────────── removeConnection ────────────╯
 
+//w: (start)╭──────────── getNetworkStats ────────────╮
 // Get network stats (counts)
 const getNetworkStats = async (userId: string) => {
   const cacheKey = `${CACHE_PREFIX}stats:${userId}`;
@@ -685,6 +700,7 @@ const getNetworkStats = async (userId: string) => {
 
   return stats;
 };
+//w: (end)  ╰──────────── getNetworkStats ────────────╯
 
 export const networkService = {
   getSuggestions,

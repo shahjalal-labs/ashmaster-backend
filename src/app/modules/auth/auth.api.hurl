@@ -33,7 +33,7 @@ Authorization: {{ashRaisa}}
 
 # get other profile
 # profile/userId
-GET {{port6011}}/auth/profile/69417bacdfe265d4f5fc920a
+GET {{port6011}}/auth/profile/69439c27b63cdd027fe1e8c6
 Authorization: {{ashRaisa}}
 
 # Delete Account
@@ -68,7 +68,7 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashSabbir}}
+Authorization: {{ashHasan}}
 Content-Type: application/json
 
 
@@ -91,7 +91,7 @@ Content-Type: application/json
         { "start": "08:00", "end": "13:00" }
       ]
     },
-    "profileImage": "https://cdn.example.com/profiles/sharif-hasan.jpg",
+    "profileImage": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1766055758422-o1znpme52q.png",
     "interests": [
       "Startup Growth",
       "Digital Marketing",
