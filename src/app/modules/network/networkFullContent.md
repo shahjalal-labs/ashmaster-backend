@@ -1381,3 +1381,5 @@ export const networkService = {
   clearUserNetworkCache,
 };
 ```
+
+I have done a wrong schema for preference. cause one user currently can set single ethnicity, gender, career but think a user can have multiple preference like interestes so it's not able to store them properly. Now how can i fix it give me best suggestion don't move to code.

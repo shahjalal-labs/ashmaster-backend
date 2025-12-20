@@ -11,6 +11,7 @@ import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
 
+//w: (start)╭──────────── createUser ────────────╮
 //create new user
 const createUserIntoDB = async (payload: User) => {
   const existingUser = await prisma.user.findUnique({
@@ -49,6 +50,7 @@ const createUserIntoDB = async (payload: User) => {
   await redisOtpService.storeOtp(userInfo.email, otp);
   return;
 };
+//w: (end)  ╰──────────── createUser ────────────╯
 
 //verify user using otp for signup
 const signupVerification = async (payload: { email: string; otp: string }) => {

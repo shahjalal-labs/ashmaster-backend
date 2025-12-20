@@ -19,6 +19,7 @@ import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
 import { UpdateProfileInput } from "./auth.validation";
 import redisClient from "../../../shared/redis";
+import { emailQueue } from "../../../jobs/queues/emailQueue";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -162,6 +163,11 @@ const sendForgotPasswordOtpDB = async (email: string) => {
     <p>Thanks, <br>The Support Team</p>
   </div>
 `;
+
+  await emailQueue.add("send-forgot-otp",{
+
+  });
+
   await sendEmail(email, subject, html);
   await redisOtpService.storeOtp(email, otp);
 
