@@ -5,7 +5,7 @@ GET {{port6011}}/network/stats
 Authorization: {{ashEsha}}
 
 # Get suggestions (for home page)
-GET {{port6011}}/network/suggestions?page=1&limit=10
+GET {{port6011}}/network/suggestions?page=1&limit=16
 Authorization: {{ashRaisa}}
 
 # Get suggestions filtered by role

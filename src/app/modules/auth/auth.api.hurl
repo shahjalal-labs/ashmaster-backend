@@ -5,7 +5,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"esha@merepost.com",
+  "email":"raisaahmed@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }

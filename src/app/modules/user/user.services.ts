@@ -114,9 +114,15 @@ const getSingleUserIntoDB = async (id: string) => {
   return sanitizedUser;
 };
 
+//w: (start)╭──────────── getUsers ────────────╮
 //get all users
 const getUsersIntoDB = async () => {
-  const users = await prisma.user.findMany();
+  const users = await prisma.user.findMany({
+    include: {
+      profile: true,
+      preference: true,
+    },
+  });
   if (users.length === 0) {
     throw new ApiError(404, "Users not found!");
   }
@@ -126,6 +132,7 @@ const getUsersIntoDB = async () => {
   });
   return sanitizedUsers;
 };
+//w: (end)  ╰──────────── getUsers ────────────╯
 
 //update user
 const updateUserIntoDB = async (id: string, userData: any) => {

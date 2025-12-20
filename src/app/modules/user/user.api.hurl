@@ -17,3 +17,8 @@ Content-type: application/json
    "email":"hasan@merepost.com",
    "otp":"1798"
 }
+
+
+# get all users 
+
+GET {{port6011}}/users

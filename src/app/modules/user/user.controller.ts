@@ -25,8 +25,10 @@ const signupVerification = catchAsync(async (req, res) => {
   });
 });
 
+//w: (start)╭──────────── getUsers ────────────╮
 //get users
 const getUsers = catchAsync(async (req: Request, res: Response) => {
+  console.log(`hitted`);
   const users = await userService.getUsersIntoDB();
   sendResponse(res, {
     success: true,
@@ -35,6 +37,7 @@ const getUsers = catchAsync(async (req: Request, res: Response) => {
     data: users,
   });
 });
+//w: (end)  ╰──────────── getUsers ────────────╯
 
 //get single user
 const getSingleUser = catchAsync(async (req: Request, res: Response) => {
@@ -51,7 +54,7 @@ const getSingleUser = catchAsync(async (req: Request, res: Response) => {
 const updateUser = catchAsync(async (req: Request, res: Response) => {
   const updatedUser = await userService.updateUserIntoDB(
     req.params.id,
-    req.body
+    req.body,
   );
   sendResponse(res, {
     success: true,

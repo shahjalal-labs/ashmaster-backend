@@ -17,7 +17,9 @@ router.post(
   validateRequest(userValidation.verificationSchema),
   userControllers.signupVerification,
 );
-router.get("/", auth(UserRole.ADMIN), userControllers.getUsers);
+
+router.get("/", userControllers.getUsers);
+
 router.get("/:id", auth(), userControllers.getSingleUser);
 router.put("/:id", auth(UserRole.ADMIN), userControllers.updateUser);
 router.delete("/:id", auth(), userControllers.deleteUser);

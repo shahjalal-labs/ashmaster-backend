@@ -8,6 +8,7 @@ import {
   UpdateRequestStatusInput,
   RecommendationsQuery,
 } from "./network.validation";
+
 import redisClient from "../../../shared/redis";
 
 // Cache keys
@@ -39,6 +40,7 @@ const clearUserNetworkCache = async (userId: string): Promise<void> => {
   }
 };
 
+//w: (start)╭──────────── getUserWithDetails ────────────╮
 // Get user with profile and preference
 const getUserWithDetails = async (userId: string) => {
   return await prisma.user.findUnique({
@@ -49,6 +51,7 @@ const getUserWithDetails = async (userId: string) => {
     },
   });
 };
+//w: (end)  ╰──────────── getUserWithDetails ────────────╯
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 // Get suggestions based on user role and preference
@@ -262,6 +265,8 @@ const getSuggestionsFromDB = async (
         }
       }
     }
+
+    console.log(whereClause, "network.service.ts", 82);
 
     return {
       ...suggestion,
