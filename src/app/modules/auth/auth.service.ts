@@ -152,23 +152,12 @@ const sendForgotPasswordOtpDB = async (email: string) => {
   }
   // Generate OTP and expiry time
   const otp = generateOTP(); // 4-digit OTP
-  const subject = "Your Password Reset OTP";
-  const html = `
-  <div style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Password Reset Request</h2>
-    <p>Hi <b>${existringUser.fullname}</b>,</p>
-    <p>Your OTP for password reset is:</p>
-    <h1 style="color: #007BFF;">${otp}</h1>
-    <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
-    <p>Thanks, <br>The Support Team</p>
-  </div>
-`;
-
-  await emailQueue.add("send-forgot-otp",{
-
+  await emailQueue.add("forgotPasswordOtp", {
+    email,
+    otp,
   });
 
-  await sendEmail(email, subject, html);
+  // await sendEmail(email, subject, html);
   await redisOtpService.storeOtp(email, otp);
 
   return;
