@@ -1,4 +1,4 @@
-import { Ethnicity, Gender, UserRole } from "@prisma/client";
+import { Gender, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── login ────────────╮

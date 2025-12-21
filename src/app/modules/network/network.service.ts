@@ -101,39 +101,45 @@ const getSuggestionsFromDB = async (
       });
     }
 
-    // Gender filter (skip if NO_ANSWER)
-    if (user.preference.gender !== "NO_ANSWER") {
+    // Gender filter - only if user has specific gender preferences
+    // Empty array means "any gender is fine"
+    if (user.preference.genders && user.preference.genders.length > 0) {
       preferenceConditions.push({
         profile: {
-          gender: user.preference.gender,
+          gender: { in: user.preference.genders },
         },
       });
     }
 
-    // Ethnicity filter (skip if NO_ANSWER)
-    if (user.preference.ethnicity !== "NO_ANSWER") {
+    // Ethnicity filter - only if user has specific ethnicity preferences
+    // Empty array means "any ethnicity is fine"
+    if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
       preferenceConditions.push({
         profile: {
-          ethnicity: user.preference.ethnicity,
+          ethnicity: { in: user.preference.ethnicities },
         },
       });
     }
 
-    // Career/Profession filter
-    if (user.preference.career) {
-      preferenceConditions.push({
+    // Career/Profession filter - check for any matching career
+    // Empty array means "any career is fine"
+    if (user.preference.careers && user.preference.careers.length > 0) {
+      // Create OR conditions for each career preference
+      const careerConditions = user.preference.careers.map((career) => ({
         OR: [
           {
             profile: {
               profession: {
-                contains: user.preference.career,
+                contains: career,
                 mode: "insensitive",
               },
             },
           },
-          { profile: { interests: { has: user.preference.career } } },
+          { profile: { interests: { has: career } } },
         ],
-      });
+      }));
+
+      preferenceConditions.push({ OR: careerConditions });
     }
 
     if (preferenceConditions.length > 0) {
@@ -219,7 +225,7 @@ const getSuggestionsFromDB = async (
     let matchReasons: string[] = [];
 
     if (user.preference && suggestion.profile) {
-      // Age match
+      // Age match (25 points)
       if (user.preference.age) {
         if (
           suggestion.profile.age >= user.preference.age.min &&
@@ -230,43 +236,68 @@ const getSuggestionsFromDB = async (
         }
       }
 
-      // Gender match
-      if (
-        user.preference.gender !== "NO_ANSWER" &&
-        user.preference.gender === suggestion.profile.gender
-      ) {
+      // Gender match (25 points)
+      if (user.preference.genders && user.preference.genders.length > 0) {
+        if (user.preference.genders.includes(suggestion.profile.gender)) {
+          matchPercentage += 25;
+          matchReasons.push("Gender matches your preference");
+        }
+      } else {
+        // Empty array means "any gender" - still give points for flexibility
         matchPercentage += 25;
-        matchReasons.push("Gender matches your preference");
+        matchReasons.push("You're open to any gender");
       }
 
-      // Ethnicity match
+      // Ethnicity match (25 points)
       if (
-        user.preference.ethnicity !== "NO_ANSWER" &&
-        user.preference.ethnicity === suggestion.profile.ethnicity
+        user.preference.ethnicities &&
+        user.preference.ethnicities.length > 0
       ) {
+        if (
+          user.preference.ethnicities.includes(suggestion.profile.ethnicity)
+        ) {
+          matchPercentage += 25;
+          matchReasons.push("Ethnicity matches your preference");
+        }
+      } else {
+        // Empty array means "any ethnicity" - still give points for flexibility
         matchPercentage += 25;
-        matchReasons.push("Ethnicity matches your preference");
+        matchReasons.push("You're open to any ethnicity");
       }
 
-      // Career/Profession match
-      if (user.preference.career) {
-        const lowerCareer = user.preference.career.toLowerCase();
+      // Career/Profession match (25 points)
+      if (user.preference.careers && user.preference.careers.length > 0) {
+        let careerMatch = false;
         const lowerProfession = suggestion.profile.profession.toLowerCase();
         const lowerInterests = suggestion.profile.interests.map((i) =>
           i.toLowerCase(),
         );
 
-        if (
-          lowerProfession.includes(lowerCareer) ||
-          lowerInterests.some((interest) => interest.includes(lowerCareer))
-        ) {
+        // Check if any preferred career matches profession or interests
+        for (const career of user.preference.careers) {
+          const lowerCareer = career.toLowerCase();
+          if (
+            lowerProfession.includes(lowerCareer) ||
+            lowerInterests.some((interest) => interest.includes(lowerCareer))
+          ) {
+            careerMatch = true;
+            break;
+          }
+        }
+
+        if (careerMatch) {
           matchPercentage += 25;
           matchReasons.push("Career/interest matches your preference");
         }
+      } else {
+        // Empty array means "any career" - still give points for flexibility
+        matchPercentage += 25;
+        matchReasons.push("You're open to any career");
       }
     }
 
-    console.log(whereClause, "network.service.ts", 82);
+    // Cap match percentage at 100%
+    matchPercentage = Math.min(matchPercentage, 100);
 
     return {
       ...suggestion,
@@ -275,8 +306,22 @@ const getSuggestionsFromDB = async (
     };
   });
 
-  // Sort by match percentage (highest first)
-  suggestionsWithMatch.sort((a, b) => b.matchPercentage - a.matchPercentage);
+  // Sort by match percentage (highest first), then by newest
+  suggestionsWithMatch.sort((a, b) => {
+    if (b.matchPercentage !== a.matchPercentage) {
+      return b.matchPercentage - a.matchPercentage;
+    }
+    // If same match percentage, sort by newest
+    return 0;
+  });
+
+  console.log(
+    "Where clause for suggestions:",
+    JSON.stringify(whereClause, null, 2),
+  );
+  console.log(
+    `Found ${suggestionsWithMatch.length} suggestions for user ${userId}`,
+  );
 
   return {
     meta: {
@@ -378,8 +423,12 @@ const sendConnectionRequest = async (
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
   const { page, limit, skip } = query;
 
+  // Get both sent and received pending requests
   const whereClause = {
-    receiverId: userId,
+    OR: [
+      { senderId: userId, status: "PENDING" },
+      { receiverId: userId, status: "PENDING" },
+    ],
   };
 
   const [requests, total] = await Promise.all([
@@ -387,6 +436,20 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       where: whereClause,
       include: {
         sender: {
+          select: {
+            id: true,
+            fullname: true,
+            email: true,
+            role: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
+        receiver: {
           select: {
             id: true,
             fullname: true,
@@ -408,7 +471,12 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     prisma.connectionRequest.count({ where: whereClause }),
   ]);
 
-  // Format response
+  // Format response to indicate if it's sent or received
+  const formattedRequests = requests.map((request) => ({
+    ...request,
+    isSentByMe: request.senderId === userId,
+    otherUser: request.senderId === userId ? request.receiver : request.sender,
+  }));
 
   return {
     meta: {
@@ -418,7 +486,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       hasNextPage: total > skip + limit,
       hasPrevPage: page > 1,
     },
-    data: requests,
+    data: formattedRequests,
   };
 };
 //w: (end)  ╰──────────── getPendingRequests ────────────╯
@@ -524,6 +592,7 @@ const getConnections = async (userId: string, query: PaginationInput) => {
                 profession: true,
                 experienceYear: true,
                 about: true,
+                ethnicity: true,
               },
             },
           },
@@ -540,6 +609,7 @@ const getConnections = async (userId: string, query: PaginationInput) => {
                 profession: true,
                 experienceYear: true,
                 about: true,
+                ethnicity: true,
               },
             },
           },

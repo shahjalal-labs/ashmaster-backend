@@ -422,7 +422,7 @@ const updateProfileIntoDB = async (
         preferenceUpdateData.gender = payload.preference.gender;
       }
 
-      if (payload.preference.ethnicity !== undefined) {
+      if (payload.preference.ethnicities !== undefined) {
         preferenceUpdateData.ethnicity = payload.preference.ethnicity;
       }
 
