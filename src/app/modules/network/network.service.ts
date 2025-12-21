@@ -1,7 +1,7 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole, RequestStatus } from "@prisma/client";
 import {
   PaginationInput,
   SendRequestInput,
@@ -64,7 +64,8 @@ const getSuggestionsFromDB = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  const { page, limit, skip, filter } = query;
+  const { page, limit, filter } = query;
+  const skip = (page - 1) * limit;
 
   // Determine target role based on user role and filter
   let targetRole: UserRole | undefined;
@@ -82,16 +83,15 @@ const getSuggestionsFromDB = async (
     id: { not: userId },
     role: targetRole,
     profilStatus: "COMPLETE",
-    AND: [],
   };
+
+  const andConditions: Prisma.UserWhereInput[] = [];
 
   // Apply preference filters if user has preference
   if (user.preference) {
-    const preferenceConditions = [];
-
     // Age range filter
     if (user.preference.age) {
-      preferenceConditions.push({
+      andConditions.push({
         profile: {
           age: {
             gte: user.preference.age.min,
@@ -102,9 +102,8 @@ const getSuggestionsFromDB = async (
     }
 
     // Gender filter - only if user has specific gender preferences
-    // Empty array means "any gender is fine"
     if (user.preference.genders && user.preference.genders.length > 0) {
-      preferenceConditions.push({
+      andConditions.push({
         profile: {
           gender: { in: user.preference.genders },
         },
@@ -112,9 +111,8 @@ const getSuggestionsFromDB = async (
     }
 
     // Ethnicity filter - only if user has specific ethnicity preferences
-    // Empty array means "any ethnicity is fine"
     if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
-      preferenceConditions.push({
+      andConditions.push({
         profile: {
           ethnicity: { in: user.preference.ethnicities },
         },
@@ -122,29 +120,35 @@ const getSuggestionsFromDB = async (
     }
 
     // Career/Profession filter - check for any matching career
-    // Empty array means "any career is fine"
     if (user.preference.careers && user.preference.careers.length > 0) {
-      // Create OR conditions for each career preference
-      const careerConditions = user.preference.careers.map((career) => ({
-        OR: [
-          {
-            profile: {
-              profession: {
-                contains: career,
-                mode: "insensitive",
-              },
+      const careerOrConditions: Prisma.UserWhereInput[] = [];
+
+      for (const career of user.preference.careers) {
+        careerOrConditions.push({
+          profile: {
+            profession: {
+              contains: career,
+              mode: "insensitive" as const,
             },
           },
-          { profile: { interests: { has: career } } },
-        ],
-      }));
+        });
+        careerOrConditions.push({
+          profile: {
+            interests: {
+              has: career,
+            },
+          },
+        });
+      }
 
-      preferenceConditions.push({ OR: careerConditions });
+      andConditions.push({
+        OR: careerOrConditions,
+      });
     }
+  }
 
-    if (preferenceConditions.length > 0) {
-      whereClause.AND = preferenceConditions;
-    }
+  if (andConditions.length > 0) {
+    whereClause.AND = andConditions;
   }
 
   // Get users that the current user is already connected with or has pending requests
@@ -161,7 +165,7 @@ const getSuggestionsFromDB = async (
     prisma.connectionRequest.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],
-        status: "PENDING",
+        status: RequestStatus.PENDING,
       },
       select: {
         senderId: true,
@@ -384,7 +388,7 @@ const sendConnectionRequest = async (
         { senderId, receiverId: payload.receiverId },
         { senderId: payload.receiverId, receiverId: senderId },
       ],
-      status: "PENDING",
+      status: RequestStatus.PENDING,
     },
   });
 
@@ -421,13 +425,14 @@ const sendConnectionRequest = async (
 //w: (start)╭──────────── getPendingRequests ────────────╮
 // Get pending requests (sent and received)
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
-  const { page, limit, skip } = query;
+  const { page, limit } = query;
+  const skip = (page - 1) * limit;
 
   // Get both sent and received pending requests
-  const whereClause = {
+  const whereClause: Prisma.ConnectionRequestWhereInput = {
     OR: [
-      { senderId: userId, status: "PENDING" },
-      { receiverId: userId, status: "PENDING" },
+      { senderId: userId, status: RequestStatus.PENDING },
+      { receiverId: userId, status: RequestStatus.PENDING },
     ],
   };
 
@@ -516,7 +521,7 @@ const updateRequestStatus = async (
     );
   }
 
-  if (request.status !== "PENDING") {
+  if (request.status !== RequestStatus.PENDING) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Request is already processed");
   }
 
@@ -529,7 +534,7 @@ const updateRequestStatus = async (
     });
 
     // If accepted, create connection
-    if (payload.status === "ACCEPTED") {
+    if (payload.status === RequestStatus.ACCEPTED) {
       // Determine order of user IDs for consistent connection storage
       const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
 
@@ -557,7 +562,8 @@ const updateRequestStatus = async (
 //w: (start)╭──────────── getConnections ────────────╮
 // Get all connections
 const getConnections = async (userId: string, query: PaginationInput) => {
-  const { page, limit, skip } = query;
+  const { page, limit } = query;
+  const skip = (page - 1) * limit;
 
   const cacheKey = getCacheKey(userId, "connections", page, limit);
 
@@ -748,13 +754,13 @@ const getNetworkStats = async (userId: string) => {
       prisma.connectionRequest.count({
         where: {
           senderId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
       prisma.connectionRequest.count({
         where: {
           receiverId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
     ]);

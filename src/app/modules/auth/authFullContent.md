@@ -17,7 +17,9 @@
 │   │   │   └── file.ts
 │   │   ├── middlewares
 │   │   │   ├── auth.ts
+│   │   │   ├── entry.ts
 │   │   │   ├── globalErrorHandler.ts
+│   │   │   ├── notFound.ts
 │   │   │   ├── optionalAuth.ts
 │   │   │   ├── parseBodyData.ts
 │   │   │   ├── postman.ts
@@ -29,9 +31,18 @@
 │   │   │   │   ├── auth.routes.ts
 │   │   │   │   ├── auth.service.ts
 │   │   │   │   └── auth.validation.ts
+│   │   │   ├── network
+│   │   │   │   ├── matchsuggestionlogic.md
+│   │   │   │   ├── network.api.hurl
+│   │   │   │   ├── network.controller.ts
+│   │   │   │   ├── networkFullContent.md
+│   │   │   │   ├── network.routes.ts
+│   │   │   │   ├── network.service.ts
+│   │   │   │   └── network.validation.ts
 │   │   │   └── user
 │   │   │       ├── user.api.hurl
 │   │   │       ├── user.controller.ts
+│   │   │       ├── userFullContent.md
 │   │   │       ├── user.interface.ts
 │   │   │       ├── user.route.ts
 │   │   │       ├── user.services.ts
@@ -65,6 +76,12 @@
 │   │   ├── file.ts
 │   │   ├── index.d.ts
 │   │   └── paginations.ts
+│   ├── jobs
+│   │   ├── bullBoard.ts
+│   │   ├── queues
+│   │   │   └── emailQueue.ts
+│   │   └── workers
+│   │       └── emailWorker.ts
 │   ├── resource
 │   │   ├── prompts
 │   │   │   └── prompt.md
@@ -82,13 +99,12 @@
 │       ├── sendResponse.ts
 │       ├── uploadInSpace.ts
 │       └── userSearch.ts
-├── structure.md
 ├── tsconfig.json
 ├── uploads
 │   └── google.png
 └── vercel.json
 
-20 directories, 64 files
+24 directories, 76 files
 ```
 
 ## 📁 auth Module Tree
@@ -145,6 +161,14 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  // Connection Requests (sent and received)
+  sentRequests     ConnectionRequest[] @relation("SentRequests")
+  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
+
+  // Connections (as user1 or user2)
+  connectionsAsUser1 Connection[] @relation("Connections1")
+  connectionsAsUser2 Connection[] @relation("Connections2")
+
   @@map("users")
 }
 
@@ -152,20 +176,21 @@ model User {
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
-  about          String
-  age            Int
-  ethnicity      Ethnicity
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  about     String
+  age       Int
+  ethnicity String
+
   gender         Gender
   profession     String
   experienceYear Int
   availability   Json
   profileImage   String?
-  interests      String[]  @default([])
-  userId         String    @unique @db.ObjectId
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  interests      String[] @default([])
+  userId         String   @unique @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("profiles")
 }
@@ -174,19 +199,60 @@ model Profile {
 
 //w: (start)╭────────────  Preference  ────────────╮
 model Preference {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  career    String
-  gender    Gender
-  ethnicity Ethnicity
-  notes     String?
-  age       AgeRange
-  userId    String    @unique @db.ObjectId
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  careers     String[]
+  genders     Gender[]
+  ethnicities String[]
+  notes       String?
+  age         AgeRange
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
+
+//w: (start)╭──────────── ConnectionRequest  ────────────╮
+model ConnectionRequest {
+  id         String        @id @default(auto()) @map("_id") @db.ObjectId
+  senderId   String        @db.ObjectId
+  sender     User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String        @db.ObjectId
+  receiver   User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     RequestStatus @default(PENDING)
+  message    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+
+  @@unique([senderId, receiverId])
+  @@index([senderId, status])
+  @@index([receiverId, status])
+  @@map("connection_requests")
+}
+
+model Connection {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String   @db.ObjectId
+  user1     User     @relation("Connections1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2Id   String   @db.ObjectId
+  user2     User     @relation("Connections2", fields: [user2Id], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([user1Id, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
+  @@map("connections")
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+//w: (end)  ╰──────────── ConnectionRequest  ────────────╯
 
 enum UserRole {
   MENTOR
@@ -229,9 +295,9 @@ type AgeRange {
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
-    "start": "node ./dist/server.js",
+    "start": "concurrently \"node ./dist/server.js\" \"node ./dist/workers/emailWorker.js\"",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
+    "dev": "concurrently \"ts-node-dev --respawn --transpile-only src/server.ts\" \"ts-node-dev --respawn --transpile-only src/jobs/workers/emailWorker.ts\"",
     "build": "tsc",
     "postinstall": "prisma generate"
   },
@@ -254,14 +320,17 @@ type AgeRange {
   "dependencies": {
     "@aws-sdk/client-s3": "^3.782.0",
     "@aws-sdk/lib-storage": "^3.782.0",
+    "@bull-board/express": "^6.15.0",
     "@prisma/client": "^6.3.0",
     "@types/jsonwebtoken": "^9.0.6",
     "@types/multer": "^1.4.11",
     "agora-access-token": "^2.0.4",
     "bcryptjs": "^2.4.3",
+    "bullmq": "^5.66.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "express-basic-auth": "^1.2.1",
     "firebase-admin": "^13.2.0",
     "http-status": "^1.7.4",
     "ioredis": "^5.8.2",
@@ -295,13 +364,13 @@ import {
   UserRole,
 } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
-import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
 import { UpdateProfileInput } from "./auth.validation";
 import redisClient from "../../../shared/redis";
+import { emailQueue } from "../../../jobs/queues/emailQueue";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -434,18 +503,12 @@ const sendForgotPasswordOtpDB = async (email: string) => {
   }
   // Generate OTP and expiry time
   const otp = generateOTP(); // 4-digit OTP
-  const subject = "Your Password Reset OTP";
-  const html = `
-  <div style="font-family: Arial, sans-serif; color: #333;">
-    <h2>Password Reset Request</h2>
-    <p>Hi <b>${existringUser.fullname}</b>,</p>
-    <p>Your OTP for password reset is:</p>
-    <h1 style="color: #007BFF;">${otp}</h1>
-    <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
-    <p>Thanks, <br>The Support Team</p>
-  </div>
-`;
-  await sendEmail(email, subject, html);
+  await emailQueue.add("forgotPasswordOtp", {
+    email,
+    otp,
+  });
+
+  // await sendEmail(email, subject, html);
   await redisOtpService.storeOtp(email, otp);
 
   return;
@@ -711,7 +774,7 @@ const updateProfileIntoDB = async (
         preferenceUpdateData.gender = payload.preference.gender;
       }
 
-      if (payload.preference.ethnicity !== undefined) {
+      if (payload.preference.ethnicities !== undefined) {
         preferenceUpdateData.ethnicity = payload.preference.ethnicity;
       }
 
@@ -848,15 +911,9 @@ const updateProfileImage = async (
     throw new ApiError(400, "Please select an image");
   }
   const fileUrl = await uploadInSpace(file, "users/profileImage");
-  await prisma.profile.update({
-    where: {
-      id: userId,
-    },
-    data: {
-      profileImage: fileUrl,
-    },
-  });
-  return;
+  console.log(fileUrl, "auth.service.ts", 568);
+
+  return fileUrl;
 };
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
 
@@ -884,97 +941,6 @@ interface CompleteProfileInput {
   };
   role?: UserRole;
 }
-
-//w: (start)╭──────────── completeProfile ────────────╮
-/* const completeProfile = async (
-  userId: string,
-  payload: CompleteProfileInput,
-) => {
-  const existingUser = await prisma.user.findUnique({
-    where: { id: userId },
-  });
-
-  if (!existingUser) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
-
-  // Check if profile already exists
-  const existingProfile = await prisma.profile.findUnique({
-    where: { userId },
-  });
-
-  if (existingProfile) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Profile already exists. Use update profile instead.",
-    );
-  }
-
-  // Check if preference already exists
-  const existingPreference = await prisma.preference.findUnique({
-    where: { userId },
-  });
-
-  if (existingPreference) {
-    throw new ApiError(
-      httpStatus.BAD_REQUEST,
-      "Preference already exists. Use update preference instead.",
-    );
-  }
-
-  // Use transaction to ensure atomicity
-  const result = await prisma.$transaction(async (tx) => {
-    // Create profile
-    const profile = await tx.profile.create({
-      data: {
-        about: payload.profile.about,
-        age: payload.profile.age,
-        ethnicity: payload.profile.ethnicity,
-        gender: payload.profile.gender,
-        profession: payload.profile.profession,
-        experienceYear: payload.profile.experienceYear,
-        availability: payload.profile.availability,
-        profileImage: payload.profile.profileImage,
-        interests: payload.profile.interests,
-        userId: userId,
-      },
-    });
-
-    // Create preference
-    const preference = await tx.preference.create({
-      data: {
-        career: payload.preference.career,
-        gender: payload.preference.gender,
-        ethnicity: payload.preference.ethnicity,
-        notes: payload.preference.notes,
-        age: payload.preference.age,
-        userId: userId,
-      },
-    });
-
-    // Update user role if provided and profile status to COMPLETE
-    const user = await tx.user.update({
-      where: { id: userId },
-      data: {
-        role: payload.role || existingUser.role,
-        profilStatus: "COMPLETE",
-      },
-    });
-
-    const accessToken = jwtHelpers.generateToken(
-      { id: user.id, email: user.email, role: user.role },
-      config.jwt.jwt_secret as string,
-      config.jwt.expires_in as string,
-    );
-
-    return {
-      accessToken,
-    };
-  });
-
-  return result;
-}; */
-//w: (end)  ╰──────────── completeProfile ────────────╯
 
 //w: (start)╭──────────── deleteAccount ────────────╮
 const deleteAccountFromDB = async (userId: string) => {
@@ -1104,7 +1070,7 @@ export const AuthRoutes = router;
 ## 📝 auth.validation.ts
 
 ```ts
-import { Ethnicity, Gender, UserRole } from "@prisma/client";
+import { Gender, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── login ────────────╮
@@ -1254,9 +1220,7 @@ const completeProfileSchema = z
         .int()
         .min(18, "Age must be at least 18")
         .max(100, "Age must be at most 100"),
-      ethnicity: z.nativeEnum(Ethnicity, {
-        errorMap: () => ({ message: "Invalid ethnicity value" }),
-      }),
+      ethnicity: z.string().min(2, { message: "Ethnicity is required" }),
       gender: z.nativeEnum(Gender, {
         errorMap: () => ({ message: "Invalid gender value" }),
       }),
@@ -1285,21 +1249,32 @@ const completeProfileSchema = z
     }),
 
     // Preference data
+    // In completeProfileSchema, update preference object:
     preference: z.object({
-      career: z
-        .string()
-        .min(2, "Career preference must be at least 2 characters long")
-        .max(100, "Career preference must be at most 100 characters long"),
-      gender: z.nativeEnum(Gender, {
-        errorMap: () => ({ message: "Invalid preferred gender value" }),
-      }),
-      ethnicity: z.nativeEnum(Ethnicity, {
-        errorMap: () => ({ message: "Invalid preferred ethnicity value" }),
-      }),
+      careers: z
+        .array(
+          z
+            .string()
+            .min(2, "Career must be at least 2 characters long")
+            .max(100, "Career must be at most 100 characters long"),
+        )
+        .min(1, "At least one career preference is required")
+        .max(10, "Maximum 10 career preferences allowed"),
+
+      genders: z
+        .array(z.nativeEnum(Gender))
+        .min(0, "At least 0 gender preferences")
+        .max(3, "Maximum 3 gender preferences allowed"),
+
+      ethnicities: z
+        .array(z.string().min(2))
+        .min(0, "At least 0 ethnicity preferences"),
+
       notes: z
         .string()
-        .max(500, "Notes must be at most 500 characters long")
+        .max(500, "Notes must be at most 500 characters")
         .optional(),
+
       age: ageRangeSchema,
     }),
 
@@ -1515,12 +1490,14 @@ const updateProfile = catchAsync(async (req: any, res: Response) => {
 //w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
-  await authService.updateProfileImage(id, req.file);
+  const fileUrl = await authService.updateProfileImage(id, req.file);
+  console.log(fileUrl, "auth.controller.ts", 140);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User profile image updated successfully",
+    message: "User profile image uploaded successfully",
+    data: fileUrl,
   });
 });
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
@@ -1579,7 +1556,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"esha@merepost.com",
+  "email":"raisaahmed@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }
@@ -1593,13 +1570,21 @@ POST {{port6011}}/auth/auth-login
   "fcmToken":""
 }
 
+# upload profile image file
+
+PACTH {{port6011}}/auth/profile-image
+Authorization: {{ashRaisa}}
+
+
+
+
 # get my profile
 GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}
 
 # get other profile
 # profile/userId
-GET {{port6011}}/auth/profile/69417bacdfe265d4f5fc920a
+GET {{port6011}}/auth/profile/69439c27b63cdd027fe1e8c6
 Authorization: {{ashRaisa}}
 
 # Delete Account
@@ -1634,52 +1619,52 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashEsha}}
+Authorization: {{ashHasan}}
 Content-Type: application/json
+
 
 {
   "profile": {
-    "about": "I am a marketing strategist focused on brand growth, digital campaigns, and data-driven storytelling.",
-    "age": 29,
-    "ethnicity": "MIDDLE_EASTERN",
-    "gender": "FEMALE",
-    "profession": "Marketing Strategist",
-    "experienceYear": 6,
+    "about": "I am an early-stage startup professional aiming to strengthen my marketing and growth strategy skills through expert mentorship and hands-on learning.",
+    "age": 26,
+    "ethnicity": "EAST_ASIAN",
+    "gender": "MALE",
+    "profession": "Startup Operations Associate",
+    "experienceYear": 3,
     "availability": {
-      "tuesday": [
-        { "start": "10:00", "end": "13:00" },
-        { "start": "17:00", "end": "19:00" }
-
+      "monday": [
+        { "start": "20:00", "end": "21:00" }
       ],
-      "thursday": [
-        { "start": "15:00", "end": "19:00" }
+      "wednesday": [
+        { "start": "16:00", "end": "20:00" }
       ],
-      "saturday": [
-        { "start": "11:00", "end": "14:00" }
+      "sunday": [
+        { "start": "08:00", "end": "13:00" }
       ]
     },
-    "profileImage": "https://cdn.example.com/profiles/esha.jpg",
+    "profileImage": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1766055758422-o1znpme52q.png",
     "interests": [
+      "Startup Growth",
       "Digital Marketing",
-      "Brand Strategy",
-      "Content Planning",
-      "Market Research"
+      "Business Strategy",
+      "Customer Acquisition"
     ]
   },
 
   "preference": {
     "career": "Business & Marketing",
     "gender": "MALE",
-    "ethnicity": "EAST_ASIAN",
-    "notes": "Interested in professionals with leadership and startup experience",
+    "ethnicity": "MIDDLE_EASTERN",
+    "notes": "Looking for a mentor with strong brand-building and data-driven marketing experience.",
     "age": {
-      "min": 27,
-      "max": 40
+      "min": 28,
+      "max": 45
     }
   },
 
-  "role": "MENTOR"
+  "role": "MENTEE"
 }
+
 
 
 
