@@ -51,10 +51,11 @@ model User {
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  about          String
-  age            Int
-  ethnicity      String
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  about     String
+  age       Int
+  ethnicity String
+
   gender         Gender
   profession     String
   experienceYear Int

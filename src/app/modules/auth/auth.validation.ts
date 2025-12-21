@@ -148,9 +148,7 @@ const completeProfileSchema = z
         .int()
         .min(18, "Age must be at least 18")
         .max(100, "Age must be at most 100"),
-      ethnicity: z.nativeEnum(Ethnicity, {
-        errorMap: () => ({ message: "Invalid ethnicity value" }),
-      }),
+      ethnicity: z.string().min(2, { message: "Ethnicity is required" }),
       gender: z.nativeEnum(Gender, {
         errorMap: () => ({ message: "Invalid gender value" }),
       }),
@@ -197,9 +195,8 @@ const completeProfileSchema = z
         .max(3, "Maximum 3 gender preferences allowed"),
 
       ethnicities: z
-        .array(z.nativeEnum(Ethnicity))
-        .min(0, "At least 0 ethnicity preferences")
-        .max(Object.values(Ethnicity).length),
+        .array(z.string().min(2))
+        .min(0, "At least 0 ethnicity preferences"),
 
       notes: z
         .string()
