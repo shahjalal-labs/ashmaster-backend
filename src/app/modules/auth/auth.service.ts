@@ -12,7 +12,6 @@ import {
   UserRole,
 } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
-import sendEmail from "../../../helpers/sendEmail";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";

@@ -33,7 +33,7 @@ new Worker(
         <div style="font-family: Arial, sans-serif; color: #333;">
           <h2>Password Reset Request</h2>
           <p>Hi, </p>
-          <p>Your OTP for password reset is:</p>
+          <p>Your password reset OTP is: </p>
           <h1 style="color: #007BFF;">${otp}</h1>
           <p>This OTP is valid for <b>5 minutes</b>. If you did not request this, please ignore this email.</p>
           <p>Thanks, <br>The Support Team</p>
