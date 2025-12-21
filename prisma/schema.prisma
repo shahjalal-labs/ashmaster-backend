@@ -74,9 +74,9 @@ model Profile {
 //w: (start)╭────────────  Preference  ────────────╮
 model Preference {
   id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  career    String
-  gender    Gender
-  ethnicity Ethnicity
+  careers    String[]
+  genders    Gender[]
+  ethnicities Ethnicity[]
   notes     String?
   age       AgeRange
   userId    String    @unique @db.ObjectId

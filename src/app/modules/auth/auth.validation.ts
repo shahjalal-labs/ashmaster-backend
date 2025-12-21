@@ -179,21 +179,33 @@ const completeProfileSchema = z
     }),
 
     // Preference data
+    // In completeProfileSchema, update preference object:
     preference: z.object({
-      career: z
-        .string()
-        .min(2, "Career preference must be at least 2 characters long")
-        .max(100, "Career preference must be at most 100 characters long"),
-      gender: z.nativeEnum(Gender, {
-        errorMap: () => ({ message: "Invalid preferred gender value" }),
-      }),
-      ethnicity: z.nativeEnum(Ethnicity, {
-        errorMap: () => ({ message: "Invalid preferred ethnicity value" }),
-      }),
+      careers: z
+        .array(
+          z
+            .string()
+            .min(2, "Career must be at least 2 characters long")
+            .max(100, "Career must be at most 100 characters long"),
+        )
+        .min(1, "At least one career preference is required")
+        .max(10, "Maximum 10 career preferences allowed"),
+
+      genders: z
+        .array(z.nativeEnum(Gender))
+        .min(0, "At least 0 gender preferences")
+        .max(3, "Maximum 3 gender preferences allowed"),
+
+      ethnicities: z
+        .array(z.nativeEnum(Ethnicity))
+        .min(0, "At least 0 ethnicity preferences")
+        .max(Object.values(Ethnicity).length),
+
       notes: z
         .string()
-        .max(500, "Notes must be at most 500 characters long")
+        .max(500, "Notes must be at most 500 characters")
         .optional(),
+
       age: ageRangeSchema,
     }),
 

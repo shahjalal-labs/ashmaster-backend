@@ -53,6 +53,7 @@ const createUserIntoDB = async (payload: User) => {
 //w: (end)  ╰──────────── createUser ────────────╯
 
 //verify user using otp for signup
+//w: (start)╭──────────── signupVerification ────────────╮
 const signupVerification = async (payload: { email: string; otp: string }) => {
   const { email, otp } = payload;
 
@@ -104,8 +105,10 @@ const signupVerification = async (payload: { email: string; otp: string }) => {
     accessToken,
   };
 };
+//w: (end)  ╰──────────── signupVerification ────────────╯
 
 //get single user
+//w: (start)╭──────────── getSingleUserIntoDB ────────────╮
 const getSingleUserIntoDB = async (id: string) => {
   const user = await prisma.user.findUnique({ where: { id } });
   if (!user) {
@@ -115,6 +118,7 @@ const getSingleUserIntoDB = async (id: string) => {
   const { password, ...sanitizedUser } = user;
   return sanitizedUser;
 };
+//w: (end)  ╰──────────── getSingleUserIntoDB ────────────╯
 
 //w: (start)╭──────────── getUsers ────────────╮
 //get all users
@@ -155,6 +159,7 @@ const updateUserIntoDB = async (id: string, userData: any) => {
   return sanitizedUser;
 };
 
+//w: (start)╭──────────── deleteUser ────────────╮
 //delete user
 const deleteUserIntoDB = async (userId: string, loggedId: string) => {
   if (!ObjectId.isValid(userId)) {
@@ -173,6 +178,7 @@ const deleteUserIntoDB = async (userId: string, loggedId: string) => {
   });
   return;
 };
+//w: (end)  ╰──────────── deleteUser ────────────╯
 
 export const userService = {
   createUserIntoDB,
