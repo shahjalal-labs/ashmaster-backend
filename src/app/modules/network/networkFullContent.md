@@ -31,8 +31,10 @@
 │   │   │   │   ├── authFullContent.md
 │   │   │   │   ├── auth.routes.ts
 │   │   │   │   ├── auth.service.ts
-│   │   │   │   └── auth.validation.ts
+│   │   │   │   ├── auth.validation.ts
+│   │   │   │   └── profiledata.md
 │   │   │   ├── network
+│   │   │   │   ├── matchsuggestionlogic.md
 │   │   │   │   ├── network.api.hurl
 │   │   │   │   ├── network.controller.ts
 │   │   │   │   ├── network.routes.ts
@@ -41,7 +43,6 @@
 │   │   │   └── user
 │   │   │       ├── user.api.hurl
 │   │   │       ├── user.controller.ts
-│   │   │       ├── userFullContent.md
 │   │   │       ├── user.interface.ts
 │   │   │       ├── user.route.ts
 │   │   │       ├── user.services.ts
@@ -103,20 +104,21 @@
 │   └── google.png
 └── vercel.json
 
-24 directories, 75 files
+24 directories, 76 files
 ```
 
 ## 📁 network Module Tree
 
 ```bash
 /home/sj/web/smt_project/ashmaster_backend/src/app/modules/network
+├── matchsuggestionlogic.md
 ├── network.api.hurl
 ├── network.controller.ts
 ├── network.routes.ts
 ├── network.service.ts
 └── network.validation.ts
 
-1 directory, 5 files
+1 directory, 6 files
 ```
 
 ## 📋 schema.prisma
@@ -175,20 +177,21 @@ model User {
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
-  id             String    @id @default(auto()) @map("_id") @db.ObjectId
-  about          String
-  age            Int
-  ethnicity      Ethnicity
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  about     String
+  age       Int
+  ethnicity String
+
   gender         Gender
   profession     String
   experienceYear Int
   availability   Json
   profileImage   String?
-  interests      String[]  @default([])
-  userId         String    @unique @db.ObjectId
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  interests      String[] @default([])
+  userId         String   @unique @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("profiles")
 }
@@ -197,16 +200,16 @@ model Profile {
 
 //w: (start)╭────────────  Preference  ────────────╮
 model Preference {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  career    String
-  gender    Gender
-  ethnicity Ethnicity
-  notes     String?
-  age       AgeRange
-  userId    String    @unique @db.ObjectId
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  careers     String[]
+  genders     Gender[]
+  ethnicities String[]
+  notes       String?
+  age         AgeRange
+  userId      String   @unique @db.ObjectId
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
@@ -258,20 +261,10 @@ enum UserRole {
   ADMIN
 }
 
-enum Ethnicity {
-  BLACK
-  EAST_ASIAN
-  HISPANIC
-  MIDDLE_EASTERN
-  NATIVE_AMERICAN
-  PACIFIC_ISLANDER
-  NO_ANSWER // prefer not to say
-}
-
 enum Gender {
   MALE
   FEMALE
-  NO_ANSWER
+  NO_ANSWER // prefer not say
 }
 
 enum ProfilStatus {
@@ -530,6 +523,21 @@ export const networkValidation = {
 };
 ```
 
+## 📖 matchsuggestionlogic.md
+
+```markdown
+---
+
+## connection suggestion logic
+
+1. exact match needed (we using AND operator)
+2. excluding own profile
+3. excluding those are already connected
+4. excluding those are already pending (from both side, sender or reciever)
+5. match based on interests, checking logged in user interest with other user interest through in operator,
+6. match with the preference settings, where array using in operator
+```
+
 ## 🔧 network.routes.ts
 
 ```ts
@@ -664,7 +672,7 @@ Authorization: {{ashRaisa}}
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, UserRole, RequestStatus } from "@prisma/client";
 import {
   PaginationInput,
   SendRequestInput,
@@ -727,7 +735,8 @@ const getSuggestionsFromDB = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  const { page, limit, skip, filter } = query;
+  const { page, limit, filter } = query;
+  const skip = (page - 1) * limit;
 
   // Determine target role based on user role and filter
   let targetRole: UserRole | undefined;
@@ -745,16 +754,15 @@ const getSuggestionsFromDB = async (
     id: { not: userId },
     role: targetRole,
     profilStatus: "COMPLETE",
-    AND: [],
   };
+
+  const andConditions: Prisma.UserWhereInput[] = [];
 
   // Apply preference filters if user has preference
   if (user.preference) {
-    const preferenceConditions = [];
-
     // Age range filter
     if (user.preference.age) {
-      preferenceConditions.push({
+      andConditions.push({
         profile: {
           age: {
             gte: user.preference.age.min,
@@ -764,44 +772,54 @@ const getSuggestionsFromDB = async (
       });
     }
 
-    // Gender filter (skip if NO_ANSWER)
-    if (user.preference.gender !== "NO_ANSWER") {
-      preferenceConditions.push({
+    // Gender filter - only if user has specific gender preferences
+    if (user.preference.genders && user.preference.genders.length > 0) {
+      andConditions.push({
         profile: {
-          gender: user.preference.gender,
+          gender: { in: user.preference.genders },
         },
       });
     }
 
-    // Ethnicity filter (skip if NO_ANSWER)
-    if (user.preference.ethnicity !== "NO_ANSWER") {
-      preferenceConditions.push({
+    // Ethnicity filter - only if user has specific ethnicity preferences
+    if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
+      andConditions.push({
         profile: {
-          ethnicity: user.preference.ethnicity,
+          ethnicity: { in: user.preference.ethnicities },
         },
       });
     }
 
-    // Career/Profession filter
-    if (user.preference.career) {
-      preferenceConditions.push({
-        OR: [
-          {
-            profile: {
-              profession: {
-                contains: user.preference.career,
-                mode: "insensitive",
-              },
+    // Career/Profession filter - check for any matching career
+    if (user.preference.careers && user.preference.careers.length > 0) {
+      const careerOrConditions: Prisma.UserWhereInput[] = [];
+
+      for (const career of user.preference.careers) {
+        careerOrConditions.push({
+          profile: {
+            profession: {
+              contains: career,
+              mode: "insensitive" as const,
             },
           },
-          { profile: { interests: { has: user.preference.career } } },
-        ],
+        });
+        careerOrConditions.push({
+          profile: {
+            interests: {
+              has: career,
+            },
+          },
+        });
+      }
+
+      andConditions.push({
+        OR: careerOrConditions,
       });
     }
+  }
 
-    if (preferenceConditions.length > 0) {
-      whereClause.AND = preferenceConditions;
-    }
+  if (andConditions.length > 0) {
+    whereClause.AND = andConditions;
   }
 
   // Get users that the current user is already connected with or has pending requests
@@ -818,7 +836,7 @@ const getSuggestionsFromDB = async (
     prisma.connectionRequest.findMany({
       where: {
         OR: [{ senderId: userId }, { receiverId: userId }],
-        status: "PENDING",
+        status: RequestStatus.PENDING,
       },
       select: {
         senderId: true,
@@ -882,7 +900,7 @@ const getSuggestionsFromDB = async (
     let matchReasons: string[] = [];
 
     if (user.preference && suggestion.profile) {
-      // Age match
+      // Age match (25 points)
       if (user.preference.age) {
         if (
           suggestion.profile.age >= user.preference.age.min &&
@@ -893,43 +911,68 @@ const getSuggestionsFromDB = async (
         }
       }
 
-      // Gender match
-      if (
-        user.preference.gender !== "NO_ANSWER" &&
-        user.preference.gender === suggestion.profile.gender
-      ) {
+      // Gender match (25 points)
+      if (user.preference.genders && user.preference.genders.length > 0) {
+        if (user.preference.genders.includes(suggestion.profile.gender)) {
+          matchPercentage += 25;
+          matchReasons.push("Gender matches your preference");
+        }
+      } else {
+        // Empty array means "any gender" - still give points for flexibility
         matchPercentage += 25;
-        matchReasons.push("Gender matches your preference");
+        matchReasons.push("You're open to any gender");
       }
 
-      // Ethnicity match
+      // Ethnicity match (25 points)
       if (
-        user.preference.ethnicity !== "NO_ANSWER" &&
-        user.preference.ethnicity === suggestion.profile.ethnicity
+        user.preference.ethnicities &&
+        user.preference.ethnicities.length > 0
       ) {
+        if (
+          user.preference.ethnicities.includes(suggestion.profile.ethnicity)
+        ) {
+          matchPercentage += 25;
+          matchReasons.push("Ethnicity matches your preference");
+        }
+      } else {
+        // Empty array means "any ethnicity" - still give points for flexibility
         matchPercentage += 25;
-        matchReasons.push("Ethnicity matches your preference");
+        matchReasons.push("You're open to any ethnicity");
       }
 
-      // Career/Profession match
-      if (user.preference.career) {
-        const lowerCareer = user.preference.career.toLowerCase();
+      // Career/Profession match (25 points)
+      if (user.preference.careers && user.preference.careers.length > 0) {
+        let careerMatch = false;
         const lowerProfession = suggestion.profile.profession.toLowerCase();
         const lowerInterests = suggestion.profile.interests.map((i) =>
           i.toLowerCase(),
         );
 
-        if (
-          lowerProfession.includes(lowerCareer) ||
-          lowerInterests.some((interest) => interest.includes(lowerCareer))
-        ) {
+        // Check if any preferred career matches profession or interests
+        for (const career of user.preference.careers) {
+          const lowerCareer = career.toLowerCase();
+          if (
+            lowerProfession.includes(lowerCareer) ||
+            lowerInterests.some((interest) => interest.includes(lowerCareer))
+          ) {
+            careerMatch = true;
+            break;
+          }
+        }
+
+        if (careerMatch) {
           matchPercentage += 25;
           matchReasons.push("Career/interest matches your preference");
         }
+      } else {
+        // Empty array means "any career" - still give points for flexibility
+        matchPercentage += 25;
+        matchReasons.push("You're open to any career");
       }
     }
 
-    console.log(whereClause, "network.service.ts", 82);
+    // Cap match percentage at 100%
+    matchPercentage = Math.min(matchPercentage, 100);
 
     return {
       ...suggestion,
@@ -938,8 +981,22 @@ const getSuggestionsFromDB = async (
     };
   });
 
-  // Sort by match percentage (highest first)
-  suggestionsWithMatch.sort((a, b) => b.matchPercentage - a.matchPercentage);
+  // Sort by match percentage (highest first), then by newest
+  suggestionsWithMatch.sort((a, b) => {
+    if (b.matchPercentage !== a.matchPercentage) {
+      return b.matchPercentage - a.matchPercentage;
+    }
+    // If same match percentage, sort by newest
+    return 0;
+  });
+
+  console.log(
+    "Where clause for suggestions:",
+    JSON.stringify(whereClause, null, 2),
+  );
+  console.log(
+    `Found ${suggestionsWithMatch.length} suggestions for user ${userId}`,
+  );
 
   return {
     meta: {
@@ -1002,7 +1059,7 @@ const sendConnectionRequest = async (
         { senderId, receiverId: payload.receiverId },
         { senderId: payload.receiverId, receiverId: senderId },
       ],
-      status: "PENDING",
+      status: RequestStatus.PENDING,
     },
   });
 
@@ -1039,10 +1096,15 @@ const sendConnectionRequest = async (
 //w: (start)╭──────────── getPendingRequests ────────────╮
 // Get pending requests (sent and received)
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
-  const { page, limit, skip } = query;
+  const { page, limit } = query;
+  const skip = (page - 1) * limit;
 
-  const whereClause = {
-    receiverId: userId,
+  // Get both sent and received pending requests
+  const whereClause: Prisma.ConnectionRequestWhereInput = {
+    OR: [
+      { senderId: userId, status: RequestStatus.PENDING },
+      { receiverId: userId, status: RequestStatus.PENDING },
+    ],
   };
 
   const [requests, total] = await Promise.all([
@@ -1050,6 +1112,20 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       where: whereClause,
       include: {
         sender: {
+          select: {
+            id: true,
+            fullname: true,
+            email: true,
+            role: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
+        receiver: {
           select: {
             id: true,
             fullname: true,
@@ -1071,7 +1147,12 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     prisma.connectionRequest.count({ where: whereClause }),
   ]);
 
-  // Format response
+  // Format response to indicate if it's sent or received
+  const formattedRequests = requests.map((request) => ({
+    ...request,
+    isSentByMe: request.senderId === userId,
+    otherUser: request.senderId === userId ? request.receiver : request.sender,
+  }));
 
   return {
     meta: {
@@ -1081,7 +1162,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
       hasNextPage: total > skip + limit,
       hasPrevPage: page > 1,
     },
-    data: requests,
+    data: formattedRequests,
   };
 };
 //w: (end)  ╰──────────── getPendingRequests ────────────╯
@@ -1111,7 +1192,7 @@ const updateRequestStatus = async (
     );
   }
 
-  if (request.status !== "PENDING") {
+  if (request.status !== RequestStatus.PENDING) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Request is already processed");
   }
 
@@ -1124,7 +1205,7 @@ const updateRequestStatus = async (
     });
 
     // If accepted, create connection
-    if (payload.status === "ACCEPTED") {
+    if (payload.status === RequestStatus.ACCEPTED) {
       // Determine order of user IDs for consistent connection storage
       const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
 
@@ -1152,7 +1233,8 @@ const updateRequestStatus = async (
 //w: (start)╭──────────── getConnections ────────────╮
 // Get all connections
 const getConnections = async (userId: string, query: PaginationInput) => {
-  const { page, limit, skip } = query;
+  const { page, limit } = query;
+  const skip = (page - 1) * limit;
 
   const cacheKey = getCacheKey(userId, "connections", page, limit);
 
@@ -1187,6 +1269,7 @@ const getConnections = async (userId: string, query: PaginationInput) => {
                 profession: true,
                 experienceYear: true,
                 about: true,
+                ethnicity: true,
               },
             },
           },
@@ -1203,6 +1286,7 @@ const getConnections = async (userId: string, query: PaginationInput) => {
                 profession: true,
                 experienceYear: true,
                 about: true,
+                ethnicity: true,
               },
             },
           },
@@ -1341,13 +1425,13 @@ const getNetworkStats = async (userId: string) => {
       prisma.connectionRequest.count({
         where: {
           senderId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
       prisma.connectionRequest.count({
         where: {
           receiverId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
     ]);
@@ -1381,5 +1465,3 @@ export const networkService = {
   clearUserNetworkCache,
 };
 ```
-
-I have done a wrong schema for preference. cause one user currently can set single ethnicity, gender, career but think a user can have multiple preference like interestes so it's not able to store them properly. Now how can i fix it give me best suggestion don't move to code.
