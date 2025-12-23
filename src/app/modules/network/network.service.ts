@@ -21,7 +21,7 @@ const getSuggestions = async (userId: string) => {
     },
   });
 
-  /* if (user.profilStatus === "COMPLETE") {
+  /* if (user.profilStatus === "INCOMPLETE") {
     throw new ApiError(httpStatus.BAD_REQUEST, "Complete your profile");
   } */
 
@@ -35,10 +35,23 @@ const getSuggestions = async (userId: string) => {
       profilStatus: {
         not: "INCOMPLETE",
       },
-      /* profile: {
+      role: {
+        notIn: [user.role, UserRole.ADMIN],
+      },
+      profile: {
         interests: {
           hasSome: user.profile?.interests,
         },
+        age: {
+          gte: user.preference?.age.min,
+        },
+      },
+
+      /*profile: {
+        interests: {
+          hasSome: user.profile?.interests,
+        },
+        
         ethnicity: {
           in: user.preference?.ethnicities,
         },
