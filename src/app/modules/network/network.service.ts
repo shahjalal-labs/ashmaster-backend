@@ -18,6 +18,24 @@ const suggestions = async (userId: string) => {
   if (user.profilStatus === "INCOMPLETE") {
     throw new ApiError(httpStatus.BAD_REQUEST, "Complete your profile");
   }
+
+  const pendingOrConnectedUser = [];
+
+  const suggestedUsers = await prisma.user.findMany({
+    where: {
+      id: {
+        not: userId,
+      },
+      profilStatus: {
+        not: "INCOMPLETE",
+      },
+      profile: {},
+    },
+    include: {
+      profile: true,
+      preference: true,
+    },
+  });
 };
 
 // Helper to parse availability

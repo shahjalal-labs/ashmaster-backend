@@ -3,6 +3,7 @@ import { networkController } from "./network.controller";
 import validateRequest from "../../middlewares/validateRequest";
 import { networkValidation } from "./network.validation";
 import auth from "../../middlewares/auth";
+import { profileGuard } from "../../middlewares/profile";
 
 const router = express.Router();
 
@@ -12,6 +13,7 @@ const router = express.Router();
 router.get(
   "/suggestions",
   auth(),
+  profileGuard(),
   validateRequest(networkValidation.recommendationsQuerySchema, "query"),
   networkController.getSuggestions,
 );
