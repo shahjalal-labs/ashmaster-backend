@@ -1,4 +1,4 @@
-import { Gender, UserRole } from "@prisma/client";
+import { Gender, PreferenceGender, UserRole } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── login ────────────╮
@@ -179,7 +179,7 @@ const completeProfileSchema = z
         .max(10, "Maximum 10 career preferences allowed"),
 
       genders: z
-        .array(z.nativeEnum(Gender))
+        .array(z.nativeEnum(PreferenceGender))
         .min(0, "At least 0 gender preferences")
         .max(3, "Maximum 3 gender preferences allowed"),
 

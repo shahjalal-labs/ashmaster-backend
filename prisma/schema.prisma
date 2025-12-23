@@ -76,7 +76,7 @@ model Profile {
 model Preference {
   id          String   @id @default(auto()) @map("_id") @db.ObjectId
   careers     String[]
-  genders     Gender[]
+  genders     PreferenceGender []
   ethnicities String[]
   notes       String?
   age         AgeRange
@@ -139,6 +139,11 @@ enum Gender {
   MALE
   FEMALE
   NO_ANSWER // prefer not say
+}
+
+enum PreferenceGender {
+  MALE
+  FEMALE
 }
 
 enum ProfilStatus {

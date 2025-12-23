@@ -47,15 +47,15 @@ const getSuggestions = async (userId: string) => {
       id: {
         not: userId,
       },
-      profilStatus: {
+      /* profilStatus: {
         not: "INCOMPLETE",
-      },
+      }, */
       role: {
         // mentee will get mentor and mentor will get mentee only
         notIn: [user.role, UserRole.ADMIN],
       },
       profile: {
-        interests: {
+        /* interests: {
           hasSome: user.profile?.interests,
         },
         age: {
@@ -67,7 +67,7 @@ const getSuggestions = async (userId: string) => {
         },
         profession: {
           in: user.preference?.careers,
-        },
+        }, */
         ...(genderProfileFilter ?? {}),
       },
     },
