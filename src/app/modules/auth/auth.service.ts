@@ -3,14 +3,7 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import {
-  Ethnicity,
-  Gender,
-  Profile,
-  ProfilStatus,
-  User,
-  UserRole,
-} from "@prisma/client";
+import { ProfilStatus, User } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
@@ -115,7 +108,7 @@ const authLogin = async (payload: User) => {
 //w: (end)  ╰──────────── authLogin ────────────╯
 
 //update or add user location
-const userLocationUpdateInDB = async (
+/* const userLocationUpdateInDB = async (
   userId: string,
   userLocation: UserLocation,
 ) => {
@@ -136,7 +129,7 @@ const userLocationUpdateInDB = async (
   });
 
   return result;
-};
+}; */
 
 //send forgot password otp
 //w: (start)╭──────────── sendForgotPasswordOtpDB ────────────╮
@@ -414,16 +407,17 @@ const updateProfileIntoDB = async (
     if (payload.preference && existingUser.preference) {
       const preferenceUpdateData: any = {};
 
-      if (payload.preference.career !== undefined) {
-        preferenceUpdateData.career = payload.preference.career;
+      // 🛠️ FIX: Use ARRAY field names
+      if (payload.preference.careers !== undefined) {
+        preferenceUpdateData.careers = payload.preference.careers; // ✅ Array
       }
 
-      if (payload.preference.gender !== undefined) {
-        preferenceUpdateData.gender = payload.preference.gender;
+      if (payload.preference.genders !== undefined) {
+        preferenceUpdateData.genders = payload.preference.genders; // ✅ Array
       }
 
       if (payload.preference.ethnicities !== undefined) {
-        preferenceUpdateData.ethnicity = payload.preference.ethnicity;
+        preferenceUpdateData.ethnicities = payload.preference.ethnicities; // ✅ Array
       }
 
       if (payload.preference.notes !== undefined) {
@@ -445,9 +439,7 @@ const updateProfileIntoDB = async (
         httpStatus.BAD_REQUEST,
         "Preference does not exist. Please complete your profile first.",
       );
-    }
-
-    // Clear cache after update
+    } // Clear cache after update
     await clearProfileCache(userId);
 
     return null;
