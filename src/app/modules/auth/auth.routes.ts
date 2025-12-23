@@ -25,12 +25,6 @@ router.get("/profile", auth(), authController.getProfile);
 
 router.get("/profile/:id", auth(), authController.getOtherProfile);
 
-router.patch(
-  "/update/user-location",
-  auth(),
-  authController.updateUserLocation,
-);
-
 //w: (start)╭──────────── sendForgotPassOtp ────────────╮
 router.post(
   "/send-forgot-otp",

@@ -17,3 +17,23 @@
 3. Cybersecurity Specialist
 4. Cloud Engineer
 5. UI/UX Designer
+
+# genders
+
+MALE
+FEMALE
+NO_ANSWER
+
+## profile name
+
+mentor
+raisa,
+rasu,
+miraj
+mira
+
+mentee:
+sara
+sani
+rahim
+rahima

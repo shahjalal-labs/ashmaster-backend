@@ -138,7 +138,7 @@ enum UserRole {
 enum Gender {
   MALE
   FEMALE
-  NO_ANSWER
+  NO_ANSWER // prefer not say
 }
 
 enum ProfilStatus {
