@@ -2,11 +2,11 @@ import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { Prisma, UserRole, RequestStatus } from "@prisma/client";
+
 import {
   PaginationInput,
   SendRequestInput,
   UpdateRequestStatusInput,
-  RecommendationsQuery,
 } from "./network.validation";
 
 const getSuggestions = async (userId: string) => {
@@ -19,9 +19,10 @@ const getSuggestions = async (userId: string) => {
       preference: true,
     },
   });
-  if (user.profilStatus === "INCOMPLETE") {
+
+  /* if (user.profilStatus === "COMPLETE") {
     throw new ApiError(httpStatus.BAD_REQUEST, "Complete your profile");
-  }
+  } */
 
   const pendingOrConnectedUser = [];
 
@@ -30,17 +31,17 @@ const getSuggestions = async (userId: string) => {
       id: {
         not: userId,
       },
-      profilStatus: {
+      /* profilStatus: {
         not: "INCOMPLETE",
-      },
-      profile: {
+      } */ //,
+      /* profile: {
         interests: {
           hasSome: user.profile?.interests,
         },
         ethnicity: {
           in: user.preference?.ethnicities,
         },
-      },
+      }, */
     },
     include: {
       profile: true,
@@ -422,5 +423,4 @@ export const networkService = {
   getConnections,
   removeConnection,
   getNetworkStats,
-  suggestions,
 };
