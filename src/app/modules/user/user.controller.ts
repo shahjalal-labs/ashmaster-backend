@@ -3,6 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { userService } from "./user.services";
 
+//w: (start)╭──────────── createUser ────────────╮
 // register user
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createUserIntoDB(req.body);
@@ -13,7 +14,9 @@ const createUser = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
+//w: (end)  ╰──────────── createUser ────────────╯
 
+//w: (start)╭──────────── signupVerification ────────────╮
 // signup verification
 const signupVerification = catchAsync(async (req, res) => {
   const accessToken = await userService.signupVerification(req.body);
@@ -24,11 +27,11 @@ const signupVerification = catchAsync(async (req, res) => {
     data: accessToken,
   });
 });
+//w: (end)  ╰──────────── signupVerification ────────────╯
 
 //w: (start)╭──────────── getUsers ────────────╮
 //get users
 const getUsers = catchAsync(async (req: Request, res: Response) => {
-  console.log(`hitted`);
   const users = await userService.getUsersIntoDB();
   sendResponse(res, {
     success: true,
@@ -43,7 +46,4 @@ export const userControllers = {
   createUser,
   signupVerification,
   getUsers,
-  getSingleUser,
-  updateUser,
-  deleteUser,
 };

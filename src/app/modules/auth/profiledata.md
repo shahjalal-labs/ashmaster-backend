@@ -1,0 +1,11 @@
+enum Ethnicity {
+BLACK
+EAST_ASIAN
+HISPANIC
+MIDDLE_EASTERN
+NATIVE_AMERICAN
+PACIFIC_ISLANDER
+NO_ANSWER // prefer not to say
+}
+
+---
