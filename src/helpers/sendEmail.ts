@@ -4,7 +4,7 @@ const sendEmail = async (
   to: string,
   subject: string,
   html: string,
-  text?: string
+  text?: string,
 ) => {
   // Create a transporter
   const transporter = nodemailer.createTransport({
@@ -19,7 +19,7 @@ const sendEmail = async (
 
   // Email options
   const mailOptions = {
-    from: config.emailSender.email,
+    from: `Bridge Connection: <${config.emailSender.email}>`,
     to,
     subject,
     html,
