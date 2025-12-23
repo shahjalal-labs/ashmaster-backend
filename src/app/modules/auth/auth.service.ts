@@ -16,7 +16,7 @@ import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
-import { UpdateProfileInput } from "./auth.validation";
+import { CompleteProfileInput, UpdateProfileInput } from "./auth.validation";
 import redisClient from "../../../shared/redis";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
 
@@ -495,13 +495,15 @@ const completeProfile = async (
   }
 
   // Use transaction to ensure atomicity
+
+  // Use transaction to ensure atomicity
   const result = await prisma.$transaction(async (tx) => {
     // Create profile
     const profile = await tx.profile.create({
       data: {
         about: payload.profile.about,
         age: payload.profile.age,
-        ethnicity: payload.profile.ethnicity,
+        ethnicity: payload.profile.ethnicity, // Note: This is a string (single ethnicity)
         gender: payload.profile.gender,
         profession: payload.profile.profession,
         experienceYear: payload.profile.experienceYear,
@@ -512,12 +514,12 @@ const completeProfile = async (
       },
     });
 
-    // Create preference
+    // 🛠️ FIX: Create preference with ARRAY fields
     const preference = await tx.preference.create({
       data: {
-        career: payload.preference.career,
-        gender: payload.preference.gender,
-        ethnicity: payload.preference.ethnicity,
+        careers: payload.preference.careers, // ✅ Array
+        genders: payload.preference.genders, // ✅ Array
+        ethnicities: payload.preference.ethnicities, // ✅ Array
         notes: payload.preference.notes,
         age: payload.preference.age,
         userId: userId,
@@ -539,7 +541,6 @@ const completeProfile = async (
       config.jwt.expires_in as string,
     );
 
-    // Clear cache after profile completion
     await clearProfileCache(userId);
 
     return {
@@ -564,31 +565,6 @@ const updateProfileImage = async (
   return fileUrl;
 };
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
-
-interface CompleteProfileInput {
-  profile: {
-    about: string;
-    age: number;
-    ethnicity: Ethnicity;
-    gender: Gender;
-    profession: string;
-    experienceYear: number;
-    availability: Record<string, { start: string; end: string }[]>;
-    profileImage?: string;
-    interests: string[];
-  };
-  preference: {
-    career: string;
-    gender: Gender;
-    ethnicity: Ethnicity;
-    notes?: string;
-    age: {
-      min: number;
-      max: number;
-    };
-  };
-  role?: UserRole;
-}
 
 //w: (start)╭──────────── deleteAccount ────────────╮
 const deleteAccountFromDB = async (userId: string) => {

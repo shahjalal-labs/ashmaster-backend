@@ -264,6 +264,7 @@ const updateProfileSchema = z
 
 // Generate TypeScript types from the schemas
 export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>; // Generate TypeScript type from the schema
 
 export const authValidation = {
