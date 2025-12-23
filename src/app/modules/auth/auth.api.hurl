@@ -5,7 +5,7 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"raisaahmed@merepost.com",
+  "email":"raisa@merepost.com",
   "password":"SjAbc1@Bad",
   "fcmToken":""
 }
@@ -68,56 +68,55 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashHasan}}
+Authorization: {{ashrahim}}
 Content-Type: application/json
-
-
 
 {
   "profile": {
-    "about": "Experienced software engineer focused on backend systems, scalable APIs, cloud infrastructure, and clean architecture.",
-    "age": 29,
+    "about": "I am a frontend engineer passionate about UI/UX design, building accessible and responsive web applications, and mentoring junior developers.",
+    "age": 27,
     "ethnicity": "EAST_ASIAN",
-    "gender": "MALE",
-    "profession": "Software Engineer",
-    "experienceYear": 6,
+    "gender": "FEMALE",
+    "profession": "Frontend Engineer",
+    "experienceYear": 5,
     "availability": {
-      "monday": [
-        { "start": "09:00", "end": "12:00" },
-        { "start": "14:00", "end": "18:00" }
+      "tuesday": [
+        { "start": "10:00", "end": "13:00" },
+        { "start": "14:00", "end": "17:00" }
       ],
-      "wednesday": [
-        { "start": "10:00", "end": "16:00" }
+      "friday": [
+        { "start": "09:30", "end": "12:30" }
       ]
     },
-    "profileImage": "https://cdn.example.com/profile/user1.png",
+    "profileImage": "https://cdn.example.com/profile/female_user.png",
     "interests": [
-      "Backend Development",
-      "Cloud Engineering",
-      "Distributed Systems"
+      "UI Design",
+      "Accessibility",
+      "React Development"
     ]
   },
   "preference": {
     "careers": [
-      "Software Engineer",
-      "Data Scientist"
+      "UI/UX Designer",
+      "Software Engineer"
     ],
     "genders": [
-      "MALE",
-      "FEMALE"
+      "FEMALE",
+      "MALE"
     ],
     "ethnicities": [
-      "BLACK",
-      "EAST_ASIAN"
+      "EAST_ASIAN",
+      "PACIFIC_ISLANDER"
     ],
-    "notes": "Prefers career-oriented individuals with strong technical background.",
+    "notes": "Interested in collaborating with creative and driven professionals.",
     "age": {
-      "min": 25,
-      "max": 35
+      "min": 24,
+      "max": 32
     }
   },
-  "role": "MENTOR"
+  "role": "MENTEE"
 }
+
 
 
 

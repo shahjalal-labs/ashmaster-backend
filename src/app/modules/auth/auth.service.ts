@@ -294,6 +294,9 @@ const updateProfileIntoDB = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
+  if (payload.role)
+    throw new ApiError(httpStatus.BAD_REQUEST, "You can't change role");
+
   // Use transaction to ensure atomicity
   const result = await prisma.$transaction(async (tx) => {
     // Update user fields if provided
