@@ -14,7 +14,6 @@ router.get(
   "/suggestions",
   auth(),
   profileGuard(),
-  validateRequest(networkValidation.recommendationsQuerySchema, "query"),
   networkController.getSuggestions,
 );
 

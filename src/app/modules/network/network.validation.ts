@@ -25,21 +25,14 @@ const updateRequestStatusSchema = z.object({
   }),
 });
 
-// Get recommendations query
-const recommendationsQuerySchema = paginationSchema.extend({
-  filter: z.enum(["all", "mentors", "mentees"]).default("all"),
-});
-
 export type PaginationInput = z.infer<typeof paginationSchema>;
 export type SendRequestInput = z.infer<typeof sendRequestSchema>;
 export type UpdateRequestStatusInput = z.infer<
   typeof updateRequestStatusSchema
 >;
-export type RecommendationsQuery = z.infer<typeof recommendationsQuerySchema>;
 
 export const networkValidation = {
   paginationSchema,
   sendRequestSchema,
   updateRequestStatusSchema,
-  recommendationsQuerySchema,
 };
