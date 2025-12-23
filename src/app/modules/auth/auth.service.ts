@@ -107,30 +107,6 @@ const authLogin = async (payload: User) => {
 };
 //w: (end)  ╰──────────── authLogin ────────────╯
 
-//update or add user location
-/* const userLocationUpdateInDB = async (
-  userId: string,
-  userLocation: UserLocation,
-) => {
-  const location = await prisma.userLocation.findFirst({
-    where: { userId: userId },
-  });
-  if (!location) {
-    const result = await prisma.userLocation.create({
-      data: { ...userLocation, userId: userId },
-    });
-
-    return result;
-  }
-
-  const result = await prisma.userLocation.update({
-    where: { id: location.id },
-    data: userLocation,
-  });
-
-  return result;
-}; */
-
 //send forgot password otp
 //w: (start)╭──────────── sendForgotPasswordOtpDB ────────────╮
 const sendForgotPasswordOtpDB = async (email: string) => {
@@ -409,15 +385,15 @@ const updateProfileIntoDB = async (
 
       // 🛠️ FIX: Use ARRAY field names
       if (payload.preference.careers !== undefined) {
-        preferenceUpdateData.careers = payload.preference.careers; // ✅ Array
+        preferenceUpdateData.careers = payload.preference.careers;
       }
 
       if (payload.preference.genders !== undefined) {
-        preferenceUpdateData.genders = payload.preference.genders; // ✅ Array
+        preferenceUpdateData.genders = payload.preference.genders;
       }
 
       if (payload.preference.ethnicities !== undefined) {
-        preferenceUpdateData.ethnicities = payload.preference.ethnicities; // ✅ Array
+        preferenceUpdateData.ethnicities = payload.preference.ethnicities;
       }
 
       if (payload.preference.notes !== undefined) {
@@ -509,9 +485,9 @@ const completeProfile = async (
     // 🛠️ FIX: Create preference with ARRAY fields
     const preference = await tx.preference.create({
       data: {
-        careers: payload.preference.careers, // ✅ Array
-        genders: payload.preference.genders, // ✅ Array
-        ethnicities: payload.preference.ethnicities, // ✅ Array
+        careers: payload.preference.careers,
+        genders: payload.preference.genders,
+        ethnicities: payload.preference.ethnicities,
         notes: payload.preference.notes,
         age: payload.preference.age,
         userId: userId,
@@ -543,11 +519,9 @@ const completeProfile = async (
   return result;
 };
 //w: (end)  ╰──────────── completeProfile ────────────╯
-////w: (start)╭──────────── updateProfileImage ────────────╮
-const updateProfileImage = async (
-  userId: string,
-  file: Express.Multer.File,
-) => {
+//
+//w: (start)╭──────────── updateProfileImage ────────────╮
+const updateProfileImage = async (file: Express.Multer.File) => {
   if (file === undefined) {
     throw new ApiError(400, "Please select an image");
   }
@@ -581,7 +555,6 @@ export const authService = {
   authLogin,
   getProfileFromDB,
   updateProfileIntoDB,
-  userLocationUpdateInDB,
   sendForgotPasswordOtpDB,
   verifyForgotPasswordOtpCodeDB,
   resetForgotPasswordDB,

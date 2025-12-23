@@ -28,19 +28,8 @@ const authLogin = catchAsync(async (req, res) => {
   });
 });
 
-//update user location
-const updateUserLocation = catchAsync(async (req: Request, res: Response) => {
-  const { id } = req.user;
-  const updatedUser = await authService.userLocationUpdateInDB(id, req.body);
-  sendResponse(res, {
-    statusCode: 200,
-    success: true,
-    message: "User location added successfully",
-    data: updatedUser,
-  });
-});
-
 //send forgot password otp
+//w: (start)╭──────────── sendForgotPasswordOtp ────────────╮
 const sendForgotPasswordOtp = catchAsync(
   async (req: Request, res: Response) => {
     const email = req.body.email as string;
@@ -54,6 +43,7 @@ const sendForgotPasswordOtp = catchAsync(
     });
   },
 );
+//w: (end)  ╰──────────── sendForgotPasswordOtp ────────────╯
 
 // verify forgot password otp code
 //w: (start)╭──────────── verifyForgotPasswordOtpCode ────────────╮
@@ -135,9 +125,7 @@ const updateProfile = catchAsync(async (req: any, res: Response) => {
 // update user profile only logged in user
 //w: (start)╭──────────── updateProfileImage ────────────╮
 const updateProfileImage = catchAsync(async (req: any, res: Response) => {
-  const { id } = req.user;
-  const fileUrl = await authService.updateProfileImage(id, req.file);
-  console.log(fileUrl, "auth.controller.ts", 140);
+  const fileUrl = await authService.updateProfileImage(req.file);
 
   sendResponse(res, {
     statusCode: 200,
@@ -182,7 +170,6 @@ export const authController = {
   getProfile,
   getOtherProfile,
   updateProfile,
-  updateUserLocation,
   sendForgotPasswordOtp,
   verifyForgotPasswordOtpCode,
   resetPassword,
