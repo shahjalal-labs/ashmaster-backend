@@ -1,12 +1,10 @@
 import { User } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
 import bcrypt from "bcryptjs";
-import { ObjectId } from "mongodb";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
 import prisma from "../../../shared/prisma";
 import generateOTP from "../../../helpers/generateOtp";
-import sendEmail from "../../../helpers/sendEmail";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
@@ -14,6 +12,7 @@ import { emailQueue } from "../../../jobs/queues/emailQueue";
 //w: (start)╭──────────── createUser ────────────╮
 //create new user
 const createUserIntoDB = async (payload: User) => {
+  // ,,e,p,a,f(ipef)=> Email, Password, Fcm token, Fullname
   const existingUser = await prisma.user.findUnique({
     where: { email: payload.email },
   });
@@ -107,19 +106,6 @@ const signupVerification = async (payload: { email: string; otp: string }) => {
 };
 //w: (end)  ╰──────────── signupVerification ────────────╯
 
-//get single user
-//w: (start)╭──────────── getSingleUserIntoDB ────────────╮
-const getSingleUserIntoDB = async (id: string) => {
-  const user = await prisma.user.findUnique({ where: { id } });
-  if (!user) {
-    throw new ApiError(404, "user not found!");
-  }
-
-  const { password, ...sanitizedUser } = user;
-  return sanitizedUser;
-};
-//w: (end)  ╰──────────── getSingleUserIntoDB ────────────╯
-
 //w: (start)╭──────────── getUsers ────────────╮
 //get all users
 const getUsersIntoDB = async () => {
@@ -140,51 +126,8 @@ const getUsersIntoDB = async () => {
 };
 //w: (end)  ╰──────────── getUsers ────────────╯
 
-//update user
-const updateUserIntoDB = async (id: string, userData: any) => {
-  if (!ObjectId.isValid(id)) {
-    throw new ApiError(400, "Invalid user ID format");
-  }
-  const existingUser = await getSingleUserIntoDB(id);
-  if (!existingUser) {
-    throw new ApiError(404, "user not found for edit user");
-  }
-  const updatedUser = await prisma.user.update({
-    where: { id },
-    data: userData,
-  });
-
-  const { password, ...sanitizedUser } = updatedUser;
-
-  return sanitizedUser;
-};
-
-//w: (start)╭──────────── deleteUser ────────────╮
-//delete user
-const deleteUserIntoDB = async (userId: string, loggedId: string) => {
-  if (!ObjectId.isValid(userId)) {
-    throw new ApiError(400, "Invalid user ID format");
-  }
-
-  if (userId === loggedId) {
-    throw new ApiError(403, "You can't delete your own account!");
-  }
-  const existingUser = await getSingleUserIntoDB(userId);
-  if (!existingUser) {
-    throw new ApiError(404, "user not found for delete this");
-  }
-  await prisma.user.delete({
-    where: { id: userId },
-  });
-  return;
-};
-//w: (end)  ╰──────────── deleteUser ────────────╯
-
 export const userService = {
   createUserIntoDB,
   signupVerification,
   getUsersIntoDB,
-  getSingleUserIntoDB,
-  updateUserIntoDB,
-  deleteUserIntoDB,
 };
