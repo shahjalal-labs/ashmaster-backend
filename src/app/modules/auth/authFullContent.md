@@ -1597,7 +1597,7 @@ Authorization: {{ashEsha}}
 
 POST {{port6011}}/auth/send-forgot-otp
 {
-   "email":"yousufbinhadi@merepost.com" 
+   "email":"yousufbinhadi@merepost.com"
 }
 
 # verify forgot password otp
@@ -1605,7 +1605,7 @@ POST {{port6011}}/auth/verify-forgot-otp
 {
    "email":"yousufbinhadi@merepost.com",
    "otp":"7565"
-} 
+}
 
 
 # reset password
