@@ -9,6 +9,17 @@ import {
   RecommendationsQuery,
 } from "./network.validation";
 
+const suggestions = async (userId: string) => {
+  const user = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: userId,
+    },
+  });
+  if (user.profilStatus === "INCOMPLETE") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Complete your profile");
+  }
+};
+
 // Helper to parse availability
 const parseAvailability = (availability: any): string[] => {
   if (!availability) return [];
@@ -34,31 +45,33 @@ const hasMatchingAvailability = (avail1: any, avail2: any): boolean => {
   );
 };
 
-// Get suggestions - SIMPLE and FAST
+// SIMPLE LOGIC: Get suggestions where at least ONE interest matches
 const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
-  const { page = 1, limit = 10, filter, search } = query;
+  const { page = 1, limit = 10, filter } = query;
   const skip = (page - 1) * limit;
 
-  // Get current user details
+  // Get current user
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       profile: true,
       preference: true,
-      connectionsAsUser1: { select: { user2Id: true } },
-      connectionsAsUser2: { select: { user1Id: true } },
-      sentRequests: {
-        where: { status: RequestStatus.PENDING },
-        select: { receiverId: true },
-      },
-      receivedRequests: {
-        where: { status: RequestStatus.PENDING },
-        select: { senderId: true },
-      },
     },
   });
 
-  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!user || !user.profile) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Please complete your profile first",
+    );
+  }
+
+  if (!user.preference) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Please set your preferences first",
+    );
+  }
 
   // Determine target role
   let targetRole: UserRole =
@@ -66,109 +79,75 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
   if (filter === "mentors") targetRole = UserRole.MENTOR;
   if (filter === "mentees") targetRole = UserRole.MENTEE;
 
-  // Collect IDs to exclude
-  const excludedIds = new Set([
-    userId,
-    ...user.connectionsAsUser1.map((c) => c.user2Id),
-    ...user.connectionsAsUser2.map((c) => c.user1Id),
-    ...user.sentRequests.map((r) => r.receiverId),
-    ...user.receivedRequests.map((r) => r.senderId),
-  ]);
-
-  // Build WHERE clause with proper TypeScript types
+  // Build WHERE clause - MUST MATCH ALL preferences (AND operator)
   const whereClause: Prisma.UserWhereInput = {
-    id: { notIn: Array.from(excludedIds) },
     role: targetRole,
     profilStatus: "COMPLETE",
+    id: { not: userId }, // Exclude self
   };
 
-  // Add search if provided
-  if (search) {
-    whereClause.OR = [
-      { fullname: { contains: search, mode: "insensitive" as const } },
-      { email: { contains: search, mode: "insensitive" as const } },
-      {
-        profile: {
-          OR: [
-            { profession: { contains: search, mode: "insensitive" as const } },
-            { about: { contains: search, mode: "insensitive" as const } },
-          ],
-        },
+  // Apply AND conditions for ALL preferences
+  const andConditions: Prisma.UserWhereInput[] = [];
+
+  // 1. AGE MATCH (REQUIRED)
+  andConditions.push({
+    profile: {
+      age: {
+        gte: user.preference.age.min,
+        lte: user.preference.age.max,
       },
-    ];
+    },
+  });
+
+  // 2. GENDER MATCH (REQUIRED - if gender preferences exist)
+  if (user.preference.genders && user.preference.genders.length > 0) {
+    andConditions.push({
+      profile: {
+        gender: { in: user.preference.genders },
+      },
+    });
   }
 
-  // Apply user preferences if they exist
-  if (user.preference) {
-    const andConditions: Prisma.UserWhereInput[] = [];
+  // 3. ETHNICITY MATCH (REQUIRED - if ethnicity preferences exist)
+  if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
+    andConditions.push({
+      profile: {
+        ethnicity: { in: user.preference.ethnicities },
+      },
+    });
+  }
 
-    // Age range
-    if (user.preference.age) {
-      andConditions.push({
+  // 4. CAREER/INTEREST MATCH (REQUIRED - MUST have at least ONE match)
+  // Using AND operator: check if any of user's preferred careers matches
+  // the other user's profession OR any of their interests
+  if (user.preference.careers && user.preference.careers.length > 0) {
+    const careerOrConditions: Prisma.UserWhereInput[] = [];
+
+    // Check each preferred career
+    user.preference.careers.forEach((career) => {
+      careerOrConditions.push({
         profile: {
-          age: {
-            gte: user.preference.age.min,
-            lte: user.preference.age.max,
-          },
-        },
-      });
-    }
-
-    // Gender
-    if (user.preference.genders && user.preference.genders.length > 0) {
-      andConditions.push({
-        profile: {
-          gender: { in: user.preference.genders },
-        },
-      });
-    }
-
-    // Ethnicity
-    if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
-      andConditions.push({
-        profile: {
-          ethnicity: { in: user.preference.ethnicities },
-        },
-      });
-    }
-
-    // Career - simple OR condition
-    if (user.preference.careers && user.preference.careers.length > 0) {
-      const careerConditions: Prisma.UserWhereInput[] =
-        user.preference.careers.map((career) => ({
           OR: [
-            {
-              profile: {
-                profession: {
-                  contains: career,
-                  mode: "insensitive" as const,
-                },
-              },
-            },
-            {
-              profile: {
-                interests: {
-                  has: career,
-                },
-              },
-            },
+            { profession: { contains: career, mode: "insensitive" as const } },
+            { interests: { has: career } },
           ],
-        }));
-
-      andConditions.push({
-        OR: careerConditions,
+        },
       });
-    }
+    });
 
-    if (andConditions.length > 0) {
-      whereClause.AND = andConditions;
-    }
+    // AT LEAST ONE career must match (using OR between careers)
+    andConditions.push({
+      OR: careerOrConditions,
+    });
   }
+
+  // Add AND conditions
+  whereClause.AND = andConditions;
 
   // Get total count
   const total = await prisma.user.count({ where: whereClause });
 
-  // Get suggestions with pagination
+  // Get suggestions
   const suggestions = await prisma.user.findMany({
     where: whereClause,
     include: {
@@ -186,114 +165,158 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
         },
       },
     },
-    orderBy: { createdAt: "desc" },
     skip,
     take: limit,
   });
 
-  // Calculate simple match scores
-  const enhancedSuggestions = suggestions.map((suggestion) => {
-    let matchScore = 0;
-    let hasAvailabilityMatch = false;
+  // Check availability match and calculate match score
+  const enhancedSuggestions = await Promise.all(
+    suggestions.map(async (suggestion) => {
+      if (!suggestion.profile) return null;
 
-    // Check availability match
-    if (user.profile?.availability && suggestion.profile?.availability) {
-      hasAvailabilityMatch = hasMatchingAvailability(
+      // Check if already connected or pending
+      const [existingConnection, existingRequest] = await Promise.all([
+        prisma.connection.findFirst({
+          where: {
+            OR: [
+              { user1Id: userId, user2Id: suggestion.id },
+              { user1Id: suggestion.id, user2Id: userId },
+            ],
+          },
+        }),
+        prisma.connectionRequest.findFirst({
+          where: {
+            OR: [
+              {
+                senderId: userId,
+                receiverId: suggestion.id,
+                status: "PENDING",
+              },
+              {
+                senderId: suggestion.id,
+                receiverId: userId,
+                status: "PENDING",
+              },
+            ],
+          },
+        }),
+      ]);
+
+      // Skip if already connected or pending
+      if (existingConnection || existingRequest) {
+        return null;
+      }
+
+      // Check availability match
+      const hasAvailabilityMatch = hasMatchingAvailability(
         user.profile.availability,
         suggestion.profile.availability,
       );
-    }
 
-    // Calculate match percentage (simple version)
-    if (user.preference && suggestion.profile) {
-      const checks = [
-        // Age (25%)
-        () =>
-          user.preference?.age
-            ? suggestion.profile!.age >= user.preference.age.min &&
-              suggestion.profile!.age <= user.preference.age.max
-            : true,
+      // Calculate match score based on preferences
+      let matchScore = 0;
 
-        // Gender (25%)
-        () =>
-          user.preference?.genders && user.preference.genders.length > 0
-            ? user.preference.genders.includes(suggestion.profile!.gender)
-            : true,
+      // Age match (25 points)
+      if (
+        suggestion.profile.age >= user.preference.age.min &&
+        suggestion.profile.age <= user.preference.age.max
+      ) {
+        matchScore += 25;
+      }
 
-        // Ethnicity (25%)
-        () =>
-          user.preference?.ethnicities && user.preference.ethnicities.length > 0
-            ? user.preference.ethnicities.includes(
-                suggestion.profile!.ethnicity,
-              )
-            : true,
+      // Gender match (25 points)
+      if (
+        user.preference.genders &&
+        user.preference.genders.length > 0 &&
+        user.preference.genders.includes(suggestion.profile.gender)
+      ) {
+        matchScore += 25;
+      }
 
-        // Career/Interest (25%)
-        () => {
-          if (!user.preference?.careers || user.preference.careers.length === 0)
-            return true;
-          const lowerProfession = suggestion.profile!.profession.toLowerCase();
-          const lowerInterests = suggestion.profile!.interests.map((i) =>
-            i.toLowerCase(),
+      // Ethnicity match (25 points)
+      if (
+        user.preference.ethnicities &&
+        user.preference.ethnicities.length > 0 &&
+        user.preference.ethnicities.includes(suggestion.profile.ethnicity)
+      ) {
+        matchScore += 25;
+      }
+
+      // Career/Interest match (25 points)
+      if (user.preference.careers && user.preference.careers.length > 0) {
+        const lowerProfession = suggestion.profile.profession.toLowerCase();
+        const lowerInterests = suggestion.profile.interests.map((i) =>
+          i.toLowerCase(),
+        );
+
+        const hasCareerMatch = user.preference.careers.some((career) => {
+          const lowerCareer = career.toLowerCase();
+          return (
+            lowerProfession.includes(lowerCareer) ||
+            lowerInterests.some((interest) => interest.includes(lowerCareer))
           );
-          return user.preference.careers.some(
-            (career) =>
-              lowerProfession.includes(career.toLowerCase()) ||
-              lowerInterests.some((interest) =>
-                interest.includes(career.toLowerCase()),
-              ),
-          );
-        },
-      ];
+        });
 
-      const passedChecks = checks.filter((check) => check()).length;
-      matchScore = Math.round((passedChecks / checks.length) * 100);
-    }
+        if (hasCareerMatch) {
+          matchScore += 25;
+        }
+      }
 
-    return {
-      id: suggestion.id,
-      fullname: suggestion.fullname,
-      email: suggestion.email,
-      role: suggestion.role,
-      profile: suggestion.profile,
-      matchScore,
-      hasAvailabilityMatch,
-      // Simple highlight text
-      highlight: hasAvailabilityMatch ? "Available times match!" : "",
-    };
-  });
+      return {
+        id: suggestion.id,
+        fullname: suggestion.fullname,
+        email: suggestion.email,
+        role: suggestion.role,
+        profile: suggestion.profile,
+        matchScore,
+        hasAvailabilityMatch,
+        highlight: hasAvailabilityMatch ? "Available times match!" : "",
+      };
+    }),
+  );
 
-  // Sort by: 1. Availability match, 2. Match score, 3. Newest
-  enhancedSuggestions.sort((a, b) => {
+  // Remove null values (filtered out connections/pending)
+  const filteredSuggestions = enhancedSuggestions.filter((s) => s !== null);
+
+  // SORTING:
+  // 1. First: Complete match (all preferences + availability)
+  // 2. Second: Complete match without availability
+  filteredSuggestions.sort((a, b) => {
+    // Priority 1: Availability match
     if (a.hasAvailabilityMatch !== b.hasAvailabilityMatch) {
-      return a.hasAvailabilityMatch ? -1 : 1;
+      return a.hasAvailabilityMatch ? -1 : 1; // a first if has availability match
     }
+
+    // Priority 2: Higher match score
     if (b.matchScore !== a.matchScore) {
       return b.matchScore - a.matchScore;
     }
-    return 0; // Already sorted by createdAt in DB query
+
+    // Priority 3: Newer profiles
+    return 0;
   });
 
   return {
     meta: {
       page,
       limit,
-      total,
-      hasNextPage: total > skip + limit,
+      total: filteredSuggestions.length,
+      hasNextPage: false, // Since we filtered in memory
       hasPrevPage: page > 1,
     },
-    data: enhancedSuggestions,
+    data: filteredSuggestions,
   };
 };
 
-// Send connection request - SIMPLE
+// Rest of the functions remain SIMPLE as before...
+
+// Send connection request
 const sendConnectionRequest = async (
   senderId: string,
   payload: SendRequestInput,
 ) => {
   const { receiverId, message } = payload;
 
-  // Basic checks
   if (senderId === receiverId) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -301,16 +324,9 @@ const sendConnectionRequest = async (
     );
   }
 
-  // Get both users
   const [sender, receiver] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: senderId },
-      include: { profile: true },
-    }),
-    prisma.user.findUnique({
-      where: { id: receiverId },
-      include: { profile: true },
-    }),
+    prisma.user.findUnique({ where: { id: senderId } }),
+    prisma.user.findUnique({ where: { id: receiverId } }),
   ]);
 
   if (!sender || !receiver) {
@@ -319,9 +335,10 @@ const sendConnectionRequest = async (
 
   // Role check
   if (sender.role === receiver.role) {
+    const oppositeRole = sender.role === "MENTOR" ? "mentee" : "mentor";
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `Mentors can only connect with mentees and vice versa`,
+      `You can only connect with ${oppositeRole}s`,
     );
   }
 
@@ -339,7 +356,7 @@ const sendConnectionRequest = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Already connected");
   }
 
-  // Check for existing pending request
+  // Check for pending request
   const existingRequest = await prisma.connectionRequest.findFirst({
     where: {
       OR: [
@@ -363,18 +380,13 @@ const sendConnectionRequest = async (
     );
   }
 
-  // Create the request
+  // Create request
   const request = await prisma.connectionRequest.create({
     data: {
       senderId,
       receiverId,
       message,
     },
-  });
-
-  // Get the request with user details
-  const requestWithDetails = await prisma.connectionRequest.findUnique({
-    where: { id: request.id },
     include: {
       sender: {
         select: {
@@ -397,10 +409,10 @@ const sendConnectionRequest = async (
     },
   });
 
-  return requestWithDetails;
+  return request;
 };
 
-// Get pending requests - SIMPLE
+// Get pending requests
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
   const { page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
@@ -454,7 +466,6 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     prisma.connectionRequest.count({ where: whereClause }),
   ]);
 
-  // Format response
   const formattedRequests = requests.map((request) => ({
     ...request,
     isSentByMe: request.senderId === userId,
@@ -473,27 +484,21 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
   };
 };
 
-// Update request status - SIMPLE
+// Update request status
 const updateRequestStatus = async (
   userId: string,
   payload: UpdateRequestStatusInput,
 ) => {
   const { requestId, status } = payload;
 
-  // Find request
   const request = await prisma.connectionRequest.findUnique({
     where: { id: requestId },
-    include: {
-      sender: { include: { profile: true } },
-      receiver: { include: { profile: true } },
-    },
   });
 
   if (!request) {
     throw new ApiError(httpStatus.NOT_FOUND, "Request not found");
   }
 
-  // Authorization check
   if (request.receiverId !== userId) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
@@ -505,7 +510,6 @@ const updateRequestStatus = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Request already processed");
   }
 
-  // Update request
   const updatedRequest = await prisma.connectionRequest.update({
     where: { id: requestId },
     data: { status },
@@ -527,7 +531,6 @@ const updateRequestStatus = async (
     },
   });
 
-  // If accepted, create connection
   if (status === RequestStatus.ACCEPTED) {
     const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
 
@@ -542,7 +545,7 @@ const updateRequestStatus = async (
   return updatedRequest;
 };
 
-// Get connections - SIMPLE
+// Get connections
 const getConnections = async (userId: string, query: PaginationInput) => {
   const { page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
@@ -597,7 +600,6 @@ const getConnections = async (userId: string, query: PaginationInput) => {
     prisma.connection.count({ where: whereClause }),
   ]);
 
-  // Format: get the other user
   const formattedConnections = connections.map((connection) => ({
     id: connection.id,
     otherUser:
@@ -617,9 +619,8 @@ const getConnections = async (userId: string, query: PaginationInput) => {
   };
 };
 
-// Remove connection - SIMPLE
+// Remove connection
 const removeConnection = async (userId: string, connectionId: string) => {
-  // Find connection
   const connection = await prisma.connection.findUnique({
     where: { id: connectionId },
   });
@@ -628,7 +629,6 @@ const removeConnection = async (userId: string, connectionId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Connection not found");
   }
 
-  // Authorization check
   if (connection.user1Id !== userId && connection.user2Id !== userId) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
@@ -636,7 +636,6 @@ const removeConnection = async (userId: string, connectionId: string) => {
     );
   }
 
-  // Delete connection
   await prisma.connection.delete({
     where: { id: connectionId },
   });
@@ -644,7 +643,7 @@ const removeConnection = async (userId: string, connectionId: string) => {
   return { success: true };
 };
 
-// Get network stats - SIMPLE
+// Get network stats
 const getNetworkStats = async (userId: string) => {
   const [connectionsCount, sentRequestsCount, receivedRequestsCount] =
     await Promise.all([
@@ -683,4 +682,5 @@ export const networkService = {
   getConnections,
   removeConnection,
   getNetworkStats,
+  suggestions,
 };
