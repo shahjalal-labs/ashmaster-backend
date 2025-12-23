@@ -72,47 +72,53 @@ Authorization: {{ashHasan}}
 Content-Type: application/json
 
 
+
 {
   "profile": {
-    "about": "I am an early-stage startup professional aiming to strengthen my marketing and growth strategy skills through expert mentorship and hands-on learning.",
-    "age": 26,
+    "about": "Experienced software engineer focused on backend systems, scalable APIs, cloud infrastructure, and clean architecture.",
+    "age": 29,
     "ethnicity": "EAST_ASIAN",
     "gender": "MALE",
-    "profession": "Startup Operations Associate",
-    "experienceYear": 3,
+    "profession": "Software Engineer",
+    "experienceYear": 6,
     "availability": {
       "monday": [
-        { "start": "20:00", "end": "21:00" }
+        { "start": "09:00", "end": "12:00" },
+        { "start": "14:00", "end": "18:00" }
       ],
       "wednesday": [
-        { "start": "16:00", "end": "20:00" }
-      ],
-      "sunday": [
-        { "start": "08:00", "end": "13:00" }
+        { "start": "10:00", "end": "16:00" }
       ]
     },
-    "profileImage": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1766055758422-o1znpme52q.png",
+    "profileImage": "https://cdn.example.com/profile/user1.png",
     "interests": [
-      "Startup Growth",
-      "Digital Marketing",
-      "Business Strategy",
-      "Customer Acquisition"
+      "Backend Development",
+      "Cloud Engineering",
+      "Distributed Systems"
     ]
   },
-
   "preference": {
-    "career": "Business & Marketing",
-    "gender": "MALE",
-    "ethnicity": "MIDDLE_EASTERN",
-    "notes": "Looking for a mentor with strong brand-building and data-driven marketing experience.",
+    "careers": [
+      "Software Engineer",
+      "Data Scientist"
+    ],
+    "genders": [
+      "MALE",
+      "FEMALE"
+    ],
+    "ethnicities": [
+      "BLACK",
+      "EAST_ASIAN"
+    ],
+    "notes": "Prefers career-oriented individuals with strong technical background.",
     "age": {
-      "min": 28,
-      "max": 45
+      "min": 25,
+      "max": 35
     }
   },
-
-  "role": "MENTEE"
+  "role": "MENTOR"
 }
+
 
 
 
