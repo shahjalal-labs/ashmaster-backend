@@ -1,7 +1,6 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { Prisma, UserRole, RequestStatus } from "@prisma/client";
 import {
   PaginationInput,
   SendRequestInput,
@@ -9,87 +8,83 @@ import {
   RecommendationsQuery,
 } from "./network.validation";
 
-import redisClient from "../../../shared/redis";
-
-// Cache keys
-const CACHE_PREFIX = "network:";
-const SUGGESTIONS_CACHE_TTL = 300; // 5 minutes
-const CONNECTIONS_CACHE_TTL = 600; // 10 minutes
-
-// Helper to get cache key
-const getCacheKey = (
-  userId: string,
-  type: string,
-  page: number,
-  limit: number,
-  filter?: string,
-): string => {
-  return `${CACHE_PREFIX}${type}:${userId}:${filter || "all"}:${page}:${limit}`;
-};
-
-// Clear cache for user
-const clearUserNetworkCache = async (userId: string): Promise<void> => {
+// Helper to parse availability
+const parseAvailability = (availability: any): string[] => {
+  if (!availability) return [];
+  if (Array.isArray(availability)) return availability;
   try {
-    const pattern = `${CACHE_PREFIX}*:${userId}:*`;
-    const keys = await redisClient.keys(pattern);
-    if (keys.length > 0) {
-      await redisClient.del(...keys);
-    }
-  } catch (error) {
-    console.error("Failed to clear network cache:", error);
+    return JSON.parse(availability);
+  } catch {
+    return [];
   }
 };
 
-//w: (start)╭──────────── getUserWithDetails ────────────╮
-// Get user with profile and preference
-const getUserWithDetails = async (userId: string) => {
-  return await prisma.user.findUnique({
+// Helper to check availability match
+const hasMatchingAvailability = (avail1: any, avail2: any): boolean => {
+  const slots1 = parseAvailability(avail1);
+  const slots2 = parseAvailability(avail2);
+
+  if (slots1.length === 0 || slots2.length === 0) return false;
+
+  return slots1.some((slot1) =>
+    slots2.some(
+      (slot2) => slot1.toLowerCase().trim() === slot2.toLowerCase().trim(),
+    ),
+  );
+};
+
+// Get suggestions - SIMPLE and FAST
+const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
+  const { page = 1, limit = 10, filter } = query;
+  const skip = (page - 1) * limit;
+
+  // Get current user details
+  const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       profile: true,
       preference: true,
+      connectionsAsUser1: { select: { user2Id: true } },
+      connectionsAsUser2: { select: { user1Id: true } },
+      sentRequests: {
+        where: { status: "PENDING" },
+        select: { receiverId: true },
+      },
+      receivedRequests: {
+        where: { status: "PENDING" },
+        select: { senderId: true },
+      },
     },
   });
-};
-//w: (end)  ╰──────────── getUserWithDetails ────────────╯
 
-//w: (start)╭──────────── getSuggestions ────────────╮
-// Get suggestions based on user role and preference
-const getSuggestionsFromDB = async (
-  userId: string,
-  query: RecommendationsQuery,
-) => {
-  const user = await getUserWithDetails(userId);
-  if (!user) {
-    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  }
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
 
-  const { page, limit, filter } = query;
-  const skip = (page - 1) * limit;
+  // Determine target role
+  let targetRole = user.role === "MENTOR" ? "MENTEE" : "MENTOR";
+  if (filter === "mentors") targetRole = "MENTOR";
+  if (filter === "mentees") targetRole = "MENTEE";
 
-  // Determine target role based on user role and filter
-  let targetRole: UserRole | undefined;
-  if (filter === "mentors") {
-    targetRole = UserRole.MENTOR;
-  } else if (filter === "mentees") {
-    targetRole = UserRole.MENTEE;
-  } else {
-    targetRole =
-      user.role === UserRole.MENTOR ? UserRole.MENTEE : UserRole.MENTOR;
-  }
+  // Collect IDs to exclude
+  const excludedIds = new Set([
+    userId,
+    ...user.connectionsAsUser1.map((c) => c.user2Id),
+    ...user.connectionsAsUser2.map((c) => c.user1Id),
+    ...user.sentRequests.map((r) => r.receiverId),
+    ...user.receivedRequests.map((r) => r.senderId),
+  ]);
 
-  // Build where clause for suggestions
-  const whereClause: Prisma.UserWhereInput = {
-    id: { not: userId },
+  // Build WHERE clause
+  const whereClause: any = {
+    id: { notIn: Array.from(excludedIds) },
     role: targetRole,
     profilStatus: "COMPLETE",
   };
 
-  const andConditions: Prisma.UserWhereInput[] = [];
-
-  // Apply preference filters if user has preference
+  // Apply user preferences if they exist
   if (user.preference) {
-    // Age range filter
+    const andConditions = [];
+
+    // Age range
     if (user.preference.age) {
       andConditions.push({
         profile: {
@@ -101,8 +96,8 @@ const getSuggestionsFromDB = async (
       });
     }
 
-    // Gender filter - only if user has specific gender preferences
-    if (user.preference.genders && user.preference.genders.length > 0) {
+    // Gender
+    if (user.preference.genders?.length > 0) {
       andConditions.push({
         profile: {
           gender: { in: user.preference.genders },
@@ -110,8 +105,8 @@ const getSuggestionsFromDB = async (
       });
     }
 
-    // Ethnicity filter - only if user has specific ethnicity preferences
-    if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
+    // Ethnicity
+    if (user.preference.ethnicities?.length > 0) {
       andConditions.push({
         profile: {
           ethnicity: { in: user.preference.ethnicities },
@@ -119,90 +114,31 @@ const getSuggestionsFromDB = async (
       });
     }
 
-    // Career/Profession filter - check for any matching career
-    if (user.preference.careers && user.preference.careers.length > 0) {
-      const careerOrConditions: Prisma.UserWhereInput[] = [];
-
-      for (const career of user.preference.careers) {
-        careerOrConditions.push({
-          profile: {
-            profession: {
-              contains: career,
-              mode: "insensitive" as const,
-            },
+    // Career - simple OR condition
+    if (user.preference.careers?.length > 0) {
+      const careerConditions = user.preference.careers.map((career) => ({
+        OR: [
+          {
+            profile: { profession: { contains: career, mode: "insensitive" } },
           },
-        });
-        careerOrConditions.push({
-          profile: {
-            interests: {
-              has: career,
-            },
-          },
-        });
-      }
-
-      andConditions.push({
-        OR: careerOrConditions,
-      });
+          { profile: { interests: { has: career } } },
+        ],
+      }));
+      andConditions.push({ OR: careerConditions });
     }
-  }
 
-  if (andConditions.length > 0) {
-    whereClause.AND = andConditions;
-  }
-
-  // Get users that the current user is already connected with or has pending requests
-  const [existingConnections, pendingRequests] = await Promise.all([
-    prisma.connection.findMany({
-      where: {
-        OR: [{ user1Id: userId }, { user2Id: userId }],
-      },
-      select: {
-        user1Id: true,
-        user2Id: true,
-      },
-    }),
-    prisma.connectionRequest.findMany({
-      where: {
-        OR: [{ senderId: userId }, { receiverId: userId }],
-        status: RequestStatus.PENDING,
-      },
-      select: {
-        senderId: true,
-        receiverId: true,
-      },
-    }),
-  ]);
-
-  // Get all user IDs to exclude
-  const excludedUserIds = [
-    ...existingConnections.map((c) =>
-      c.user1Id === userId ? c.user2Id : c.user1Id,
-    ),
-    ...pendingRequests.map((r) =>
-      r.senderId === userId ? r.receiverId : r.senderId,
-    ),
-  ];
-
-  if (excludedUserIds.length > 0) {
-    whereClause.id = {
-      not: {
-        in: excludedUserIds,
-      },
-    };
+    if (andConditions.length > 0) {
+      whereClause.AND = andConditions;
+    }
   }
 
   // Get total count
   const total = await prisma.user.count({ where: whereClause });
 
-  // Get paginated suggestions
+  // Get suggestions with pagination
   const suggestions = await prisma.user.findMany({
     where: whereClause,
-    select: {
-      id: true,
-      fullname: true,
-      email: true,
-      role: true,
+    include: {
       profile: {
         select: {
           about: true,
@@ -213,119 +149,96 @@ const getSuggestionsFromDB = async (
           interests: true,
           gender: true,
           ethnicity: true,
+          availability: true,
         },
       },
     },
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy: { createdAt: "desc" },
     skip,
     take: limit,
   });
 
-  // Calculate match percentage based on preference
-  const suggestionsWithMatch = suggestions.map((suggestion) => {
-    let matchPercentage = 0;
-    let matchReasons: string[] = [];
+  // Calculate simple match scores
+  const enhancedSuggestions = suggestions.map((suggestion) => {
+    let matchScore = 0;
+    let hasAvailabilityMatch = false;
 
-    if (user.preference && suggestion.profile) {
-      // Age match (25 points)
-      if (user.preference.age) {
-        if (
-          suggestion.profile.age >= user.preference.age.min &&
-          suggestion.profile.age <= user.preference.age.max
-        ) {
-          matchPercentage += 25;
-          matchReasons.push("Age matches your preference");
-        }
-      }
-
-      // Gender match (25 points)
-      if (user.preference.genders && user.preference.genders.length > 0) {
-        if (user.preference.genders.includes(suggestion.profile.gender)) {
-          matchPercentage += 25;
-          matchReasons.push("Gender matches your preference");
-        }
-      } else {
-        // Empty array means "any gender" - still give points for flexibility
-        matchPercentage += 25;
-        matchReasons.push("You're open to any gender");
-      }
-
-      // Ethnicity match (25 points)
-      if (
-        user.preference.ethnicities &&
-        user.preference.ethnicities.length > 0
-      ) {
-        if (
-          user.preference.ethnicities.includes(suggestion.profile.ethnicity)
-        ) {
-          matchPercentage += 25;
-          matchReasons.push("Ethnicity matches your preference");
-        }
-      } else {
-        // Empty array means "any ethnicity" - still give points for flexibility
-        matchPercentage += 25;
-        matchReasons.push("You're open to any ethnicity");
-      }
-
-      // Career/Profession match (25 points)
-      if (user.preference.careers && user.preference.careers.length > 0) {
-        let careerMatch = false;
-        const lowerProfession = suggestion.profile.profession.toLowerCase();
-        const lowerInterests = suggestion.profile.interests.map((i) =>
-          i.toLowerCase(),
-        );
-
-        // Check if any preferred career matches profession or interests
-        for (const career of user.preference.careers) {
-          const lowerCareer = career.toLowerCase();
-          if (
-            lowerProfession.includes(lowerCareer) ||
-            lowerInterests.some((interest) => interest.includes(lowerCareer))
-          ) {
-            careerMatch = true;
-            break;
-          }
-        }
-
-        if (careerMatch) {
-          matchPercentage += 25;
-          matchReasons.push("Career/interest matches your preference");
-        }
-      } else {
-        // Empty array means "any career" - still give points for flexibility
-        matchPercentage += 25;
-        matchReasons.push("You're open to any career");
-      }
+    // Check availability match
+    if (user.profile?.availability && suggestion.profile?.availability) {
+      hasAvailabilityMatch = hasMatchingAvailability(
+        user.profile.availability,
+        suggestion.profile.availability,
+      );
     }
 
-    // Cap match percentage at 100%
-    matchPercentage = Math.min(matchPercentage, 100);
+    // Calculate match percentage (simple version)
+    if (user.preference && suggestion.profile) {
+      const checks = [
+        // Age (25%)
+        () =>
+          user.preference?.age
+            ? suggestion.profile!.age >= user.preference.age.min &&
+              suggestion.profile!.age <= user.preference.age.max
+            : true,
+
+        // Gender (25%)
+        () =>
+          user.preference?.genders?.length
+            ? user.preference.genders.includes(suggestion.profile!.gender)
+            : true,
+
+        // Ethnicity (25%)
+        () =>
+          user.preference?.ethnicities?.length
+            ? user.preference.ethnicities.includes(
+                suggestion.profile!.ethnicity,
+              )
+            : true,
+
+        // Career/Interest (25%)
+        () => {
+          if (!user.preference?.careers?.length) return true;
+          const lowerProfession = suggestion.profile!.profession.toLowerCase();
+          const lowerInterests = suggestion.profile!.interests.map((i) =>
+            i.toLowerCase(),
+          );
+          return user.preference.careers.some(
+            (career) =>
+              lowerProfession.includes(career.toLowerCase()) ||
+              lowerInterests.some((interest) =>
+                interest.includes(career.toLowerCase()),
+              ),
+          );
+        },
+      ];
+
+      const passedChecks = checks.filter((check) => check()).length;
+      matchScore = Math.round((passedChecks / checks.length) * 100);
+    }
 
     return {
-      ...suggestion,
-      matchPercentage,
-      matchReasons,
+      id: suggestion.id,
+      fullname: suggestion.fullname,
+      email: suggestion.email,
+      role: suggestion.role,
+      profile: suggestion.profile,
+      matchScore,
+      hasAvailabilityMatch,
+      // Simple highlight text
+      highlight: hasAvailabilityMatch ? "Available times match!" : "",
     };
   });
 
-  // Sort by match percentage (highest first), then by newest
-  suggestionsWithMatch.sort((a, b) => {
-    if (b.matchPercentage !== a.matchPercentage) {
-      return b.matchPercentage - a.matchPercentage;
+  // Sort by: 1. Availability match, 2. Match score, 3. Newest
+  enhancedSuggestions.sort((a, b) => {
+    if (a.hasAvailabilityMatch !== b.hasAvailabilityMatch) {
+      return a.hasAvailabilityMatch ? -1 : 1;
     }
-    // If same match percentage, sort by newest
-    return 0;
+    if (b.matchScore !== a.matchScore) {
+      return b.matchScore - a.matchScore;
+    }
+    return 0; // Already sorted by createdAt in DB query
   });
-
-  console.log(
-    "Where clause for suggestions:",
-    JSON.stringify(whereClause, null, 2),
-  );
-  console.log(
-    `Found ${suggestionsWithMatch.length} suggestions for user ${userId}`,
-  );
 
   return {
     meta: {
@@ -335,44 +248,55 @@ const getSuggestionsFromDB = async (
       hasNextPage: total > skip + limit,
       hasPrevPage: page > 1,
     },
-    data: suggestionsWithMatch,
-    userRole: user.role,
-    targetRole,
+    data: enhancedSuggestions,
   };
 };
-//w: (end)  ╰──────────── getSuggestions ────────────╯
 
-//w: (start)╭──────────── sendConnectionRequest ────────────╮
-// Send connection request
+// Send connection request - SIMPLE
 const sendConnectionRequest = async (
   senderId: string,
   payload: SendRequestInput,
 ) => {
-  // Check if sender and receiver exist
+  const { receiverId, message } = payload;
+
+  // Basic checks
+  if (senderId === receiverId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Cannot send request to yourself",
+    );
+  }
+
+  // Get both users
   const [sender, receiver] = await Promise.all([
-    prisma.user.findUnique({ where: { id: senderId } }),
-    prisma.user.findUnique({ where: { id: payload.receiverId } }),
+    prisma.user.findUnique({
+      where: { id: senderId },
+      include: { profile: true },
+    }),
+    prisma.user.findUnique({
+      where: { id: receiverId },
+      include: { profile: true },
+    }),
   ]);
 
   if (!sender || !receiver) {
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  const oppositeRole = sender.role === "MENTOR" ? "MENTEE" : "MENTOR";
-
+  // Role check
   if (sender.role === receiver.role) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
-      `You can connect with only ${oppositeRole}`,
+      `Mentors can only connect with mentees and vice versa`,
     );
   }
 
-  // Check if users are already connected
+  // Check if already connected
   const existingConnection = await prisma.connection.findFirst({
     where: {
       OR: [
-        { user1Id: senderId, user2Id: payload.receiverId },
-        { user1Id: payload.receiverId, user2Id: senderId },
+        { user1Id: senderId, user2Id: receiverId },
+        { user1Id: receiverId, user2Id: senderId },
       ],
     },
   });
@@ -381,58 +305,68 @@ const sendConnectionRequest = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "Already connected");
   }
 
-  // Check if there's a pending request
+  // Check for existing pending request
   const existingRequest = await prisma.connectionRequest.findFirst({
     where: {
       OR: [
-        { senderId, receiverId: payload.receiverId },
-        { senderId: payload.receiverId, receiverId: senderId },
+        { senderId, receiverId },
+        { senderId: receiverId, receiverId: senderId },
       ],
-      status: RequestStatus.PENDING,
+      status: "PENDING",
     },
   });
 
   if (existingRequest) {
-    if (existingRequest.senderId === senderId) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Request already sent");
-    } else {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "You have a pending request from this user",
-      );
-    }
+    const isSentByMe = existingRequest.senderId === senderId;
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      isSentByMe
+        ? "Request already sent"
+        : "You have a pending request from this user",
+    );
   }
 
-  // Create connection request
+  // Create the request
   const request = await prisma.connectionRequest.create({
     data: {
       senderId,
-      receiverId: payload.receiverId,
-      message: payload.message,
+      receiverId,
+      message,
+    },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          fullname: true,
+          email: true,
+          role: true,
+          profile: { select: { profileImage: true, profession: true } },
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+          fullname: true,
+          email: true,
+          role: true,
+          profile: { select: { profileImage: true, profession: true } },
+        },
+      },
     },
   });
 
-  // Clear cache for both users
-  await Promise.all([
-    clearUserNetworkCache(senderId),
-    clearUserNetworkCache(payload.receiverId),
-  ]);
-
   return request;
 };
-//w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
-//w: (start)╭──────────── getPendingRequests ────────────╮
-// Get pending requests (sent and received)
+// Get pending requests - SIMPLE
 const getPendingRequests = async (userId: string, query: PaginationInput) => {
-  const { page, limit } = query;
+  const { page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
 
-  // Get both sent and received pending requests
-  const whereClause: Prisma.ConnectionRequestWhereInput = {
+  const whereClause = {
     OR: [
-      { senderId: userId, status: RequestStatus.PENDING },
-      { receiverId: userId, status: RequestStatus.PENDING },
+      { senderId: userId, status: "PENDING" },
+      { receiverId: userId, status: "PENDING" },
     ],
   };
 
@@ -450,6 +384,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
               select: {
                 profileImage: true,
                 profession: true,
+                availability: true,
               },
             },
           },
@@ -464,6 +399,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
               select: {
                 profileImage: true,
                 profession: true,
+                availability: true,
               },
             },
           },
@@ -476,7 +412,7 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     prisma.connectionRequest.count({ where: whereClause }),
   ]);
 
-  // Format response to indicate if it's sent or received
+  // Format response
   const formattedRequests = requests.map((request) => ({
     ...request,
     isSentByMe: request.senderId === userId,
@@ -494,19 +430,20 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
     data: formattedRequests,
   };
 };
-//w: (end)  ╰──────────── getPendingRequests ────────────╯
 
-//w: (start)╭──────────── updateRequestStatus ────────────╮
-// Update request status (accept/reject)
+// Update request status - SIMPLE
 const updateRequestStatus = async (
   userId: string,
   payload: UpdateRequestStatusInput,
 ) => {
+  const { requestId, status } = payload;
+
+  // Find request
   const request = await prisma.connectionRequest.findUnique({
-    where: { id: payload.requestId },
+    where: { id: requestId },
     include: {
-      sender: true,
-      receiver: true,
+      sender: { include: { profile: true } },
+      receiver: { include: { profile: true } },
     },
   });
 
@@ -514,70 +451,44 @@ const updateRequestStatus = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Request not found");
   }
 
+  // Authorization check
   if (request.receiverId !== userId) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "You can only update requests sent to you",
+      "Only the receiver can accept/reject requests",
     );
   }
 
-  if (request.status !== RequestStatus.PENDING) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Request is already processed");
+  if (request.status !== "PENDING") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Request already processed");
   }
 
-  // Start transaction
-  const result = await prisma.$transaction(async (tx) => {
-    // Update request status
-    const updatedRequest = await tx.connectionRequest.update({
-      where: { id: payload.requestId },
-      data: { status: payload.status },
-    });
-
-    // If accepted, create connection
-    if (payload.status === RequestStatus.ACCEPTED) {
-      // Determine order of user IDs for consistent connection storage
-      const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
-
-      await tx.connection.create({
-        data: {
-          user1Id,
-          user2Id,
-        },
-      });
-    }
-
-    return updatedRequest;
+  // Update request
+  const updatedRequest = await prisma.connectionRequest.update({
+    where: { id: requestId },
+    data: { status },
   });
 
-  // Clear cache for both users
-  await Promise.all([
-    clearUserNetworkCache(request.senderId),
-    clearUserNetworkCache(request.receiverId),
-  ]);
+  // If accepted, create connection
+  if (status === "ACCEPTED") {
+    const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
 
-  return result;
-};
-//w: (end)  ╰──────────── updateRequestStatus ────────────╯
-
-//w: (start)╭──────────── getConnections ────────────╮
-// Get all connections
-const getConnections = async (userId: string, query: PaginationInput) => {
-  const { page, limit } = query;
-  const skip = (page - 1) * limit;
-
-  const cacheKey = getCacheKey(userId, "connections", page, limit);
-
-  // Try to get from cache
-  try {
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-  } catch (error) {
-    console.error("Cache read error:", error);
+    await prisma.connection.create({
+      data: {
+        user1Id,
+        user2Id,
+      },
+    });
   }
 
-  // Get connections where user is either user1 or user2
+  return updatedRequest;
+};
+
+// Get connections - SIMPLE
+const getConnections = async (userId: string, query: PaginationInput) => {
+  const { page = 1, limit = 10 } = query;
+  const skip = (page - 1) * limit;
+
   const whereClause = {
     OR: [{ user1Id: userId }, { user2Id: userId }],
   };
@@ -596,9 +507,9 @@ const getConnections = async (userId: string, query: PaginationInput) => {
               select: {
                 profileImage: true,
                 profession: true,
-                experienceYear: true,
                 about: true,
-                ethnicity: true,
+                availability: true,
+                interests: true,
               },
             },
           },
@@ -613,9 +524,9 @@ const getConnections = async (userId: string, query: PaginationInput) => {
               select: {
                 profileImage: true,
                 profession: true,
-                experienceYear: true,
                 about: true,
-                ethnicity: true,
+                availability: true,
+                interests: true,
               },
             },
           },
@@ -628,15 +539,15 @@ const getConnections = async (userId: string, query: PaginationInput) => {
     prisma.connection.count({ where: whereClause }),
   ]);
 
-  // Format response - get the other user
+  // Format: get the other user
   const formattedConnections = connections.map((connection) => ({
-    ...connection,
+    id: connection.id,
     otherUser:
       connection.user1Id === userId ? connection.user2 : connection.user1,
     connectedSince: connection.createdAt,
   }));
 
-  const result = {
+  return {
     meta: {
       page,
       limit,
@@ -646,59 +557,11 @@ const getConnections = async (userId: string, query: PaginationInput) => {
     },
     data: formattedConnections,
   };
-
-  // Cache the result
-  try {
-    await redisClient.setex(
-      cacheKey,
-      CONNECTIONS_CACHE_TTL,
-      JSON.stringify(result),
-    );
-  } catch (error) {
-    console.error("Cache write error:", error);
-  }
-
-  return result;
 };
-//w: (end)  ╰──────────── getConnections ────────────╯
 
-//w: (start)╭──────────── getSuggestions ────────────╮
-// Get suggestions with caching
-const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
-  const { page, limit, filter } = query;
-  const cacheKey = getCacheKey(userId, "suggestions", page, limit, filter);
-
-  // Try to get from cache
-  try {
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-  } catch (error) {
-    console.error("Cache read error:", error);
-  }
-
-  // Get fresh data from DB
-  const result = await getSuggestionsFromDB(userId, query);
-
-  // Cache the result
-  try {
-    await redisClient.setex(
-      cacheKey,
-      SUGGESTIONS_CACHE_TTL,
-      JSON.stringify(result),
-    );
-  } catch (error) {
-    console.error("Cache write error:", error);
-  }
-
-  return result;
-};
-//w: (end)  ╰──────────── getSuggestions ────────────╯
-
-//w: (start)╭──────────── removeConnection ────────────╮
-// Remove connection
+// Remove connection - SIMPLE
 const removeConnection = async (userId: string, connectionId: string) => {
+  // Find connection
   const connection = await prisma.connection.findUnique({
     where: { id: connectionId },
   });
@@ -707,10 +570,11 @@ const removeConnection = async (userId: string, connectionId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Connection not found");
   }
 
+  // Authorization check
   if (connection.user1Id !== userId && connection.user2Id !== userId) {
     throw new ApiError(
       httpStatus.FORBIDDEN,
-      "You can only remove your own connections",
+      "Can only remove your own connections",
     );
   }
 
@@ -719,31 +583,11 @@ const removeConnection = async (userId: string, connectionId: string) => {
     where: { id: connectionId },
   });
 
-  // Clear cache for both users
-  await Promise.all([
-    clearUserNetworkCache(connection.user1Id),
-    clearUserNetworkCache(connection.user2Id),
-  ]);
-
-  return null;
+  return { success: true };
 };
-//w: (end)  ╰──────────── removeConnection ────────────╯
 
-//w: (start)╭──────────── getNetworkStats ────────────╮
-// Get network stats (counts)
+// Get network stats - SIMPLE
 const getNetworkStats = async (userId: string) => {
-  const cacheKey = `${CACHE_PREFIX}stats:${userId}`;
-
-  // Try to get from cache
-  try {
-    const cachedData = await redisClient.get(cacheKey);
-    if (cachedData) {
-      return JSON.parse(cachedData);
-    }
-  } catch (error) {
-    console.error("Cache read error:", error);
-  }
-
   const [connectionsCount, sentRequestsCount, receivedRequestsCount] =
     await Promise.all([
       prisma.connection.count({
@@ -754,34 +598,24 @@ const getNetworkStats = async (userId: string) => {
       prisma.connectionRequest.count({
         where: {
           senderId: userId,
-          status: RequestStatus.PENDING,
+          status: "PENDING",
         },
       }),
       prisma.connectionRequest.count({
         where: {
           receiverId: userId,
-          status: RequestStatus.PENDING,
+          status: "PENDING",
         },
       }),
     ]);
 
-  const stats = {
+  return {
     connections: connectionsCount,
-    sentRequests: sentRequestsCount,
-    receivedRequests: receivedRequestsCount,
+    pendingSent: sentRequestsCount,
+    pendingReceived: receivedRequestsCount,
     totalPending: sentRequestsCount + receivedRequestsCount,
   };
-
-  // Cache for 2 minutes
-  try {
-    await redisClient.setex(cacheKey, 120, JSON.stringify(stats));
-  } catch (error) {
-    console.error("Cache write error:", error);
-  }
-
-  return stats;
 };
-//w: (end)  ╰──────────── getNetworkStats ────────────╯
 
 export const networkService = {
   getSuggestions,
@@ -791,5 +625,4 @@ export const networkService = {
   getConnections,
   removeConnection,
   getNetworkStats,
-  clearUserNetworkCache,
 };
