@@ -14,6 +14,7 @@ const getSuggestions = async (userId: string) => {
     where: {
       id: userId,
     },
+
     include: {
       profile: true,
       preference: true,
@@ -31,9 +32,9 @@ const getSuggestions = async (userId: string) => {
       id: {
         not: userId,
       },
-      /* profilStatus: {
+      profilStatus: {
         not: "INCOMPLETE",
-      } */ //,
+      },
       /* profile: {
         interests: {
           hasSome: user.profile?.interests,
@@ -42,6 +43,11 @@ const getSuggestions = async (userId: string) => {
           in: user.preference?.ethnicities,
         },
       }, */
+    },
+    omit: {
+      password: true,
+      fcmToken: true,
+      // profilStatus: true,
     },
     include: {
       profile: true,

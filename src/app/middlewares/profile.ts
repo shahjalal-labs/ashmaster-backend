@@ -11,10 +11,14 @@ export const profileGuard = () => {
       const user = await prisma.user.findUnique({
         where: {
           id: userId,
-          profilStatus: "INCOMPLETE",
         },
       });
+
       if (!user) {
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+      }
+
+      if (user.profilStatus === "INCOMPLETE") {
         throw new ApiError(httpStatus.BAD_REQUEST, "Complete profile first.");
       }
       next();
