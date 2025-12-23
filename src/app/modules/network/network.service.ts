@@ -36,6 +36,7 @@ const getSuggestions = async (userId: string) => {
         not: "INCOMPLETE",
       },
       role: {
+        // mentee will get mentor and mentor will get mentee only
         notIn: [user.role, UserRole.ADMIN],
       },
       profile: {
@@ -44,18 +45,18 @@ const getSuggestions = async (userId: string) => {
         },
         age: {
           gte: user.preference?.age.min,
+          lte: user.preference?.age.max,
         },
-      },
-
-      /*profile: {
-        interests: {
-          hasSome: user.profile?.interests,
-        },
-        
         ethnicity: {
           in: user.preference?.ethnicities,
         },
-      }, */
+        profession: {
+          in: user.preference?.careers,
+        },
+        gender: {
+          in: user.preference?.genders,
+        },
+      },
     },
     omit: {
       password: true,
