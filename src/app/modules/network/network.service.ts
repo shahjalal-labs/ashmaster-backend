@@ -26,6 +26,21 @@ const getSuggestions = async (userId: string) => {
   } */
 
   const pendingOrConnectedUser = [];
+  const genderProfileFilter: Prisma.ProfileWhereInput | undefined = user
+    .preference?.genders?.length
+    ? {
+        OR: [
+          {
+            gender: {
+              in: user.preference.genders,
+            },
+          },
+          {
+            gender: "NO_ANSWER",
+          },
+        ],
+      }
+    : undefined; //  no filtering at all
 
   const suggestedUsers = await prisma.user.findMany({
     where: {
@@ -53,9 +68,7 @@ const getSuggestions = async (userId: string) => {
         profession: {
           in: user.preference?.careers,
         },
-        gender: {
-          in: user.preference?.genders,
-        },
+        ...(genderProfileFilter ?? {}),
       },
     },
     omit: {
