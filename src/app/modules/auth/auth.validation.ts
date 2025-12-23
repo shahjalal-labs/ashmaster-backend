@@ -60,17 +60,6 @@ const resetPasswordSchema = z
   .strict();
 //w: (end)  ╰──────────── resetPassword ────────────╯
 
-// Define days of the week
-const weekDays = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-] as const;
-
 // Time slot validation
 const timeSlotSchema = z
   .object({
@@ -219,6 +208,7 @@ const completeProfileSchema = z
 //w: (start)╭──────────── updateProfileSchema ────────────╮
 // Create partial versions of complete schemas for update
 const partialProfileSchema = completeProfileSchema.shape.profile.partial();
+
 const partialPreferenceSchema =
   completeProfileSchema.shape.preference.partial();
 
@@ -263,7 +253,7 @@ const updateProfileSchema = z
 //w: (end)  ╰──────────── updateProfileSchema ────────────╯
 
 // Generate TypeScript types from the schemas
-export type CompleteProfileInput = z.infer<typeof completeProfileSchema>;
+export type TCompleteProfileInput = z.infer<typeof completeProfileSchema>;
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>; // Generate TypeScript type from the schema
 

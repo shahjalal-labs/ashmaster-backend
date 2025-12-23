@@ -9,7 +9,7 @@ import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
-import { CompleteProfileInput, UpdateProfileInput } from "./auth.validation";
+import { TCompleteProfileInput, UpdateProfileInput } from "./auth.validation";
 import redisClient from "../../../shared/redis";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
 
@@ -426,7 +426,7 @@ const updateProfileIntoDB = async (
 //w: (end)  ╰──────────── updateProfile ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
-const completeProfile = async (
+/* const completeProfile = async (
   userId: string,
   payload: CompleteProfileInput,
 ) => {
@@ -515,7 +515,78 @@ const completeProfile = async (
   });
 
   return result;
+}; */
+
+const completeProfile = async (
+  userId: string,
+  payload: TCompleteProfileInput,
+) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // 1️⃣ Validate user existence INSIDE transaction
+      const user = await tx.user.findUnique({
+        where: { id: userId },
+        select: { id: true, email: true, role: true },
+      });
+
+      if (!user) {
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+      }
+
+      // 2️⃣ Create profile (will fail if already exists)
+      await tx.profile.create({
+        data: {
+          ...payload.profile,
+          userId,
+        },
+      });
+
+      // 3️⃣ Create preference (will fail if already exists)
+      await tx.preference.create({
+        data: {
+          ...payload.preference,
+          userId,
+        },
+      });
+
+      // 4️⃣ Update user
+      const updatedUser = await tx.user.update({
+        where: { id: userId },
+        data: {
+          role: payload.role ?? user.role,
+          profilStatus: "COMPLETE",
+        },
+      });
+
+      const accessToken = jwtHelpers.generateToken(
+        {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          role: updatedUser.role,
+        },
+        config.jwt.jwt_secret as string,
+        config.jwt.expires_in as string,
+      );
+
+      await clearProfileCache(userId);
+
+      return { accessToken };
+    });
+
+    return result;
+  } catch (error: any) {
+    //  Translate DB uniqueness errors into API errors
+    if (error.code === "P2002") {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Profile or preference already exists. Use update instead.",
+      );
+    }
+
+    throw error;
+  }
 };
+
 //w: (end)  ╰──────────── completeProfile ────────────╯
 //
 //w: (start)╭──────────── updateProfileImage ────────────╮
