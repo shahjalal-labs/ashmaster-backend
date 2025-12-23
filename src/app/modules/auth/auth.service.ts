@@ -216,6 +216,7 @@ const setProfileCache = async (userId: string, data: any): Promise<void> => {
   }
 };
 
+//w: (start)╭──────────── getProfile ────────────╮
 // Helper function to get profile from cache
 const getProfileFromCache = async (userId: string): Promise<any | null> => {
   try {
@@ -232,7 +233,6 @@ const getProfileFromCache = async (userId: string): Promise<any | null> => {
   }
 };
 
-//w: (start)╭──────────── getProfileFromDB ────────────╮
 const getProfileFromDB = async (userId: string) => {
   // Try to get from cache first
   const cachedProfile = await getProfileFromCache(userId);
@@ -275,9 +275,9 @@ const getProfileFromDB = async (userId: string) => {
 
   return sanitizedUser;
 };
-//w: (end)  ╰──────────── getProfileFromDB ────────────╯
+//w: (end)  ╰──────────── getProfile ────────────╯
 
-//w: (start)╭──────────── updateProfileIntoDB ────────────╮
+//w: (start)╭──────────── updateProfile ────────────╮
 const updateProfileIntoDB = async (
   userId: string,
   payload: UpdateProfileInput,
@@ -423,7 +423,7 @@ const updateProfileIntoDB = async (
 
   return result;
 };
-//w: (end)  ╰──────────── updateProfileIntoDB ────────────╯
+//w: (end)  ╰──────────── updateProfile ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮
 const completeProfile = async (
@@ -438,7 +438,7 @@ const completeProfile = async (
     throw new ApiError(httpStatus.NOT_FOUND, "User not found");
   }
 
-  // Check if profile already exists
+  // Checking if profile already exists
   const existingProfile = await prisma.profile.findUnique({
     where: { userId },
   });
@@ -450,7 +450,7 @@ const completeProfile = async (
     );
   }
 
-  // Check if preference already exists
+  // Checking if preference already exists
   const existingPreference = await prisma.preference.findUnique({
     where: { userId },
   });
@@ -462,9 +462,7 @@ const completeProfile = async (
     );
   }
 
-  // Use transaction to ensure atomicity
-
-  // Use transaction to ensure atomicity
+  // transaction to ensure atomicity
   const result = await prisma.$transaction(async (tx) => {
     // Create profile
     const profile = await tx.profile.create({
@@ -546,6 +544,8 @@ const deleteAccountFromDB = async (userId: string) => {
   });
 
   console.log(deletedUser, "auth.service.ts", 395);
+  await clearProfileCache(userId);
+
   return null;
 };
 //w: (end)  ╰──────────── deleteAccount ────────────╯
