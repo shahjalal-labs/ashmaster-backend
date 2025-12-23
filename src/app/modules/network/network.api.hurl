@@ -2,7 +2,7 @@
 
 # Get suggestions
 GET {{port6011}}/network/suggestions?page=1&limit=10
-Authorization: {{yourToken}}
+Authorization: {{ashRaisa}}
 
 # Send request
 POST {{port6011}}/network/request

@@ -1,6 +1,7 @@
 import prisma from "../../../shared/prisma";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
+import { Prisma, UserRole, RequestStatus } from "@prisma/client";
 import {
   PaginationInput,
   SendRequestInput,
@@ -35,7 +36,7 @@ const hasMatchingAvailability = (avail1: any, avail2: any): boolean => {
 
 // Get suggestions - SIMPLE and FAST
 const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
-  const { page = 1, limit = 10, filter } = query;
+  const { page = 1, limit = 10, filter, search } = query;
   const skip = (page - 1) * limit;
 
   // Get current user details
@@ -47,11 +48,11 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
       connectionsAsUser1: { select: { user2Id: true } },
       connectionsAsUser2: { select: { user1Id: true } },
       sentRequests: {
-        where: { status: "PENDING" },
+        where: { status: RequestStatus.PENDING },
         select: { receiverId: true },
       },
       receivedRequests: {
-        where: { status: "PENDING" },
+        where: { status: RequestStatus.PENDING },
         select: { senderId: true },
       },
     },
@@ -60,9 +61,10 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
   if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
 
   // Determine target role
-  let targetRole = user.role === "MENTOR" ? "MENTEE" : "MENTOR";
-  if (filter === "mentors") targetRole = "MENTOR";
-  if (filter === "mentees") targetRole = "MENTEE";
+  let targetRole: UserRole =
+    user.role === "MENTOR" ? UserRole.MENTEE : UserRole.MENTOR;
+  if (filter === "mentors") targetRole = UserRole.MENTOR;
+  if (filter === "mentees") targetRole = UserRole.MENTEE;
 
   // Collect IDs to exclude
   const excludedIds = new Set([
@@ -73,16 +75,32 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
     ...user.receivedRequests.map((r) => r.senderId),
   ]);
 
-  // Build WHERE clause
-  const whereClause: any = {
+  // Build WHERE clause with proper TypeScript types
+  const whereClause: Prisma.UserWhereInput = {
     id: { notIn: Array.from(excludedIds) },
     role: targetRole,
     profilStatus: "COMPLETE",
   };
 
+  // Add search if provided
+  if (search) {
+    whereClause.OR = [
+      { fullname: { contains: search, mode: "insensitive" as const } },
+      { email: { contains: search, mode: "insensitive" as const } },
+      {
+        profile: {
+          OR: [
+            { profession: { contains: search, mode: "insensitive" as const } },
+            { about: { contains: search, mode: "insensitive" as const } },
+          ],
+        },
+      },
+    ];
+  }
+
   // Apply user preferences if they exist
   if (user.preference) {
-    const andConditions = [];
+    const andConditions: Prisma.UserWhereInput[] = [];
 
     // Age range
     if (user.preference.age) {
@@ -97,7 +115,7 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
     }
 
     // Gender
-    if (user.preference.genders?.length > 0) {
+    if (user.preference.genders && user.preference.genders.length > 0) {
       andConditions.push({
         profile: {
           gender: { in: user.preference.genders },
@@ -106,7 +124,7 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
     }
 
     // Ethnicity
-    if (user.preference.ethnicities?.length > 0) {
+    if (user.preference.ethnicities && user.preference.ethnicities.length > 0) {
       andConditions.push({
         profile: {
           ethnicity: { in: user.preference.ethnicities },
@@ -115,16 +133,31 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
     }
 
     // Career - simple OR condition
-    if (user.preference.careers?.length > 0) {
-      const careerConditions = user.preference.careers.map((career) => ({
-        OR: [
-          {
-            profile: { profession: { contains: career, mode: "insensitive" } },
-          },
-          { profile: { interests: { has: career } } },
-        ],
-      }));
-      andConditions.push({ OR: careerConditions });
+    if (user.preference.careers && user.preference.careers.length > 0) {
+      const careerConditions: Prisma.UserWhereInput[] =
+        user.preference.careers.map((career) => ({
+          OR: [
+            {
+              profile: {
+                profession: {
+                  contains: career,
+                  mode: "insensitive" as const,
+                },
+              },
+            },
+            {
+              profile: {
+                interests: {
+                  has: career,
+                },
+              },
+            },
+          ],
+        }));
+
+      andConditions.push({
+        OR: careerConditions,
+      });
     }
 
     if (andConditions.length > 0) {
@@ -183,13 +216,13 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
 
         // Gender (25%)
         () =>
-          user.preference?.genders?.length
+          user.preference?.genders && user.preference.genders.length > 0
             ? user.preference.genders.includes(suggestion.profile!.gender)
             : true,
 
         // Ethnicity (25%)
         () =>
-          user.preference?.ethnicities?.length
+          user.preference?.ethnicities && user.preference.ethnicities.length > 0
             ? user.preference.ethnicities.includes(
                 suggestion.profile!.ethnicity,
               )
@@ -197,7 +230,8 @@ const getSuggestions = async (userId: string, query: RecommendationsQuery) => {
 
         // Career/Interest (25%)
         () => {
-          if (!user.preference?.careers?.length) return true;
+          if (!user.preference?.careers || user.preference.careers.length === 0)
+            return true;
           const lowerProfession = suggestion.profile!.profession.toLowerCase();
           const lowerInterests = suggestion.profile!.interests.map((i) =>
             i.toLowerCase(),
@@ -309,10 +343,13 @@ const sendConnectionRequest = async (
   const existingRequest = await prisma.connectionRequest.findFirst({
     where: {
       OR: [
-        { senderId, receiverId },
-        { senderId: receiverId, receiverId: senderId },
+        { senderId, receiverId, status: RequestStatus.PENDING },
+        {
+          senderId: receiverId,
+          receiverId: senderId,
+          status: RequestStatus.PENDING,
+        },
       ],
-      status: "PENDING",
     },
   });
 
@@ -333,6 +370,11 @@ const sendConnectionRequest = async (
       receiverId,
       message,
     },
+  });
+
+  // Get the request with user details
+  const requestWithDetails = await prisma.connectionRequest.findUnique({
+    where: { id: request.id },
     include: {
       sender: {
         select: {
@@ -355,7 +397,7 @@ const sendConnectionRequest = async (
     },
   });
 
-  return request;
+  return requestWithDetails;
 };
 
 // Get pending requests - SIMPLE
@@ -363,10 +405,10 @@ const getPendingRequests = async (userId: string, query: PaginationInput) => {
   const { page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
 
-  const whereClause = {
+  const whereClause: Prisma.ConnectionRequestWhereInput = {
     OR: [
-      { senderId: userId, status: "PENDING" },
-      { receiverId: userId, status: "PENDING" },
+      { senderId: userId, status: RequestStatus.PENDING },
+      { receiverId: userId, status: RequestStatus.PENDING },
     ],
   };
 
@@ -459,7 +501,7 @@ const updateRequestStatus = async (
     );
   }
 
-  if (request.status !== "PENDING") {
+  if (request.status !== RequestStatus.PENDING) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Request already processed");
   }
 
@@ -467,10 +509,26 @@ const updateRequestStatus = async (
   const updatedRequest = await prisma.connectionRequest.update({
     where: { id: requestId },
     data: { status },
+    include: {
+      sender: {
+        select: {
+          id: true,
+          fullname: true,
+          role: true,
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+          fullname: true,
+          role: true,
+        },
+      },
+    },
   });
 
   // If accepted, create connection
-  if (status === "ACCEPTED") {
+  if (status === RequestStatus.ACCEPTED) {
     const [user1Id, user2Id] = [request.senderId, request.receiverId].sort();
 
     await prisma.connection.create({
@@ -489,7 +547,7 @@ const getConnections = async (userId: string, query: PaginationInput) => {
   const { page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
 
-  const whereClause = {
+  const whereClause: Prisma.ConnectionWhereInput = {
     OR: [{ user1Id: userId }, { user2Id: userId }],
   };
 
@@ -598,13 +656,13 @@ const getNetworkStats = async (userId: string) => {
       prisma.connectionRequest.count({
         where: {
           senderId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
       prisma.connectionRequest.count({
         where: {
           receiverId: userId,
-          status: "PENDING",
+          status: RequestStatus.PENDING,
         },
       }),
     ]);
