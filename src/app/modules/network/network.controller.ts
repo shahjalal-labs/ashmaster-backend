@@ -7,6 +7,7 @@ import { pick } from "../../../shared/pick";
 import { paginationOptions } from "../../../shared/paginationHelper";
 
 // Get network suggestions
+//w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
   const options = pick(req.query, paginationOptions);
@@ -20,6 +21,7 @@ const getSuggestions = catchAsync(async (req: any, res: Response) => {
     data: result,
   });
 });
+//w: (end)  ╰──────────── getSuggestions ────────────╯
 
 // Send connection request
 const sendConnectionRequest = catchAsync(async (req: any, res: Response) => {

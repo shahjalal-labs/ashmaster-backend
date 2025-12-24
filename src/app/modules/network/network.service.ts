@@ -10,6 +10,7 @@ import {
 } from "./network.validation";
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 
+//w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
@@ -114,8 +115,24 @@ const getSuggestions = async (userId: string, options: TOptions) => {
       preference: true,
     },
   });
-  return suggestedUsers;
+
+  const total = await prisma.user.count({
+    where: whereClause,
+  });
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages,
+    },
+    data: suggestedUsers,
+  };
 };
+//w: (end)  ╰──────────── getSuggestions ────────────╯
 
 // Send connection request
 const sendConnectionRequest = async (
