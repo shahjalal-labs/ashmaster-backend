@@ -1,13 +1,6 @@
 import prisma from "../../../shared/prisma";
-import ApiError from "../../../errors/ApiErrors";
-import httpStatus from "http-status";
-import { Prisma, UserRole, RequestStatus } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 
-import {
-  PaginationInput,
-  SendRequestInput,
-  UpdateRequestStatusInput,
-} from "./network.validation";
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
@@ -133,3 +126,7 @@ const getSuggestions = async (userId: string, options: TOptions) => {
   };
 };
 //w: (end)  ╰──────────── getSuggestions ────────────╯
+
+export const NetworkService = {
+  getSuggestions,
+};
