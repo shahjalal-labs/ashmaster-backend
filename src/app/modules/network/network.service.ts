@@ -131,6 +131,13 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = async (userId: string, receiverId: string) => {
+  if (userId === receiverId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You cannot send a connection request to yourself.",
+    );
+  }
+
   const uniqueKey = [userId, receiverId].sort().join("_");
 
   const [user, receiver, existingConnection] = await Promise.all([
@@ -167,8 +174,17 @@ const sendConnectionRequest = async (userId: string, receiverId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "User or receiver not found.");
   }
 
-  if(){
+  if (existingConnection) {
+    const statusErrorMap = {
+      PENDING: "Connection request already sent.",
+      ACCEPTED: "You are already connected.",
+      REJECTED: "Connection request was rejected and cannot be resent.",
+    } as const;
 
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      statusErrorMap[existingConnection.status],
+    );
   }
 
   if (existingConnection) {
