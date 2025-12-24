@@ -127,6 +127,40 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
+//w: (start)╭──────────── sendConnectionRequest ────────────╮
+const sendConnectionRequest = async (userId: string, receiverId: string) => {
+  const uniqueKey = [userId, receiverId].sort().join("_");
+
+  const [user, receiver, existingConnection] = await Promise.all([
+    prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+      },
+    }),
+
+    prisma.user.findUnique({
+      where: {
+        id: receiverId,
+      },
+      select: {
+        id: true,
+      },
+    }),
+
+    prisma.connections.findUnique({
+      where: {
+        uniqueKey,
+      },
+    }),
+  ]);
+};
+
+//w: (end)  ╰──────────── sendConnectionRequest ────────────╯
+
 export const NetworkService = {
   getSuggestions,
+  sendConnectionRequest,
 };
