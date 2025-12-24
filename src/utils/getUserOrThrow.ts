@@ -1,15 +1,17 @@
 import httpStatus from "http-status";
 import ApiError from "../errors/ApiErrors";
-import prisma from "../shared/prisma";
 
-export const findUserOrThrow = async (userId: string, model: any) => {
-  const user = await prisma.model.findUnique({
-    where: {
-      id: userId,
-    },
+export const findOrThrow = async <T>(
+  model: { findUnique: (args: { where: { id: string } }) => Promise<T | null> },
+  id: string,
+) => {
+  const record = await model.findUnique({
+    where: { id },
   });
 
-  if (!user) {
-    ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!record) {
+    throw new ApiError(httpStatus.NOT_FOUND, `Record not found`);
   }
+
+  return record;
 };
