@@ -130,7 +130,11 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
-const sendConnectionRequest = async (userId: string, receiverId: string) => {
+const sendConnectionRequest = async (
+  userId: string,
+  receiverId: string,
+  paylaod,
+) => {
   if (userId === receiverId) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -192,6 +196,7 @@ const sendConnectionRequest = async (userId: string, receiverId: string) => {
       senderId: userId,
       receiverId,
       uniqueKey,
+      message: "",
     },
   });
 };

@@ -5,12 +5,13 @@ import { profileGuard } from "../../middlewares/profile";
 
 const router = express.Router();
 
+router.use(auth(), profileGuard());
 // Get suggestions (for home page)
 //w: (start)╭──────────── getSuggestions ────────────╮
 router.get(
   "/suggestions",
   auth(),
-  profileGuard(),
+  // profileGuard(),
   NetworkController.getSuggestions,
 );
 //w: (end)  ╰──────────── getSuggestions ────────────╯
