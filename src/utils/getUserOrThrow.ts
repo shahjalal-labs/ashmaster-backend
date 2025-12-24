@@ -7,13 +7,11 @@ export const findOrThrow = async (
   message?: string,
   model: string = "user",
 ) => {
-  const record = await (prisma as any)[model].findUnique({
+  const record = await (prisma as any)[model].count({
     where: { id },
   });
 
-  if (!record) {
+  if (record < 1) {
     throw new ApiError(httpStatus.NOT_FOUND, message || `${model} not found`);
   }
-
-  return record;
 };

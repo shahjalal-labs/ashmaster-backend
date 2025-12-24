@@ -32,3 +32,12 @@ Content-Type: application/json
   "requestId": "requestId123",
   "status": "ACCEPTED"
 }
+
+
+# get connections
+
+GET {{port6011}}/network/connections?page=1&limit=10
+ Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
+
+

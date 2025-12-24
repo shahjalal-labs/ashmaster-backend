@@ -54,8 +54,24 @@ const getPendingRequests = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getPendingRequests ────────────╯
 
+//w: (start)╭──────────── getConnections ────────────╮
+const getConnections = catchAsync(async (req, res) => {
+  const id = req.user.id;
+  const options = pick(req.query, paginationOptions);
+
+  const result = await NetworkService.getConnections(id, options);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Connections fetched successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getConnections ────────────╯
+
 export const NetworkController = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequests,
+  getConnections,
 };

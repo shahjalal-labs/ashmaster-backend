@@ -260,12 +260,22 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getPendingRequest ────────────╯
 
-const getConnections = async (userId: string) => {
+//w: (start)╭──────────── getConnections ────────────╮
+const getConnections = async (userId: string, options: TOptions) => {
   await findOrThrow(userId);
+
+  const whereClause:ConnectionsWhereInput={} ;
+   const [connections, total]=await Promise.all([
+    prisma.connections.findMany({
+      where: 
+    })
+  ]) ;
 };
+//w: (end)  ╰──────────── getConnections ────────────╯
 
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequest,
+  getConnections,
 };

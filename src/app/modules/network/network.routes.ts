@@ -29,6 +29,6 @@ router.post(
 //w: (start)╭──────────── getPendingRequests ────────────╮
 router.get("/request-pending", NetworkController.getPendingRequests);
 
-//w: (end)  ╰──────────── getPendingRequests ────────────╯
+router.get("/connections", NetworkController.getConnections);
 
 export const NetworkRoutes = router;
