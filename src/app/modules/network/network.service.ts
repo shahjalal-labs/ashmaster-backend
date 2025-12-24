@@ -187,20 +187,13 @@ const sendConnectionRequest = async (userId: string, receiverId: string) => {
     );
   }
 
-  if (existingConnection) {
-    if (existingConnection.status === RequestStatus.PENDING) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Already sent request");
-    }
-    if (existingConnection.status === RequestStatus.ACCEPTED) {
-      throw new ApiError(httpStatus.BAD_REQUEST, "Already friend");
-    }
-    if (existingConnection.status === RequestStatus.REJECTED) {
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Request Rejected. Can't resend.",
-      );
-    }
-  }
+  await prisma.connections.create({
+    data: {
+      senderId: userId,
+      receiverId,
+      uniqueKey,
+    },
+  });
 };
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
