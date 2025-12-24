@@ -42,6 +42,10 @@ const getSuggestions = async (userId: string, query) => {
       }
     : undefined; //  no filtering at all
 
+  const andConditions: Prisma.UserWhereInput[] = [];
+  const whereConditons: Prisma.UserWhereInput =
+    andCondions.length > 0 ? { AND: andCondions } : {};
+
   const suggestedUsers = await prisma.user.findMany({
     where: {
       id: {

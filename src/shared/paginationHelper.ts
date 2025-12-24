@@ -15,6 +15,8 @@ export type TOptionsResult = {
   skip: number;
 };
 
+export const paginationOptions = ["page", "limit", "sortBy", "sortOrder"];
+
 const calcalutePagination = (options: TOptions): TOptionsResult => {
   const page = Number(options.page) || 1;
   const limit = Number(options.limit) || 10;

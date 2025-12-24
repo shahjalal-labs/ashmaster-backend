@@ -14,3 +14,14 @@ export const pick = <T extends Record<string, unknown>, k extends keyof T>(
   return finalObj;
 };
 
+// pick return value like this
+/*
+ {
+  page: "2",
+  limit: "10",
+  sortBy: "createdAt",
+  sortOrder: "desc",
+}
+
+ * */
+
