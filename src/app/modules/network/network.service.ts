@@ -92,30 +92,33 @@ const getSuggestions = async (userId: string, options: TOptions) => {
       ...(genderProfileFilter ?? {}),
     },
   };
-  const suggestedUsers = await prisma.user.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      fullname: true,
-      profile: {
-        select: {
-          profileImage: true,
-          profession: true,
+
+  const [suggestedUsers, total] = await Promise.all([
+    await prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        fullname: true,
+        profile: {
+          select: {
+            profileImage: true,
+            profession: true,
+          },
         },
+        // preference: true,
       },
-      // preference: true,
-    },
 
-    skip,
-    take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
 
-  const total = await prisma.user.count({
-    where: whereClause,
-  });
+    await prisma.user.count({
+      where: whereClause,
+    }),
+  ]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -215,8 +218,8 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
     status: "PENDING",
   };
 
-  const [requests] = Promise.all([
-    await prisma.connections.findMany({
+  const [requests, total] = await Promise.all([
+    prisma.connections.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -239,11 +242,12 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
         createdAt: "desc",
       },
     }),
+
+    prisma.connections.count({
+      where: whereClause,
+    }),
   ]);
 
-  const total = await prisma.connections.count({
-    where: whereClause,
-  });
   return {
     meta: {
       total,
@@ -255,6 +259,10 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
   };
 };
 //w: (end)  ╰──────────── getPendingRequest ────────────╯
+
+const getConnections = async (userId: string) => {
+  await findOrThrow(userId);
+};
 
 export const NetworkService = {
   getSuggestions,
