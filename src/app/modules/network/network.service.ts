@@ -66,12 +66,12 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 
   const whereClause: Prisma.UserWhereInput = {
     id: {
-      notIn: [userId],
+      notIn: excludedIds,
     },
 
     profilStatus: ProfilStatus.COMPLETE,
     role: {
-      // mentee will get mentor and mentor will get mentee only
+      // mentee will get mentor and mentor will get mentee only, no need to see admin > it also hide own profile as role needs to be opposite
       notIn: [user.role, UserRole.ADMIN],
     },
     profile: {
