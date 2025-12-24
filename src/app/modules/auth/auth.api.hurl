@@ -33,7 +33,7 @@ Authorization: {{ashRaisa}}
 
 # get other profile
 # profile/userId
-GET {{port6011}}/auth/profile/69439c27b63cdd027fe1e8c6
+GET {{port6011}}/auth/profile/694a39873340ac9b4e138239
 Authorization: {{ashRaisa}}
 
 # Delete Account

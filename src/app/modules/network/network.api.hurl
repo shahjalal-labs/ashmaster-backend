@@ -10,8 +10,8 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "receiverId": "694a39873340ac9b4e138239",
-  "message": "Hi, let's connect!"
+  "receiverId": "694a254aad128cabeaf7412f",
+  "message": "Hi, let's connect! I have dream to help other"
 }
 
 # Accept request

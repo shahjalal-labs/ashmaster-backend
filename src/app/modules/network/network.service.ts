@@ -67,34 +67,6 @@ const getSuggestions = async (userId: string, options: TOptions) => {
     },
   };
   const suggestedUsers = await prisma.user.findMany({
-    /*  {
-           id: {
-        not: userId,
-      },
-      profilStatus: {
-        not: "INCOMPLETE",
-      },
-      role: {
-        // mentee will get mentor and mentor will get mentee only
-        notIn: [user.role, UserRole.ADMIN],
-      },
-      profile: {
-        interests: {
-          hasSome: user.profile?.interests,
-        },
-        age: {
-          gte: user.preference?.age.min,
-          lte: user.preference?.age.max,
-        },
-        ethnicity: {
-          in: user.preference?.ethnicities,
-        },
-        profession: {
-          in: user.preference?.careers,
-        },
-        ...(genderProfileFilter ?? {}),
-      },
-    },  */
     where: whereClause,
     select: {
       id: true,
