@@ -95,11 +95,17 @@ const getSuggestions = async (userId: string, options: TOptions) => {
         ...(genderProfileFilter ?? {}),
       },
     },  */
-    // where: whereClause,
+    where: whereClause,
     select: {
+      id: true,
       fullname: true,
-      profile: true,
-      preference: true,
+      profile: {
+        select: {
+          profileImage: true,
+          profession: true,
+        },
+      },
+      // preference: true,
     },
 
     skip,
@@ -107,20 +113,6 @@ const getSuggestions = async (userId: string, options: TOptions) => {
     orderBy: {
       createdAt: "desc",
     },
-    /* omit: {
-      password: true,
-      fcmToken: true,
-      // profilStatus: true,
-    }, */
-    /* include: {
-      profile: {
-        select: {
-          profileImage: true,
-          profession: true,
-        },
-      },
-      preference: true,
-    }, */
   });
 
   const total = await prisma.user.count({
