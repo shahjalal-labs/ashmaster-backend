@@ -9,7 +9,7 @@ import {
   UpdateRequestStatusInput,
 } from "./network.validation";
 
-const getSuggestions = async (userId: string) => {
+const getSuggestions = async (userId: string, query) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
       id: userId,

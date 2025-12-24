@@ -3,17 +3,17 @@ import catchAsync from "../../../shared/catchAsync";
 import { networkService } from "./network.service";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
+import { pick } from "../../../shared/pick";
 
 // Get network suggestions
 const getSuggestions = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
-  const { page = 1, limit = 10, filter = "all", search } = req.query;
+  const { page = 1, limit = 10 } = req.query;
+  const options = pick(req.query, ["page", "limit", "sortBy", "sortOrder"]);
 
   const result = await networkService.getSuggestions(id, {
     page: Number(page),
     limit: Number(limit),
-    filter,
-    search,
   });
 
   sendResponse(res, {
