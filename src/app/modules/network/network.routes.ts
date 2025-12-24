@@ -17,48 +17,4 @@ router.get(
   networkController.getSuggestions,
 );
 
-// Send connection request
-router.post(
-  "/request",
-  auth(),
-  validateRequest(networkValidation.sendRequestSchema),
-  networkController.sendConnectionRequest,
-);
-
-// Get pending requests (sent and received)
-router.get(
-  "/requests/pending",
-  auth(),
-  validateRequest(networkValidation.paginationSchema, "query"),
-  networkController.getPendingRequests,
-);
-
-// Accept/reject connection request
-router.patch(
-  "/request/status",
-  auth(),
-  validateRequest(networkValidation.updateRequestStatusSchema),
-  networkController.updateRequestStatus,
-);
-
-// Get all connections
-router.get(
-  "/connections",
-  auth(),
-  validateRequest(networkValidation.paginationSchema, "query"),
-  networkController.getConnections,
-);
-
-// Remove connection
-router.delete(
-  "/connection/:connectionId",
-  auth(),
-  networkController.removeConnection,
-);
-
-// Get network stats
-router.get("/stats", auth(), networkController.getNetworkStats);
-
-//w: (end)  ╰──────────── Network Routes ────────────╯
-
 export const NetworkRoutes = router;
