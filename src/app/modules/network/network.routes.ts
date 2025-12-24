@@ -10,7 +10,7 @@ router.use(auth(), profileGuard());
 //w: (start)╭──────────── getSuggestions ────────────╮
 router.get(
   "/suggestions",
-  auth(),
+  // auth(),
   // profileGuard(),
   NetworkController.getSuggestions,
 );

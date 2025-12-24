@@ -4,6 +4,7 @@ import { Prisma, RequestStatus, UserRole } from "@prisma/client";
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
+import { TSendConnectionReqest } from "./network.validation";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -132,9 +133,9 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = async (
   userId: string,
-  receiverId: string,
-  paylaod,
+  paylaod: TSendConnectionReqest,
 ) => {
+  const { receiverId, message } = paylaod;
   if (userId === receiverId) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
@@ -182,7 +183,7 @@ const sendConnectionRequest = async (
     const statusErrorMap = {
       PENDING: "Connection request already sent.",
       ACCEPTED: "You are already connected.",
-      REJECTED: "Connection request was rejected and cannot be resent.",
+      // REJECTED: "Connection request was rejected and cannot be resent.",
     } as const;
 
     throw new ApiError(
@@ -196,7 +197,7 @@ const sendConnectionRequest = async (
       senderId: userId,
       receiverId,
       uniqueKey,
-      message: "",
+      message,
     },
   });
 };

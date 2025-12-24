@@ -105,7 +105,7 @@ model Connections {
 enum RequestStatus {
   PENDING
   ACCEPTED
-  REJECTED
+  // REJECTED
 }
 
 enum UserRole {
