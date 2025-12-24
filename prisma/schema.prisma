@@ -24,17 +24,19 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id           String       @id @default(auto()) @map("_id") @db.ObjectId
-  email        String       @unique
+  id           String        @id @default(auto()) @map("_id") @db.ObjectId
+  email        String        @unique
   password     String?
   fullname     String
   fcmToken     String?
-  role         UserRole     @default(MENTEE)
-  profilStatus ProfilStatus @default(INCOMPLETE)
+  role         UserRole      @default(MENTEE)
+  profilStatus ProfilStatus  @default(INCOMPLETE)
   profile      Profile?
   preference   Preference?
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  Connections  Connections[]
+  Connections  Connections[]
 
   @@map("users")
 }
@@ -97,6 +99,7 @@ model Connections {
   @@index([receiverId, status])
   @@map("connections")
 }
+
 //w: (end)  ╰────────────  Connections ────────────╯
 
 enum RequestStatus {
@@ -123,6 +126,39 @@ enum PreferenceGender {
 }
 
 enum ProfilStatus {
+  COMPLETE
+  INCOMPLETE
+}
+
+type AgeRange {
+  min Int
+  max Int
+}
+  max Int
+}
+  ADMIN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  NO_ANSWER // prefer not say
+}
+
+enum PreferenceGender {
+  MALE
+  FEMALE
+}
+
+enum ProfilStatus {
+  COMPLETE
+  INCOMPLETE
+}
+
+type AgeRange {
+  min Int
+  max Int
+}
   COMPLETE
   INCOMPLETE
 }
