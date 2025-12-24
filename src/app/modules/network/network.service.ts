@@ -19,16 +19,33 @@ const getSuggestions = async (userId: string, options: TOptions) => {
     },
   });
 
-  const pendingOrConnectedUser = await prisma.user.findMany({
+  const connectedUsersIds = await prisma.user.findMany({
     where: {
       OR: [
-        sendConnectionRequest:''
+        {
+          receivedRequests: {
+            some: {
+              senderId: userId,
+              // status: { in: ["PENDING", "ACCEPTED"] },
+            },
+          },
+        },
+        {
+          sentRequests: {
+            some: {
+              receiverId: userId,
+              // status: { in: ["PENDING", "ACCEPTED"] },
+            },
+          },
+        },
       ],
     },
     select: {
       id: true,
     },
   });
+
+  console.log(connectedUsersIds, "network.service.ts", 23);
   const { page, limit, skip } = paginationHelper.calcalutePagination(options);
 
   const genderProfileFilter: Prisma.ProfileWhereInput | undefined = user
