@@ -36,14 +36,6 @@ model User {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
-  // Connection Requests (sent and received)
-  sentRequests     ConnectionRequest[] @relation("SentRequests")
-  receivedRequests ConnectionRequest[] @relation("ReceivedRequests")
-
-  // Connections (as user1 or user2)
-  connectionsAsUser1 Connection[] @relation("Connections1")
-  connectionsAsUser2 Connection[] @relation("Connections2")
-
   @@map("users")
 }
 
@@ -74,60 +66,44 @@ model Profile {
 
 //w: (start)╭────────────  Preference  ────────────╮
 model Preference {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String             @id @default(auto()) @map("_id") @db.ObjectId
   careers     String[]
-  genders     PreferenceGender []
+  genders     PreferenceGender[]
   ethnicities String[]
   notes       String?
   age         AgeRange
-  userId      String   @unique @db.ObjectId
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  userId      String             @unique @db.ObjectId
+  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
 
-//w: (start)╭──────────── ConnectionRequest  ────────────╮
-model ConnectionRequest {
+//w: (start)╭────────────  Connections ────────────╮
+model Connections {
   id         String        @id @default(auto()) @map("_id") @db.ObjectId
   senderId   String        @db.ObjectId
   sender     User          @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
   receiverId String        @db.ObjectId
   receiver   User          @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
   status     RequestStatus @default(PENDING)
+  uniqueKey  String        @unique
   message    String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  @@unique([senderId, receiverId])
   @@index([senderId, status])
   @@index([receiverId, status])
-  @@map("connection_requests")
-}
-
-model Connection {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  user1Id   String   @db.ObjectId
-  user1     User     @relation("Connections1", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2Id   String   @db.ObjectId
-  user2     User     @relation("Connections2", fields: [user2Id], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([user1Id, user2Id])
-  @@index([user1Id])
-  @@index([user2Id])
   @@map("connections")
 }
+//w: (end)  ╰────────────  Connections ────────────╯
 
 enum RequestStatus {
   PENDING
   ACCEPTED
   REJECTED
 }
-
-//w: (end)  ╰──────────── ConnectionRequest  ────────────╯
 
 enum UserRole {
   MENTOR
