@@ -23,6 +23,19 @@ const getSuggestions = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
+//w: (start)╭──────────── sendConnectionRequest ────────────╮
+const sendConnectionRequest = catchAsync(async (req, res) => {
+  await NetworkService.sendConnectionRequest("", req.body);
+  sendResponse(res, {
+    statusCode: httpStatus.CREATED,
+    success: true,
+    message: "Connection request sent successfully",
+    data: null,
+  });
+});
+//w: (end)  ╰──────────── sendConnectionRequest ────────────╯
+
 export const NetworkController = {
   getSuggestions,
+  sendConnectionRequest,
 };

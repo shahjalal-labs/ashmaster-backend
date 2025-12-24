@@ -2,6 +2,8 @@ import express from "express";
 import { NetworkController } from "./network.controller";
 import auth from "../../middlewares/auth";
 import { profileGuard } from "../../middlewares/profile";
+import validateRequest from "../../middlewares/validateRequest";
+import { NetworkValidation } from "./network.validation";
 
 const router = express.Router();
 
@@ -15,5 +17,13 @@ router.get(
   NetworkController.getSuggestions,
 );
 //w: (end)  ╰──────────── getSuggestions ────────────╯
+
+//w: (start)╭──────────── sendConnectionRequest ────────────╮
+router.post(
+  "/send-request",
+  validateRequest(NetworkValidation.sendConnectionRequest),
+  NetworkController.sendConnectionRequest,
+);
+//w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
 export const NetworkRoutes = router;

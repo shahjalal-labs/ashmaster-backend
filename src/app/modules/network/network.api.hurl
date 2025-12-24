@@ -6,11 +6,11 @@ Authorization: {{ashRaisa}}
 
 # Send request
 POST {{port6011}}/network/request
-Authorization: {{yourToken}}
+Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "receiverId": "otherUserId",
+  "receiverId": "694a39873340ac9b4e138239",
   "message": "Hi, let's connect!"
 }
 
