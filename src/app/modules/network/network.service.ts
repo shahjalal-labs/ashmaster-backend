@@ -1,7 +1,9 @@
 import prisma from "../../../shared/prisma";
-import { Prisma, UserRole } from "@prisma/client";
+import { Prisma, RequestStatus, UserRole } from "@prisma/client";
 
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
+import ApiError from "../../../errors/ApiErrors";
+import httpStatus from "http-status";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -154,8 +156,35 @@ const sendConnectionRequest = async (userId: string, receiverId: string) => {
       where: {
         uniqueKey,
       },
+      select: {
+        id: true,
+        status: true,
+      },
     }),
   ]);
+
+  if (!user || !receiver) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User or receiver not found.");
+  }
+
+  if(){
+
+  }
+
+  if (existingConnection) {
+    if (existingConnection.status === RequestStatus.PENDING) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Already sent request");
+    }
+    if (existingConnection.status === RequestStatus.ACCEPTED) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Already friend");
+    }
+    if (existingConnection.status === RequestStatus.REJECTED) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Request Rejected. Can't resend.",
+      );
+    }
+  }
 };
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
