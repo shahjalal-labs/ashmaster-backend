@@ -207,8 +207,19 @@ const sendConnectionRequest = async (
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
 const getPendingRequest = async (userId: string) => {
-  const user = await findOrThrow(userId);
-  console.log(user, "network.service.ts", 211);
+  await findOrThrow(userId);
+
+  const requests = await prisma.connections.findMany({
+    where: {
+      receiverId: userId,
+      status: "PENDING",
+    },
+  });
+
+  return {
+    meta: {},
+    data: requests,
+  };
 };
 //w: (end)  ╰──────────── getPendingRequest ────────────╯
 
