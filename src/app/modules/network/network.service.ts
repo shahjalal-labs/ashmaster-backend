@@ -204,6 +204,8 @@ const sendConnectionRequest = async (
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
+const getPendingRequest = () => {};
+
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
