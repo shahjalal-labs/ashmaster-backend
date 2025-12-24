@@ -18,7 +18,7 @@ Content-Type: application/json
 
 
 # Get pending requests
-GET {{port6011}}/network/request-pending
+GET {{port6011}}/network/request-pending?page=2&limit=100
  Authorization: {{ashsrahim}}
 #Authorization: {{ashRaisa}}
 

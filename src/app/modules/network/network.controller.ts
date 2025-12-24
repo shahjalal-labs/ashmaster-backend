@@ -3,7 +3,10 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { pick } from "../../../shared/pick";
-import { paginationOptions } from "../../../shared/paginationHelper";
+import {
+  paginationOptions,
+  paginationOptions,
+} from "../../../shared/paginationHelper";
 import { NetworkService } from "./network.service";
 
 // Get network suggestions
@@ -39,8 +42,9 @@ const sendConnectionRequest = catchAsync(async (req, res) => {
 //w: (start)╭──────────── getPendingRequests ────────────╮
 const getPendingRequests = catchAsync(async (req, res) => {
   const id = req.user.id;
+  const options = pick(req.query, paginationOptions);
 
-  const result = await NetworkService.getPendingRequest(id);
+  const result = await NetworkService.getPendingRequest(id, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

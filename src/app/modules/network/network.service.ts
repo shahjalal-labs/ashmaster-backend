@@ -206,18 +206,33 @@ const sendConnectionRequest = async (
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
-const getPendingRequest = async (userId: string) => {
+const getPendingRequest = async (userId: string, options: TOptions) => {
   await findOrThrow(userId);
+  const { page, skip, limit } = paginationHelper.calcalutePagination(options);
 
+  const whereClause: Prisma.ConnectionsWhereInput = {
+    receiverId: userId,
+    status: "PENDING",
+  };
   const requests = await prisma.connections.findMany({
-    where: {
-      receiverId: userId,
-      status: "PENDING",
-    },
+    where: whereClause,
   });
 
+  const total = await prisma.connections.count({
+    where: whereClause,
+    skip,
+    take: limit,
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
   return {
-    meta: {},
+    meta: {
+      total,
+      limit,
+      page,
+      totalPages: Math.ceil(total / limit),
+    },
     data: requests,
   };
 };
