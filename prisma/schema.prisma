@@ -97,6 +97,7 @@ model Connections {
 
   @@index([senderId, status])
   @@index([receiverId, status])
+  @@index([createdAt])
   @@map("connections")
 }
 

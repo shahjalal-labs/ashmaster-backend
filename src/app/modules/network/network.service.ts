@@ -214,29 +214,32 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
     receiverId: userId,
     status: "PENDING",
   };
-  const requests = await prisma.connections.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      sender: {
-        select: {
-          id: true,
-          fullname: true,
-          profile: {
-            select: {
-              profileImage: true,
-              profession: true,
+
+  const [requests] = Promise.all([
+    await prisma.connections.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
             },
           },
         },
       },
-    },
-    skip,
-    take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+  ]);
 
   const total = await prisma.connections.count({
     where: whereClause,
