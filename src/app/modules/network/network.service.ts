@@ -262,14 +262,56 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 
 //w: (start)╭──────────── getConnections ────────────╮
 const getConnections = async (userId: string, options: TOptions) => {
+  const {} = paginationHelper.calcalutePagination(options);
   await findOrThrow(userId);
 
-  const whereClause:ConnectionsWhereInput={} ;
-   const [connections, total]=await Promise.all([
+  const whereClause: Prisma.ConnectionsWhereInput = {
+    status: "ACCEPTED",
+    OR: [
+      {
+        senderId: userId,
+      },
+      {
+        receiverId: userId,
+      },
+    ],
+  };
+  const [connections, total] = await Promise.all([
     prisma.connections.findMany({
-      where: 
-    })
-  ]) ;
+      where: whereClause,
+      select: {
+        id: true,
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.connections.count({
+      where: whereClause,
+    }),
+  ]);
+
+  return {
+    meta: {
+      total,
+    },
+    data: connections,
+  };
 };
 //w: (end)  ╰──────────── getConnections ────────────╯
 
