@@ -42,13 +42,37 @@ const getSuggestions = async (userId: string, query) => {
       }
     : undefined; //  no filtering at all
 
-  const andConditions: Prisma.UserWhereInput[] = [];
-  const whereConditons: Prisma.UserWhereInput =
-    andCondions.length > 0 ? { AND: andCondions } : {};
-
+  const whereClause: Prisma.UserWhereInput = {
+    id: {
+      not: userId,
+    },
+    profilStatus: {
+      not: "INCOMPLETE",
+    },
+    role: {
+      // mentee will get mentor and mentor will get mentee only
+      notIn: [user.role, UserRole.ADMIN],
+    },
+    profile: {
+      interests: {
+        hasSome: user.profile?.interests,
+      },
+      age: {
+        gte: user.preference?.age.min,
+        lte: user.preference?.age.max,
+      },
+      ethnicity: {
+        in: user.preference?.ethnicities,
+      },
+      profession: {
+        in: user.preference?.careers,
+      },
+      ...(genderProfileFilter ?? {}),
+    },
+  };
   const suggestedUsers = await prisma.user.findMany({
     where: {
-      id: {
+      /*       id: {
         not: userId,
       },
       profilStatus: {
@@ -73,7 +97,8 @@ const getSuggestions = async (userId: string, query) => {
           in: user.preference?.careers,
         },
         ...(genderProfileFilter ?? {}),
-      },
+      }, */
+      ...whereClause,
     },
     omit: {
       password: true,
