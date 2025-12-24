@@ -39,6 +39,14 @@ const sendConnectionRequest = catchAsync(async (req, res) => {
 //w: (start)╭──────────── getPendingRequests ────────────╮
 const getPendingRequests = catchAsync(async (req, res) => {
   const id = req.user.id;
+
+  const result = await NetworkService.getPendingRequest(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Pending request fetched successfully",
+    data: result,
+  });
 });
 //w: (end)  ╰──────────── getPendingRequests ────────────╯
 

@@ -16,6 +16,13 @@ Content-Type: application/json
   "message": "Hi, let's connect! I have dream to help other"
 }
 
+
+# Get pending requests
+GET {{port6011}}/network/request-pending
+Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
+
+
 # Accept request
 PATCH {{port6011}}/network/request/status
 Authorization: {{yourToken}}
