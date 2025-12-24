@@ -8,8 +8,9 @@ import {
   SendRequestInput,
   UpdateRequestStatusInput,
 } from "./network.validation";
+import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 
-const getSuggestions = async (userId: string, query) => {
+const getSuggestions = async (userId: string, options: TOptions) => {
   const user = await prisma.user.findUniqueOrThrow({
     where: {
       id: userId,
@@ -21,11 +22,9 @@ const getSuggestions = async (userId: string, query) => {
     },
   });
 
-  /* if (user.profilStatus === "INCOMPLETE") {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Complete your profile");
-  } */
-
   const pendingOrConnectedUser = [];
+  const { page, limit, skip } = paginationHelper.calcalutePagination(options);
+
   const genderProfileFilter: Prisma.ProfileWhereInput | undefined = user
     .preference?.genders?.length
     ? {
@@ -71,8 +70,8 @@ const getSuggestions = async (userId: string, query) => {
     },
   };
   const suggestedUsers = await prisma.user.findMany({
-    where: {
-      /*       id: {
+    /*  {
+           id: {
         not: userId,
       },
       profilStatus: {
@@ -97,8 +96,13 @@ const getSuggestions = async (userId: string, query) => {
           in: user.preference?.careers,
         },
         ...(genderProfileFilter ?? {}),
-      }, */
-      ...whereClause,
+      },
+    },  */
+    where: whereClause,
+    skip,
+    take: limit,
+    orderBy: {
+      createdAt: "desc",
     },
     omit: {
       password: true,
