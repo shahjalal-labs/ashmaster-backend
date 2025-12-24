@@ -36,7 +36,14 @@ const sendConnectionRequest = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
+//w: (start)╭──────────── getPendingRequests ────────────╮
+const getPendingRequests = catchAsync(async (req, res) => {
+  const id = req.user.id;
+});
+//w: (end)  ╰──────────── getPendingRequests ────────────╯
+
 export const NetworkController = {
   getSuggestions,
   sendConnectionRequest,
+  getPendingRequests,
 };

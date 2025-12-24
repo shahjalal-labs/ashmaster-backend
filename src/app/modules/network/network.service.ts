@@ -5,6 +5,7 @@ import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TSendConnectionReqest } from "./network.validation";
+import { findOrThrow } from "../../../utils/getUserOrThrow";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -204,9 +205,15 @@ const sendConnectionRequest = async (
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
-const getPendingRequest = () => {};
+//w: (start)╭──────────── getPendingRequest ────────────╮
+const getPendingRequest = async (userId: string) => {
+  const user = await findOrThrow(userId);
+  console.log(user, "network.service.ts", 211);
+};
+//w: (end)  ╰──────────── getPendingRequest ────────────╯
 
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
+  getPendingRequest,
 };
