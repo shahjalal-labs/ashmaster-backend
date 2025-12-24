@@ -20,7 +20,7 @@ router.get(
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 router.post(
-  "/send-request",
+  "/request",
   validateRequest(NetworkValidation.sendConnectionRequest),
   NetworkController.sendConnectionRequest,
 );

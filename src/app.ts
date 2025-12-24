@@ -5,8 +5,8 @@ import path from "path";
 import { router } from "./app/routes";
 import { bullBoardRouter } from "./jobs/bullBoard";
 import basicAuth from "express-basic-auth";
-import { notFount } from "./app/middlewares/notFound";
 import { entryMessage } from "./app/middlewares/entry";
+import { notFound } from "./app/middlewares/notFound";
 
 const app: Application = express();
 app.use(cors());
@@ -31,6 +31,6 @@ app.use(
 app.use(GlobalErrorHandler);
 
 // not found handler
-app.use(notFount);
+app.use(notFound);
 
 export default app;
