@@ -25,7 +25,8 @@ const getSuggestions = catchAsync(async (req: any, res: Response) => {
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = catchAsync(async (req, res) => {
-  await NetworkService.sendConnectionRequest("", req.body);
+  const userId = req.user.id;
+  await NetworkService.sendConnectionRequest(userId, req.body);
   sendResponse(res, {
     statusCode: httpStatus.CREATED,
     success: true,

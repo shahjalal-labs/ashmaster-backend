@@ -2,11 +2,13 @@
 
 # Get suggestions
 GET {{port6011}}/network/suggestions?page=1&limit=10
-Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
 
 # Send request
 POST {{port6011}}/network/request
-Authorization: {{ashRaisa}}
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 Content-Type: application/json
 
 {
