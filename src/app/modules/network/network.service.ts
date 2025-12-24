@@ -1,5 +1,5 @@
 import prisma from "../../../shared/prisma";
-import { Prisma, RequestStatus, UserRole } from "@prisma/client";
+import { Prisma, ProfilStatus, RequestStatus, UserRole } from "@prisma/client";
 
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
@@ -19,14 +19,13 @@ const getSuggestions = async (userId: string, options: TOptions) => {
     },
   });
 
-  const connectedUsersIds = await prisma.user.findMany({
+  const connectedOrPendingUsers = await prisma.user.findMany({
     where: {
       OR: [
         {
           receivedRequests: {
             some: {
               senderId: userId,
-              // status: { in: ["PENDING", "ACCEPTED"] },
             },
           },
         },
@@ -34,7 +33,6 @@ const getSuggestions = async (userId: string, options: TOptions) => {
           sentRequests: {
             some: {
               receiverId: userId,
-              // status: { in: ["PENDING", "ACCEPTED"] },
             },
           },
         },
@@ -45,7 +43,9 @@ const getSuggestions = async (userId: string, options: TOptions) => {
     },
   });
 
-  console.log(connectedUsersIds, "network.service.ts", 23);
+  const excludedIds = connectedOrPendingUsers.map((u) => u.id);
+  // excludedIds.push(userId);
+  console.log(excludedIds, "network.service.ts", 47);
   const { page, limit, skip } = paginationHelper.calcalutePagination(options);
 
   const genderProfileFilter: Prisma.ProfileWhereInput | undefined = user
@@ -66,11 +66,10 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 
   const whereClause: Prisma.UserWhereInput = {
     id: {
-      not: userId,
+      notIn: [userId],
     },
-    profilStatus: {
-      not: "INCOMPLETE",
-    },
+
+    profilStatus: ProfilStatus.COMPLETE,
     role: {
       // mentee will get mentor and mentor will get mentee only
       notIn: [user.role, UserRole.ADMIN],
