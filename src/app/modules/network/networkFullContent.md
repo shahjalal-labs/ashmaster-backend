@@ -152,8 +152,9 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id               String        @id @default(auto()) @map("_id") @db.ObjectId
-  email            String        @unique
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
+
   password         String?
   fullname         String
   fcmToken         String?
@@ -225,6 +226,7 @@ model Connections {
 
   @@index([senderId, status])
   @@index([receiverId, status])
+  @@index([createdAt])
   @@map("connections")
 }
 
@@ -332,10 +334,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { pick } from "../../../shared/pick";
-import {
-  paginationOptions,
-  paginationOptions,
-} from "../../../shared/paginationHelper";
+import { paginationOptions } from "../../../shared/paginationHelper";
 import { NetworkService } from "./network.service";
 
 // Get network suggestions
@@ -383,10 +382,35 @@ const getPendingRequests = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getPendingRequests ────────────╯
 
+//w: (start)╭──────────── getConnections ────────────╮
+const getConnections = catchAsync(async (req, res) => {
+  const id = req.user.id;
+  const options = pick(req.query, paginationOptions);
+
+  const result = await NetworkService.getConnections(id, options);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Connections fetched successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getConnections ────────────╯
+
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = catchAsync(async (req, res) => {
+  console.log(`logging`);
+  const { id } = req.user;
+  await NetworkService.responseRequest(id);
+});
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkController = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequests,
+  getConnections,
+  responseRequest,
 };
 ```
 
@@ -407,8 +431,21 @@ export type TSendConnectionReqest = z.infer<typeof sendConnectionRequest>;
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = z
+  .object({
+    requestId: z.string().min(24),
+    status: z.enum(["ACCEPTED", "REJECTED"]),
+  })
+  .strict();
+
+export type TResponseRequest = z.infer<typeof responseRequest>;
+
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkValidation = {
   sendConnectionRequest,
+  responseRequest,
 };
 ```
 
@@ -462,7 +499,9 @@ router.post(
 //w: (start)╭──────────── getPendingRequests ────────────╮
 router.get("/request-pending", NetworkController.getPendingRequests);
 
-//w: (end)  ╰──────────── getPendingRequests ────────────╯
+router.get("/connections", NetworkController.getConnections);
+
+router.patch("/request/response", NetworkController.responseRequest);
 
 export const NetworkRoutes = router;
 ```
@@ -479,7 +518,7 @@ Authorization: {{ashsrahim}}
 
 # Send request
 POST {{port6011}}/network/request
-Authorization: {{ashRaisa}}
+#Authorization: {{ashRaisa}}
 Authorization: {{ashsrahim}}
 Content-Type: application/json
 
@@ -491,19 +530,28 @@ Content-Type: application/json
 
 # Get pending requests
 GET {{port6011}}/network/request-pending?page=1&limit=10
- Authorization: {{ashsrahim}}
-#Authorization: {{ashRaisa}}
+# Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
 
 
 # Accept request
-PATCH {{port6011}}/network/request/status
-Authorization: {{yourToken}}
+PATCH {{port6011}}/network/request/response
+Authorization: {{ashsrahim}}
 Content-Type: application/json
 
 {
   "requestId": "requestId123",
   "status": "ACCEPTED"
 }
+
+
+# get connections
+
+GET {{port6011}}/network/connections?page=1&limit=10
+ Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
+
+
 ```
 
 ## 🛠️ network.service.ts
@@ -515,8 +563,9 @@ import { Prisma, ProfilStatus, RequestStatus, UserRole } from "@prisma/client";
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { TSendConnectionReqest } from "./network.validation";
+import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
 import { findOrThrow } from "../../../utils/getUserOrThrow";
+import config, { ENV } from "../../../config";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -603,30 +652,33 @@ const getSuggestions = async (userId: string, options: TOptions) => {
       ...(genderProfileFilter ?? {}),
     },
   };
-  const suggestedUsers = await prisma.user.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      fullname: true,
-      profile: {
-        select: {
-          profileImage: true,
-          profession: true,
+
+  const [suggestedUsers, total] = await Promise.all([
+    await prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        fullname: true,
+        profile: {
+          select: {
+            profileImage: true,
+            profession: true,
+          },
         },
+        // preference: true,
       },
-      // preference: true,
-    },
 
-    skip,
-    take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
 
-  const total = await prisma.user.count({
-    where: whereClause,
-  });
+    await prisma.user.count({
+      where: whereClause,
+    }),
+  ]);
 
   const totalPages = Math.ceil(total / limit);
 
@@ -718,40 +770,47 @@ const sendConnectionRequest = async (
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
 const getPendingRequest = async (userId: string, options: TOptions) => {
-  await findOrThrow(userId);
+  if (config.env === ENV.DEVELOPMENT) {
+    await findOrThrow(userId);
+  }
+
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
 
   const whereClause: Prisma.ConnectionsWhereInput = {
     receiverId: userId,
     status: "PENDING",
   };
-  const requests = await prisma.connections.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      sender: {
-        select: {
-          id: true,
-          fullname: true,
-          profile: {
-            select: {
-              profileImage: true,
-              profession: true,
+
+  const [requests, total] = await Promise.all([
+    prisma.connections.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
             },
           },
         },
       },
-    },
-    skip,
-    take: limit,
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
 
-  const total = await prisma.connections.count({
-    where: whereClause,
-  });
+    prisma.connections.count({
+      where: whereClause,
+    }),
+  ]);
+
   return {
     meta: {
       total,
@@ -764,9 +823,136 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getPendingRequest ────────────╯
 
+//w: (start)╭──────────── getConnections ────────────╮
+const getConnections = async (userId: string, options: TOptions) => {
+  const { page, skip, limit } = paginationHelper.calcalutePagination(options);
+
+  if (config.env === "development") {
+    await findOrThrow(userId);
+  }
+
+  const whereClause: Prisma.ConnectionsWhereInput = {
+    status: "ACCEPTED",
+    OR: [
+      {
+        senderId: userId,
+      },
+      {
+        receiverId: userId,
+      },
+    ],
+  };
+  const [connections, total] = await Promise.all([
+    prisma.connections.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        receiver: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.connections.count({
+      where: whereClause,
+    }),
+  ]);
+
+  return {
+    meta: {
+      total,
+      skip,
+      page,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: connections,
+  };
+};
+//w: (end)  ╰──────────── getConnections ────────────╯
+
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = async (userId: string, payload: TResponseRequest) => {
+  if (config.env === ENV.DEVELOPMENT) {
+    await findOrThrow(userId);
+  }
+
+  const [request] = await Promise.all([
+    await prisma.connections.findUnique({
+      where: {
+        id: payload.requestId,
+      },
+      select: {
+        id: true,
+        receiver: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  if (!request) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No request found");
+  }
+
+  if (request?.receiver.id !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You canno't response to other request",
+    );
+  }
+
+  if (payload.status === "ACCEPTED") {
+    await prisma.connections.update({
+      where: {
+        id: payload.requestId,
+      },
+      data: {
+        status: payload.status,
+      },
+    });
+  } else {
+    await prisma.connections.delete({
+      where: {
+        id: payload.requestId,
+      },
+    });
+  }
+};
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequest,
+  getConnections,
+  responseRequest,
 };
 ```

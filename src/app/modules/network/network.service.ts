@@ -360,6 +360,7 @@ const responseRequest = async (userId: string, payload: TResponseRequest) => {
   ]);
 
   if (!request) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "No request found");
   }
 
   if (request?.receiver.id !== userId) {
@@ -367,6 +368,23 @@ const responseRequest = async (userId: string, payload: TResponseRequest) => {
       httpStatus.BAD_REQUEST,
       "You canno't response to other request",
     );
+  }
+
+  if (payload.status === "ACCEPTED") {
+    await prisma.connections.update({
+      where: {
+        id: payload.requestId,
+      },
+      data: {
+        status: payload.status,
+      },
+    });
+  } else {
+    await prisma.connections.delete({
+      where: {
+        id: payload.requestId,
+      },
+    });
   }
 };
 //w: (end)  ╰──────────── responseRequest ────────────╯
