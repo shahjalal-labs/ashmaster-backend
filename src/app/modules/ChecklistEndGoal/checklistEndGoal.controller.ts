@@ -18,6 +18,21 @@ const createChecklistEndGoals = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
+//w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
+const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(id);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: ` fetched successfully`,
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
+
 export const ChecklistEndGoalsController = {
   createChecklistEndGoals,
+  getMyChecklistOrEndGoals,
 };

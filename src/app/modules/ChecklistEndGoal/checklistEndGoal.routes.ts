@@ -20,4 +20,6 @@ router.post(
   ChecklistEndGoalsController.createChecklistEndGoals,
 );
 
+router.get("/", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
+
 export const ChecklistEndGoalsRoutes = router;
