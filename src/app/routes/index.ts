@@ -3,6 +3,7 @@ import { Router } from "express";
 import { AuthRoutes } from "../modules/auth/auth.routes";
 import { UserRoutes } from "../modules/user/user.route";
 import { NetworkRoutes } from "../modules/network/network.routes";
+import { ChecklistEndGoalsRoutes } from "../modules/ChecklistEndGoal/checklistEndGoal.routes";
 
 type TAllRoutes = {
   path: string;
@@ -22,6 +23,10 @@ const allRoutes: TAllRoutes[] = [
   {
     path: "/network",
     route: NetworkRoutes,
+  },
+  {
+    path: "/checklist-end-goals",
+    route: ChecklistEndGoalsRoutes,
   },
 ];
 //w: (end)  ╰──────────── allRoutes ────────────╯
