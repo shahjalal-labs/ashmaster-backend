@@ -237,9 +237,9 @@ const getProfileFromCache = async (userId: string): Promise<any | null> => {
 const getProfileFromDB = async (userId: string, otherUserId?: string) => {
   // Try to get from cache first
   const cachedProfile = await getProfileFromCache(otherUserId || userId);
-  if (cachedProfile) {
+  /* if (cachedProfile) {
     return cachedProfile;
-  }
+  } */
 
   // If not in cache, fetch from database
   const user = await prisma.user.findUnique({
@@ -271,18 +271,20 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
     throw new ApiError(404, "user not found!");
   }
 
-  const uniqueKey = [userId, otherUserId].sort().join("_");
+  let connections;
+  if (otherUserId) {
+    const uniqueKey = [userId, otherUserId].sort().join("_");
 
-  const connections = await prisma.connections.findUnique({
-    where: {
-      uniqueKey,
-    },
-    select: {
-      id: true,
-      status: true,
-    },
-  });
-
+    connections = await prisma.connections.findUnique({
+      where: {
+        uniqueKey,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
+    });
+  }
   console.log(connections, "auth.service.ts", 276);
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
