@@ -1,5 +1,5 @@
 import prisma from "../../../shared/prisma";
-import { Prisma, ProfilStatus, RequestStatus, UserRole } from "@prisma/client";
+import { Prisma, ProfilStatus, UserRole } from "@prisma/client";
 
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
@@ -45,7 +45,6 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 
   const excludedIds = connectedOrPendingUsers.map((u) => u.id);
   // excludedIds.push(userId);
-  console.log(excludedIds, "network.service.ts", 47);
   const { page, limit, skip } = paginationHelper.calcalutePagination(options);
 
   const genderProfileFilter: Prisma.ProfileWhereInput | undefined = user
