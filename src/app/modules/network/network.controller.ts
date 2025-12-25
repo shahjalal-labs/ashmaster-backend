@@ -67,9 +67,9 @@ const getConnections = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── getConnections ────────────╯
 
 //w: (start)╭──────────── responseRequest ────────────╮
-const responseRequest = catchAsync(async (req, res) => {
+const responseRequestOrRemoveConnection = catchAsync(async (req, res) => {
   const { id } = req.user;
-  await NetworkService.responseRequest(id, req.body);
+  await NetworkService.responseRequestOrRemoveConnection(id, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -84,5 +84,5 @@ export const NetworkController = {
   sendConnectionRequest,
   getPendingRequests,
   getConnections,
-  responseRequest,
+  responseRequestOrRemoveConnection,
 };

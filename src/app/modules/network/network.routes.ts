@@ -33,8 +33,8 @@ router.get("/connections", NetworkController.getConnections);
 
 router.patch(
   "/response-or-remove",
-  validateRequest(NetworkValidation.responseRequest),
-  NetworkController.responseRequest,
+  validateRequest(NetworkValidation.responseRequestOrRemoveConnection),
+  NetworkController.responseRequestOrRemoveConnection,
 );
 
 export const NetworkRoutes = router;

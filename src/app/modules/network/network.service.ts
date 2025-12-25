@@ -338,7 +338,13 @@ const getConnections = async (userId: string, options: TOptions) => {
 //w: (end)  ╰──────────── getConnections ────────────╯
 
 //w: (start)╭──────────── responseRequest ────────────╮
-const responseRequest = async (userId: string, payload: TResponseRequest) => {
+
+const responseRequestOrRemoveConnection = async (
+  userId: string,
+  payload: TResponseRequest,
+) => {
+  //  paylaod status:
+  //  ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove for deletng existing connection
   if (config.env === ENV.DEVELOPMENT) {
     await findOrThrow(userId);
   }
@@ -400,5 +406,5 @@ export const NetworkService = {
   sendConnectionRequest,
   getPendingRequest,
   getConnections,
-  responseRequest,
+  responseRequestOrRemoveConnection,
 };
