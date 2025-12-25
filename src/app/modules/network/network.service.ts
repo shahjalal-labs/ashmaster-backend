@@ -342,6 +342,32 @@ const responseRequest = async (userId: string, payload: TResponseRequest) => {
   if (config.env === ENV.DEVELOPMENT) {
     await findOrThrow(userId);
   }
+
+  const [request] = await Promise.all([
+    await prisma.connections.findUnique({
+      where: {
+        id: payload.requestId,
+      },
+      select: {
+        id: true,
+        receiver: {
+          select: {
+            id: true,
+          },
+        },
+      },
+    }),
+  ]);
+
+  if (!request) {
+  }
+
+  if (request?.receiver.id !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You canno't response to other request",
+    );
+  }
 };
 //w: (end)  ╰──────────── responseRequest ────────────╯
 
