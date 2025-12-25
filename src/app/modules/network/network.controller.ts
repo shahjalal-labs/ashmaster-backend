@@ -3,10 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
 import { pick } from "../../../shared/pick";
-import {
-  paginationOptions,
-  paginationOptions,
-} from "../../../shared/paginationHelper";
+import { paginationOptions } from "../../../shared/paginationHelper";
 import { NetworkService } from "./network.service";
 
 // Get network suggestions
@@ -69,9 +66,17 @@ const getConnections = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getConnections ────────────╯
 
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = catchAsync(async (req, res) => {
+  const { id } = req.user;
+  await NetworkService.responseRequest(id);
+});
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkController = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequests,
   getConnections,
+  responseRequest,
 };

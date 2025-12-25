@@ -55,6 +55,7 @@ const loginUserIntoDB = async (payload: {
   return {
     accessToken,
     profileStatus: user.profilStatus,
+    id: user.id,
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
@@ -573,7 +574,7 @@ const completeProfile = async (
 
       await clearProfileCache(userId);
 
-      return { accessToken };
+      return { accessToken, id: updatedUser.id };
     });
 
     return result;

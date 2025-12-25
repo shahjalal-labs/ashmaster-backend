@@ -330,9 +330,16 @@ const getConnections = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getConnections ────────────╯
 
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = async (userId: string) => {
+  await findOrThrow(userId);
+};
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequest,
   getConnections,
+  responseRequest,
 };
