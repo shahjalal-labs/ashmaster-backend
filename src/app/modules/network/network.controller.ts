@@ -66,7 +66,7 @@ const getConnections = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getConnections ────────────╯
 
-//w: (start)╭──────────── responseRequest ────────────╮
+//w: (start)╭──────────── responseRequestOrRemoveConnection ────────────╮
 const responseRequestOrRemoveConnection = catchAsync(async (req, res) => {
   const { id } = req.user;
   await NetworkService.responseRequestOrRemoveConnection(id, req.body);
@@ -77,7 +77,7 @@ const responseRequestOrRemoveConnection = catchAsync(async (req, res) => {
     data: null,
   });
 });
-//w: (end)  ╰──────────── responseRequest ────────────╯
+//w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
 export const NetworkController = {
   getSuggestions,

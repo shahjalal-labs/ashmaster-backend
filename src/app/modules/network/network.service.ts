@@ -337,8 +337,7 @@ const getConnections = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getConnections ────────────╯
 
-//w: (start)╭──────────── responseRequest ────────────╮
-
+//w: (start)╭──────────── responseRequestOrRemoveConnection ────────────╮
 const responseRequestOrRemoveConnection = async (
   userId: string,
   payload: TResponseRequest,
@@ -399,7 +398,7 @@ const responseRequestOrRemoveConnection = async (
     });
   }
 };
-//w: (end)  ╰──────────── responseRequest ────────────╯
+//w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
 export const NetworkService = {
   getSuggestions,
