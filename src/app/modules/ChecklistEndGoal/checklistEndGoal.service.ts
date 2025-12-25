@@ -7,6 +7,10 @@ const createChecklistEndGoals = async (userId: string, payload: any) => {
 };
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
+
+
+ // const getMyChecklistEnd= ;
+
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
 };
