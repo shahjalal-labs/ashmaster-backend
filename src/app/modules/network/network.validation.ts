@@ -16,7 +16,7 @@ export type TSendConnectionReqest = z.infer<typeof sendConnectionRequest>;
 const responseRequest = z
   .object({
     requestId: z.string().min(24),
-    status: z.enum(["ACCEPTED", "REJECTED"]),
+    status: z.enum(["ACCEPTED", "REJECTED", "REMOVE"]),
   })
   .strict();
 

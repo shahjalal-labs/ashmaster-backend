@@ -32,7 +32,7 @@ router.get("/request-pending", NetworkController.getPendingRequests);
 router.get("/connections", NetworkController.getConnections);
 
 router.patch(
-  "/request/response",
+  "/response-or-remove",
   validateRequest(NetworkValidation.responseRequest),
   NetworkController.responseRequest,
 );

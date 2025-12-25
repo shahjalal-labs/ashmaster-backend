@@ -24,19 +24,21 @@ Authorization: {{ashRaisa}}
 
 
 # Accept request
-PATCH {{port6011}}/network/request/response
-Authorization: {{ashsrahim}}
+PATCH {{port6011}}/network/response-or-remove
+#Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "requestId": "requestId123"
+  "requestId": "694cc7f9798af5fc3907ca51",
+  "status": "REMOVE"     # ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection
 }
 
 
 # get connections
 
 GET {{port6011}}/network/connections?page=1&limit=10
- Authorization: {{ashsrahim}}
+Authorization: {{ashsrahim}}
 #Authorization: {{ashRaisa}}
 
 

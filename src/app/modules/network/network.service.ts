@@ -350,6 +350,7 @@ const responseRequest = async (userId: string, payload: TResponseRequest) => {
       },
       select: {
         id: true,
+        status: true,
         receiver: {
           select: {
             id: true,
@@ -368,6 +369,11 @@ const responseRequest = async (userId: string, payload: TResponseRequest) => {
       httpStatus.BAD_REQUEST,
       "You canno't response to other request",
     );
+  }
+
+  // if already accepted then throw error when tyring not to remove connection
+  if (payload.status !== "REMOVE" && request.status === "ACCEPTED") {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Request already responded");
   }
 
   if (payload.status === "ACCEPTED") {
