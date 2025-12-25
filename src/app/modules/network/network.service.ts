@@ -6,6 +6,7 @@ import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TSendConnectionReqest } from "./network.validation";
 import { findOrThrow } from "../../../utils/getUserOrThrow";
+import config, { ENV } from "../../../config";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -210,7 +211,10 @@ const sendConnectionRequest = async (
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
 const getPendingRequest = async (userId: string, options: TOptions) => {
-  await findOrThrow(userId);
+  if (config.env === "development") {
+    await findOrThrow(userId);
+  }
+
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
 
   const whereClause: Prisma.ConnectionsWhereInput = {
@@ -263,7 +267,10 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 //w: (start)╭──────────── getConnections ────────────╮
 const getConnections = async (userId: string, options: TOptions) => {
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
-  await findOrThrow(userId);
+
+  if (config.env === "development") {
+    await findOrThrow(userId);
+  }
 
   const whereClause: Prisma.ConnectionsWhereInput = {
     status: "ACCEPTED",
@@ -332,7 +339,9 @@ const getConnections = async (userId: string, options: TOptions) => {
 
 //w: (start)╭──────────── responseRequest ────────────╮
 const responseRequest = async (userId: string) => {
-  await findOrThrow(userId);
+  if (config.env === ENV.DEVELOPMENT) {
+    await findOrThrow(userId);
+  }
 };
 //w: (end)  ╰──────────── responseRequest ────────────╯
 

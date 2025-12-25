@@ -24,8 +24,8 @@ Authorization: {{ashRaisa}}
 
 
 # Accept request
-PATCH {{port6011}}/network/request/status
-Authorization: {{yourToken}}
+PATCH {{port6011}}/network/request/response
+Authorization: {{ashsrahim}}
 Content-Type: application/json
 
 {

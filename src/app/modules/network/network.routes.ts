@@ -31,6 +31,6 @@ router.get("/request-pending", NetworkController.getPendingRequests);
 
 router.get("/connections", NetworkController.getConnections);
 
-router.post("/response");
+router.post("/response", NetworkController.responseRequest);
 
 export const NetworkRoutes = router;

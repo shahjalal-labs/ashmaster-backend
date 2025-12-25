@@ -68,6 +68,7 @@ const getConnections = catchAsync(async (req, res) => {
 
 //w: (start)╭──────────── responseRequest ────────────╮
 const responseRequest = catchAsync(async (req, res) => {
+  console.log(`logging`);
   const { id } = req.user;
   await NetworkService.responseRequest(id);
 });

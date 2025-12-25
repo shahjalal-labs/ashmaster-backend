@@ -5,13 +5,14 @@ import prisma from "../shared/prisma";
 export const findOrThrow = async (
   id: string,
   message?: string,
-  model: string = "user",
+  model: string = "User",
 ) => {
-  const record = await (prisma as any)[model].count({
+  const exists = await prisma.user.findUnique({
     where: { id },
+    select: { id: true },
   });
 
-  if (record < 1) {
-    throw new ApiError(httpStatus.NOT_FOUND, message || `${model} not found`);
+  if (!exists) {
+    throw new ApiError(httpStatus.NOT_FOUND, message ?? `${model} not found`);
   }
 };
