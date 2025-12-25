@@ -2,11 +2,17 @@ import { Server } from "http";
 import app from "./app";
 import config from "./config";
 
-let server: Server;
+// let server: Server;
 
 async function main() {
-  server = app.listen(config.port, () => {
-    console.log("✅ Server is running on port ", config.port);
+  const server: Server = app.listen(config.port, () => {
+    console.log("✅ Server is running on", `http://localhost:${config.port}`);
+
+    console.log(
+      "📊 BullMQ Dashboard at",
+
+      `http://localhost:${6011}/admin/queues`,
+    );
   });
 
   const exitHandler = () => {

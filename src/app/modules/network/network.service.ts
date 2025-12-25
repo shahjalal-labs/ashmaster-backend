@@ -377,6 +377,8 @@ const responseRequestOrRemoveConnection = async (
   }
 
   // if already accepted then throw error when tyring not to remove connection
+  //p: ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection or cancel sent request
+
   if (payload.status !== "REMOVE" && request.status === "ACCEPTED") {
     throw new ApiError(httpStatus.BAD_REQUEST, "Request already responded");
   }

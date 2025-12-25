@@ -31,7 +31,7 @@ Content-Type: application/json
 
 {
   "requestId": "694cc7f9798af5fc3907ca51",
-  "status": "REMOVE"     # ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection
+  "status": "REMOVE"     # ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection or cancel send request
 }
 
 

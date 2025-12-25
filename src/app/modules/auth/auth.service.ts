@@ -294,7 +294,7 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
   return {
     ...sanitizedUser,
     ...(otherUserId && {
-      connectionStatus: connections?.status || "not_connected",
+      connectionStatus: connections?.status || "NOT_CONNECTED",
     }),
   };
 };
