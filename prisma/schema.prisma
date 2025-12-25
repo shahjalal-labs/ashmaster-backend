@@ -30,14 +30,15 @@ model User {
   password         String?
   fullname         String
   fcmToken         String?
-  role             UserRole      @default(MENTEE)
-  profilStatus     ProfilStatus  @default(INCOMPLETE)
+  role             UserRole           @default(MENTEE)
+  profilStatus     ProfilStatus       @default(INCOMPLETE)
   profile          Profile?
   preference       Preference?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  sentRequests     Connections[] @relation("SentRequests")
-  receivedRequests Connections[] @relation("ReceivedRequests")
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  sentRequests     Connections[]      @relation("SentRequests")
+  receivedRequests Connections[]      @relation("ReceivedRequests")
+  checklistEndGoal ChecklistEndGoal[]
 
   @@map("users")
 }
@@ -108,6 +109,8 @@ model Connections {
 model ChecklistEndGoal {
   id          String               @id @default(auto()) @map("_id") @db.ObjectId
   type        ChecklistEndGoalType
+  userId      String               @db.ObjectId
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   status      Status               @default(INCOMPLETE)
   title       String
   description String

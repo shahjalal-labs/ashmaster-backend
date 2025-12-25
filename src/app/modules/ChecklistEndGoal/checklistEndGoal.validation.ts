@@ -9,6 +9,9 @@ const createChecklistEndGoalsSchema = z
     description: z.string().min(10),
   })
   .strict();
+export type TCreateChecklistEndGoals = z.infer<
+  typeof createChecklistEndGoalsSchema
+>;
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 export const ChecklistEndGoalsValidation = {
