@@ -104,6 +104,23 @@ model Connections {
 
 //w: (end)  ╰────────────  Connections ────────────╯
 
+//w: (start)╭────────────  ChecklistEndGoal ────────────╮
+model ChecklistEndGoal {
+  id String @id @default(auto()) @map("_id") @db.ObjectId
+  status   Status  
+
+  @@map("checklist_end_goals")
+
+}
+//w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
+
+
+enum Status {
+COMPLETE
+INCOMPLETE
+
+}
+
 enum RequestStatus {
   PENDING
   ACCEPTED
