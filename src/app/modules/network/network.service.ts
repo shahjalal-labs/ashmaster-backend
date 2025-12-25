@@ -262,7 +262,7 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 
 //w: (start)╭──────────── getConnections ────────────╮
 const getConnections = async (userId: string, options: TOptions) => {
-  const {} = paginationHelper.calcalutePagination(options);
+  const { page, skip, limit } = paginationHelper.calcalutePagination(options);
   await findOrThrow(userId);
 
   const whereClause: Prisma.ConnectionsWhereInput = {
@@ -281,6 +281,18 @@ const getConnections = async (userId: string, options: TOptions) => {
       where: whereClause,
       select: {
         id: true,
+        receiver: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
+            },
+          },
+        },
         sender: {
           select: {
             id: true,
@@ -309,6 +321,9 @@ const getConnections = async (userId: string, options: TOptions) => {
   return {
     meta: {
       total,
+      skip,
+      page,
+      totalPages: Math.ceil(total / limit),
     },
     data: connections,
   };
