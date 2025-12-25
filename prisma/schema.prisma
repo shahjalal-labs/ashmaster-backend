@@ -111,6 +111,8 @@ model ChecklistEndGoal {
   status      Status               @default(INCOMPLETE)
   title       String
   description String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
 
   @@map("checklist_end_goals")
 }
