@@ -29,8 +29,7 @@ Authorization: {{ashsrahim}}
 Content-Type: application/json
 
 {
-  "requestId": "requestId123",
-  "status": "ACCEPTED"
+  "requestId": "requestId123"
 }
 
 

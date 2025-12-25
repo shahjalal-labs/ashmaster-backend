@@ -31,6 +31,10 @@ router.get("/request-pending", NetworkController.getPendingRequests);
 
 router.get("/connections", NetworkController.getConnections);
 
-router.patch("/request/response", NetworkController.responseRequest);
+router.patch(
+  "/request/response",
+  validateRequest(NetworkValidation.responseRequest),
+  NetworkController.responseRequest,
+);
 
 export const NetworkRoutes = router;
