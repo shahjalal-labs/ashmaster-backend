@@ -5,8 +5,6 @@ import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
-import { findOrThrow } from "../../../utils/getUserOrThrow";
-import config, { ENV } from "../../../config";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -211,10 +209,6 @@ const sendConnectionRequest = async (
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
 const getPendingRequest = async (userId: string, options: TOptions) => {
-  if (config.env === ENV.DEVELOPMENT) {
-    await findOrThrow(userId);
-  }
-
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
 
   const whereClause: Prisma.ConnectionsWhereInput = {
@@ -267,10 +261,6 @@ const getPendingRequest = async (userId: string, options: TOptions) => {
 //w: (start)╭──────────── getConnections ────────────╮
 const getConnections = async (userId: string, options: TOptions) => {
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
-
-  if (config.env === "development") {
-    await findOrThrow(userId);
-  }
 
   const whereClause: Prisma.ConnectionsWhereInput = {
     status: "ACCEPTED",
@@ -344,9 +334,6 @@ const responseRequestOrRemoveConnection = async (
 ) => {
   //  paylaod status:
   //  ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove for deletng existing connection
-  if (config.env === ENV.DEVELOPMENT) {
-    await findOrThrow(userId);
-  }
 
   const [request] = await Promise.all([
     await prisma.connections.findUnique({

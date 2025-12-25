@@ -4,10 +4,14 @@ import auth from "../../middlewares/auth";
 import { profileGuard } from "../../middlewares/profile";
 import validateRequest from "../../middlewares/validateRequest";
 import { NetworkValidation } from "./network.validation";
+import config, { ENV } from "../../../config";
 
 const router = express.Router();
 
-router.use(auth(), profileGuard());
+router.use(auth());
+if (config.env === ENV.DEVELOPMENT) {
+  router.use(profileGuard());
+}
 // Get suggestions (for home page)
 //w: (start)╭──────────── getSuggestions ────────────╮
 router.get(
