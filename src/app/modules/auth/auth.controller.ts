@@ -95,15 +95,20 @@ const getProfile = catchAsync(async (req: any, res: Response) => {
 
 //w: (start)╭──────────── getOtherProfile ────────────╮
 const getOtherProfile = catchAsync(async (req, res) => {
-  const id = req.params.id as string;
-  console.log(id, "auth.controller.ts", 109);
+  const otherUserId = req.params.id as string;
 
-  const user = await authService.getProfileFromDB(id);
+  const userId = req.user.id;
+
+  console.log({
+    userId,
+    otherUserId,
+  });
+  const result = await authService.getProfileFromDB(userId, otherUserId);
   sendResponse(res, {
     statusCode: 200,
     success: true,
     message: "User profile retrieved successfully",
-    data: user,
+    data: result,
   });
 });
 //w: (end)  ╰──────────── getOtherProfile ────────────╯

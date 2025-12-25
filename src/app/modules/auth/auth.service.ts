@@ -281,16 +281,14 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
     },
   });
 
-  sanitizedUser.connectionStatus = connections?.status;
-
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
 
   return {
+    connectionStatus: connections?.status,
     ...sanitizedUser,
-    connectionStatus : connections?.status;
   };
 };
 //w: (end)  ╰──────────── getProfile ────────────╯
