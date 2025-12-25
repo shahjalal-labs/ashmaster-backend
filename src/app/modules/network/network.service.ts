@@ -4,7 +4,7 @@ import { Prisma, ProfilStatus, RequestStatus, UserRole } from "@prisma/client";
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { TSendConnectionReqest } from "./network.validation";
+import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
 import { findOrThrow } from "../../../utils/getUserOrThrow";
 import config, { ENV } from "../../../config";
 
@@ -211,7 +211,7 @@ const sendConnectionRequest = async (
 
 //w: (start)╭──────────── getPendingRequest ────────────╮
 const getPendingRequest = async (userId: string, options: TOptions) => {
-  if (config.env === "development") {
+  if (config.env === ENV.DEVELOPMENT) {
     await findOrThrow(userId);
   }
 
@@ -338,7 +338,7 @@ const getConnections = async (userId: string, options: TOptions) => {
 //w: (end)  ╰──────────── getConnections ────────────╯
 
 //w: (start)╭──────────── responseRequest ────────────╮
-const responseRequest = async (userId: string) => {
+const responseRequest = async (userId: string, payload: TResponseRequest) => {
   if (config.env === ENV.DEVELOPMENT) {
     await findOrThrow(userId);
   }

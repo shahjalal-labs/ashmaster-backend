@@ -12,6 +12,19 @@ export type TSendConnectionReqest = z.infer<typeof sendConnectionRequest>;
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
 
+//w: (start)╭──────────── responseRequest ────────────╮
+const responseRequest = z
+  .object({
+    requestId: z.string().min(24),
+    status: z.enum(["ACCEPTED", "REJECTED"]),
+  })
+  .strict();
+
+export type TResponseRequest = z.infer<typeof responseRequest>;
+
+//w: (end)  ╰──────────── responseRequest ────────────╯
+
 export const NetworkValidation = {
   sendConnectionRequest,
+  responseRequest,
 };
