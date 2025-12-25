@@ -238,7 +238,7 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
   // Try to get from cache first
   const cachedProfile = await getProfileFromCache(otherUserId || userId);
   if (cachedProfile) {
-    // return cachedProfile;
+    return cachedProfile;
   }
 
   // If not in cache, fetch from database
@@ -291,7 +291,9 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
 
   return {
     ...sanitizedUser,
-    [otherUserId && connectionStatus: connections?.status || "not_connected"]
+    ...(otherUserId && {
+      connectionStatus: connections?.status || "not_connected",
+    }),
   };
 };
 //w: (end)  ╰──────────── getProfile ────────────╯
