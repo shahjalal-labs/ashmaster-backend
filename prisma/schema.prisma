@@ -106,19 +106,25 @@ model Connections {
 
 //w: (start)╭────────────  ChecklistEndGoal ────────────╮
 model ChecklistEndGoal {
-  id String @id @default(auto()) @map("_id") @db.ObjectId
-  status   Status  
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  type        ChecklistEndGoalType
+  status      Status               @default(INCOMPLETE)
+  title       String
+  description String
 
   @@map("checklist_end_goals")
-
 }
+
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
 
+enum ChecklistEndGoalType {
+  CHECKLIST
+  ENDGOALS
+}
 
 enum Status {
-COMPLETE
-INCOMPLETE
-
+  COMPLETE
+  INCOMPLETE
 }
 
 enum RequestStatus {
