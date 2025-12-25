@@ -255,13 +255,15 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
           userId: true,
         },
       },
-      preference: {
-        omit: {
-          createdAt: true,
-          updatedAt: true,
-          userId: true,
+      ...(!otherUserId && {
+        preference: {
+          omit: {
+            createdAt: true,
+            updatedAt: true,
+            userId: true,
+          },
         },
-      },
+      }),
     },
   });
 
@@ -281,14 +283,15 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
     },
   });
 
+  console.log(connections, "auth.service.ts", 276);
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
 
   return {
-    connectionStatus: connections?.status,
     ...sanitizedUser,
+    [otherUserId && connectionStatus: connections?.status || "not_connected"]
   };
 };
 //w: (end)  ╰──────────── getProfile ────────────╯
