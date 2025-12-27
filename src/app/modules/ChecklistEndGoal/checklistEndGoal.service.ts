@@ -34,11 +34,28 @@ const getMyChecklistOrEndGoals = async (
   const result = await prisma.checklistEndGoal.findMany({
     where: {
       userId,
-      // type: filter.type,
       type: filter.type,
     },
+    skip,
+    take: limit,
+    orderBy:
+      paginations.sortBy && sortOrder
+        ? {
+            [paginations.sortBy]: paginations.sortOrder,
+          }
+        : {
+            [sortBy]: sortOrder,
+          },
   });
-  return result;
+  return {
+    meta: {
+      page,
+      limit,
+
+      // total: 0,
+    },
+    data: result,
+  };
 };
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 

@@ -32,6 +32,7 @@ const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
   const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(
     id,
     pickedPagination,
+    pickedFilter,
   );
 
   sendResponse(res, {

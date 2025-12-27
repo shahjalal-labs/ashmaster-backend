@@ -117,6 +117,7 @@ model ChecklistEndGoal {
   createdAt   DateTime             @default(now())
   updatedAt   DateTime             @updatedAt
 
+  @@index([createdAt])
   @@map("checklist_end_goals")
 }
 
