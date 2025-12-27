@@ -1,4 +1,5 @@
 import { ChecklistEndGoalType, Status } from "@prisma/client";
+import { title } from "process";
 import { z } from "zod";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
@@ -19,6 +20,8 @@ const changeChecklistStatusSchema = z
   .object({
     status: z.nativeEnum(Status),
     checklistId: z.string().min(24),
+    title: z.string().min(4),
+    description: z.string().min(10),
   })
   .strict();
 

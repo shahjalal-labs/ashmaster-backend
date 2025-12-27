@@ -22,4 +22,16 @@ Authorization: {{ashRaisa}}
 
 
 
-PATCH  {{port6011}}/checklist-end-goals?type=CHECKLIST&page=1&limit=10&sortBy=title&sortOrder=asc
+# update checklist
+PATCH  {{port6011}}/checklist-end-goals/status
+#Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
+
+Content-Type: application/json
+
+{
+ "checklistId": "694d1cadf2f85a0ba12ada34",
+ "status": "COMPLETE",
+ "title": "Read 4 h",
+ "description":"Study 4h at night"
+}
