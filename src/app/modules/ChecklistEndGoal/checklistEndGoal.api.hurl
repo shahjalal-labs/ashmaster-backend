@@ -11,7 +11,7 @@ Content-Type: application/json
 
 # get all checklist/ endgoals
 
-GET  {{port6011}}/checklist-end-goals/694a254aad128cabeaf7412f?type=CHECKLIST&page=1&limit=10&sortBy=title&sortOrder=asc
+GET  {{port6011}}/checklist-end-goals/694a254aad128cabeaf7412f?type=ENDGOALS&page=1&limit=10&sortBy=title&sortOrder=asc
 #Authorization: {{ashRaisa}}
 Authorization: {{ashsrahim}}
 

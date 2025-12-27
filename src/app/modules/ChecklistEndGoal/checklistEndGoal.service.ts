@@ -135,18 +135,18 @@ const getAllChecklistOrEndGoals = async (
 
     progress =
       totalChecklist > 0
-        ? Number((completedChecklist / totalChecklist).toFixed(2))
+        ? Math.round((completedChecklist / totalChecklist) * 100)
         : 0;
   }
 
   return {
     meta: {
-      progress,
       page,
       limit,
       total,
       totalPages: Math.ceil(total / limit),
     },
+    progress,
     data,
   };
 };
