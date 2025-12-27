@@ -22,4 +22,10 @@ router.post(
 
 router.get("/", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
 
+router.patch(
+  "/status",
+  validateRequest(ChecklistEndGoalsValidation.changeChecklistStatusSchema),
+  ChecklistEndGoalsController.changeChecklistStatus,
+);
+
 export const ChecklistEndGoalsRoutes = router;

@@ -20,3 +20,6 @@ Authorization: {{ashRaisa}}
 GET  {{port6011}}/checklist-end-goals?type=CHECKLIST&page=1&limit=10&sortBy=title&sortOrder=asc
 Authorization: {{ashRaisa}}
 
+
+
+PATCH  {{port6011}}/checklist-end-goals?type=CHECKLIST&page=1&limit=10&sortBy=title&sortOrder=asc

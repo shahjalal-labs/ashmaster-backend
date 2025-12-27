@@ -1,8 +1,13 @@
-import { ChecklistEndGoalType, Prisma } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import prisma from "../../../shared/prisma";
-import { TCreateChecklistEndGoals } from "./checklistEndGoal.validation";
 import { paginationHelper } from "../../../shared/paginationHelper";
+import {
+  TChangeChecklistStatusSchema,
+  TCreateChecklistEndGoals,
+} from "./checklistEndGoal.validation";
+import ApiError from "../../../errors/ApiErrors";
+import httpStatus from "http-status";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
 const createChecklistEndGoals = async (
@@ -15,10 +20,7 @@ const createChecklistEndGoals = async (
       ...payload,
     },
   });
-  console.log({
-    userId,
-    payload,
-  });
+
   return;
 };
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
@@ -65,7 +67,35 @@ const getMyChecklistOrEndGoals = async (
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 
 //w: (start)╭──────────── changeChecklistStatus ────────────╮
-const changeChecklistStatus = async (userId: string, payload: any) => {};
+const changeChecklistStatus = async (
+  userId: string,
+  payload: TChangeChecklistStatusSchema,
+) => {
+  const checklist = await prisma.checklistEndGoal.findUnique({
+    where: {
+      id: payload.checklistId,
+    },
+  });
+  if (!checklist) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Checklist not found");
+  }
+
+  if (checklist?.userId !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You can't change ohter's checklist.",
+    );
+  }
+
+  await prisma.checklistEndGoal.update({
+    where: {
+      id: payload.checklistId,
+    },
+    data: {
+      status: payload.status,
+    },
+  });
+};
 //w: (end)  ╰──────────── changeChecklistStatus ────────────╯
 
 export const ChecklistEndGoalsService = {

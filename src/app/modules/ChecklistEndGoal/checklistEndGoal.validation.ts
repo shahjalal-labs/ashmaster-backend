@@ -18,6 +18,7 @@ export type TCreateChecklistEndGoals = z.infer<
 const changeChecklistStatusSchema = z
   .object({
     status: z.nativeEnum(Status),
+    checklistId: z.string().min(24),
   })
   .strict();
 
