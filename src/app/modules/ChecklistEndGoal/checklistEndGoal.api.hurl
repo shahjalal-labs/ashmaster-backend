@@ -6,12 +6,12 @@ Content-Type: application/json
 {
  "title":"Read 3 hours",
  "description": "Study 8 am to 11 am before going to school. And ready for submission.",
- "type": "ENDGOALS"
+ "type": "CHECKLIST"
 }
 
-# get my checklist/ endgoals
+# get all checklist/ endgoals
 
-GET  {{port6011}}/checklist-end-goals?type=ENDGOALS&page=1&limit=10&sortBy=title&sortOrder=asc
+GET  {{port6011}}/checklist-end-goals/694d1c81f2f85a0ba12ada33?type=ENDGOALS&page=1&limit=10&sortBy=title&sortOrder=asc
 Authorization: {{ashRaisa}}
 
 
@@ -37,7 +37,7 @@ Content-Type: application/json
 }
 
 
-DELETE  {{port6011}}/checklist-end-goals/694d1cadf2f85a0ba12ada34
+DELETE  {{port6011}}/checklist-end-goals/694fa0aa8a0113dcfa949157
 
-Authorization: {{ashsrahim}}
-#Authorization: {{ashRaisa}}
+#Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}

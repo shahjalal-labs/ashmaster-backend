@@ -23,13 +23,13 @@ const createChecklistEndGoals = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
-const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
+const getAllChecklistOrEndGoals = catchAsync(async (req, res) => {
   const pickedPagination = pick(req.query, paginationOptions);
 
   const pickedFilter = pick(req.query, ["type"]);
   console.log(pickedPagination, "checklistEndGoal.controller.ts", 26);
-  const { id } = req.user;
-  const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(
+  const { id } = req.params;
+  const result = await ChecklistEndGoalsService.getAllChecklistOrEndGoals(
     id,
     pickedPagination,
     pickedFilter,
@@ -79,7 +79,7 @@ const deleteChecklistEndGoals = catchAsync(async (req, res) => {
 
 export const ChecklistEndGoalsController = {
   createChecklistEndGoals,
-  getMyChecklistOrEndGoals,
+  getAllChecklistOrEndGoals,
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
 };

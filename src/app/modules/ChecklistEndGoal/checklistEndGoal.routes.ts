@@ -8,6 +8,8 @@ import { ChecklistEndGoalsValidation } from "./checklistEndGoal.validation";
 
 const router = Router();
 
+router.get("/:id", ChecklistEndGoalsController.getAllChecklistOrEndGoals);
+
 router.use(auth());
 
 if (config.env === ENV.DEVELOPMENT) {
@@ -19,8 +21,6 @@ router.post(
   validateRequest(ChecklistEndGoalsValidation.createChecklistEndGoalsSchema),
   ChecklistEndGoalsController.createChecklistEndGoals,
 );
-
-router.get("/", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
 
 router.patch(
   "/status",

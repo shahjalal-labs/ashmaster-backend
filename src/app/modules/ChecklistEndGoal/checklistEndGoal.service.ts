@@ -26,7 +26,7 @@ const createChecklistEndGoals = async (
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
-const getMyChecklistOrEndGoals = async (
+const getAllChecklistOrEndGoals = async (
   userId: string,
   paginations: IPaginationOptions,
   filter: any,
@@ -116,7 +116,7 @@ const deleteChecklistEndGoals = async (
 
   if (checklist?.userId !== userId) {
     throw new ApiError(
-      httpStatus.BAD_REQUEST,
+      httpStatus.FORBIDDEN,
       "You can't delete ohter's checklist or end goals.",
     );
   }
@@ -130,9 +130,12 @@ const deleteChecklistEndGoals = async (
 };
 //w: (end)  ╰──────────── deleteChecklistEndGoals ────────────╯
 
+const getChecklistEndGoalById = async () => {};
+
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
-  getMyChecklistOrEndGoals,
+  getAllChecklistOrEndGoals,
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
+  getChecklistEndGoalById,
 };
