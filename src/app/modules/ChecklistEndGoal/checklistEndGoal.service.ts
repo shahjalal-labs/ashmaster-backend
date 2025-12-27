@@ -66,7 +66,7 @@ const getMyChecklistOrEndGoals = async (
 };
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 
-//w: (start)╭──────────── changeChecklistStatus ────────────╮
+//w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = async (
   userId: string,
   payload: TChangeChecklistStatusSchema,
@@ -98,7 +98,7 @@ const updateChecklistEndGoals = async (
     },
   });
 };
-//w: (end)  ╰──────────── changeChecklistStatus ────────────╯
+//w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,

@@ -24,8 +24,8 @@ router.get("/", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
 
 router.patch(
   "/status",
-  validateRequest(ChecklistEndGoalsValidation.changeChecklistStatusSchema),
-  ChecklistEndGoalsController.changeChecklistStatus,
+  validateRequest(ChecklistEndGoalsValidation.updateChecklistEndGoalsSchema),
+  ChecklistEndGoalsController.updateChecklistEndGoals,
 );
 
 export const ChecklistEndGoalsRoutes = router;

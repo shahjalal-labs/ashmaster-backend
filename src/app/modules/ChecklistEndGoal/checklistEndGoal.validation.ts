@@ -16,7 +16,7 @@ export type TCreateChecklistEndGoals = z.infer<
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── changeChecklistStatus ────────────╮
-const changeChecklistStatusSchema = z
+const updateChecklistEndGoalsSchema = z
   .object({
     status: z.nativeEnum(Status),
     checklistId: z.string().min(24),
@@ -26,12 +26,12 @@ const changeChecklistStatusSchema = z
   .strict();
 
 export type TChangeChecklistStatusSchema = z.infer<
-  typeof changeChecklistStatusSchema
+  typeof updateChecklistEndGoalsSchema
 >;
 
 //w: (end)  ╰──────────── changeChecklistStatus ────────────╯
 
 export const ChecklistEndGoalsValidation = {
   createChecklistEndGoalsSchema,
-  changeChecklistStatusSchema,
+  updateChecklistEndGoalsSchema,
 };

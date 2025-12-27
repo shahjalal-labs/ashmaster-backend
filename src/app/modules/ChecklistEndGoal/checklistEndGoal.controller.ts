@@ -44,11 +44,11 @@ const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 
-//w: (start)╭──────────── changeChecklistStatus ────────────╮
+//w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = catchAsync(async (req, res) => {
   const { id } = req.user;
 
-  await ChecklistEndGoalsService.changeChecklistStatus(id, req.body);
+  await ChecklistEndGoalsService.updateChecklistEndGoals(id, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
@@ -56,7 +56,7 @@ const updateChecklistEndGoals = catchAsync(async (req, res) => {
     data: null,
   });
 });
-//w: (end)  ╰──────────── changeChecklistStatus ────────────╯
+//w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
 export const ChecklistEndGoalsController = {
   createChecklistEndGoals,
