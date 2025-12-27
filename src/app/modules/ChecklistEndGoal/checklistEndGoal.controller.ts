@@ -2,6 +2,7 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { ChecklistEndGoalsService } from "./checklistEndGoal.service";
+import { pick } from "../../../shared/pick";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
 const createChecklistEndGoals = catchAsync(async (req, res) => {
@@ -20,8 +21,12 @@ const createChecklistEndGoals = catchAsync(async (req, res) => {
 
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
 const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
+  const filter = pick(req.query, ["type"]);
   const { id } = req.user;
-  const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(id);
+  const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(
+    id,
+    filter,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

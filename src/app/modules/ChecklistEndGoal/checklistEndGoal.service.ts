@@ -21,11 +21,17 @@ const createChecklistEndGoals = async (
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
-const getMyChecklistOrEndGoals = async (userId: string) => {
+const getMyChecklistOrEndGoals = async (userId: string, filter: any) => {
+  console.log(filter, "checklistEndGoal.service.ts", 25);
   const result = await prisma.checklistEndGoal.findMany({
     where: {
       userId,
+      // type: filter.type,
+      type: {
+        equals: filter.type,
+      },
     },
+    skip: 0,
   });
   return result;
 };
