@@ -58,6 +58,10 @@ const updateChecklistEndGoals = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
+//w: (start)╭──────────── deleteChecklistEndGoals ────────────╮
+const deleteChecklistEndGoals = catchAsync(async (req, res) => {});
+//w: (end)  ╰──────────── deleteChecklistEndGoals ────────────╯
+
 export const ChecklistEndGoalsController = {
   createChecklistEndGoals,
   getMyChecklistOrEndGoals,

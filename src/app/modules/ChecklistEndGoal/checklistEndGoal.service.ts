@@ -100,8 +100,39 @@ const updateChecklistEndGoals = async (
 };
 //w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
+//w: (start)╭──────────── deleteChecklistEndGoals ────────────╮
+const deleteChecklistEndGoals = async (
+  userId: string,
+  checklistEndGoalId: string,
+) => {
+  const checklist = await prisma.checklistEndGoal.findUnique({
+    where: {
+      id: checklistEndGoalId,
+    },
+  });
+  if (!checklist) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Checklist not found");
+  }
+
+  if (checklist?.userId !== userId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You can't delete ohter's checklist or end goals.",
+    );
+  }
+
+  await prisma.checklistEndGoal.delete({
+    where: {
+      id: checklistEndGoalId,
+    },
+  });
+  return null;
+};
+//w: (end)  ╰──────────── deleteChecklistEndGoals ────────────╯
+
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
   getMyChecklistOrEndGoals,
   updateChecklistEndGoals,
+  deleteChecklistEndGoals,
 };

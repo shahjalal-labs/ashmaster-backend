@@ -31,7 +31,10 @@ export type TChangeChecklistStatusSchema = z.infer<
 
 //w: (end)  ╰──────────── changeChecklistStatus ────────────╯
 
+const deleteChecklistEndGoalsSchema = z.object({});
+
 export const ChecklistEndGoalsValidation = {
   createChecklistEndGoalsSchema,
   updateChecklistEndGoalsSchema,
+  deleteChecklistEndGoalsSchema,
 };
