@@ -4,6 +4,8 @@ import sendResponse from "../../../shared/sendResponse";
 import { ChecklistEndGoalsService } from "./checklistEndGoal.service";
 import { pick } from "../../../shared/pick";
 import { paginationOptions } from "../../../shared/paginationHelper";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { ChecklistEndGoalType } from "@prisma/client";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
 const createChecklistEndGoals = catchAsync(async (req, res) => {
@@ -22,12 +24,14 @@ const createChecklistEndGoals = catchAsync(async (req, res) => {
 
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
 const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
-  const picked = pick(req.query, ["type", ...paginationOptions]);
-  console.log(picked, "checklistEndGoal.controller.ts", 26);
+  const pickedPagination = pick(req.query, paginationOptions);
+
+  const pickedFilter = pick(req.query, ["type"]);
+  console.log(pickedPagination, "checklistEndGoal.controller.ts", 26);
   const { id } = req.user;
   const result = await ChecklistEndGoalsService.getMyChecklistOrEndGoals(
     id,
-    picked,
+    pickedPagination,
   );
 
   sendResponse(res, {

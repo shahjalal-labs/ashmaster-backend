@@ -2,6 +2,7 @@ import { ChecklistEndGoalType } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import prisma from "../../../shared/prisma";
 import { TCreateChecklistEndGoals } from "./checklistEndGoal.validation";
+import { paginationHelper } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
 const createChecklistEndGoals = async (
@@ -25,16 +26,16 @@ const createChecklistEndGoals = async (
 //w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
 const getMyChecklistOrEndGoals = async (
   userId: string,
-  picked: IPaginationOptions & { type: ChecklistEndGoalType },
+  paginations: IPaginationOptions,
+  filter: any,
 ) => {
-  console.log(picked, "checklistEndGoal.service.ts", 25);
+  const { page, limit, skip, sortBy, sortOrder } =
+    paginationHelper.calcalutePagination(paginations);
   const result = await prisma.checklistEndGoal.findMany({
     where: {
       userId,
       // type: filter.type,
-      type: {
-        equals: picked.type,
-      },
+      type: filter.type,
     },
   });
   return result;
