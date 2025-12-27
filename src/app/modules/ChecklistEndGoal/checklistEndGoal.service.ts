@@ -1,4 +1,4 @@
-import { ChecklistEndGoalType } from "@prisma/client";
+import { ChecklistEndGoalType, Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import prisma from "../../../shared/prisma";
 import { TCreateChecklistEndGoals } from "./checklistEndGoal.validation";
@@ -29,30 +29,34 @@ const getMyChecklistOrEndGoals = async (
   paginations: IPaginationOptions,
   filter: any,
 ) => {
-  const { page, limit, skip, sortBy, sortOrder } =
+  const { page, limit, skip } =
     paginationHelper.calcalutePagination(paginations);
-  const result = await prisma.checklistEndGoal.findMany({
-    where: {
-      userId,
-      type: filter.type,
-    },
-    skip,
-    take: limit,
-    orderBy:
-      paginations.sortBy && sortOrder
-        ? {
-            [paginations.sortBy]: paginations.sortOrder,
-          }
-        : {
-            [sortBy]: sortOrder,
-          },
-  });
+
+  const whereClause: Prisma.ChecklistEndGoalWhereInput = {
+    userId,
+    type: filter.type,
+  };
+
+  const [result, total] = await Promise.all([
+    prisma.checklistEndGoal.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+
+    prisma.checklistEndGoal.count({
+      where: whereClause,
+    }),
+  ]);
+
   return {
     meta: {
       page,
       limit,
-
-      // total: 0,
+      total,
     },
     data: result,
   };
