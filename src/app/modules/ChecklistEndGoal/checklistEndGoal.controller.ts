@@ -59,11 +59,27 @@ const updateChecklistEndGoals = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── deleteChecklistEndGoals ────────────╮
-const deleteChecklistEndGoals = catchAsync(async (req, res) => {});
+const deleteChecklistEndGoals = catchAsync(async (req, res) => {
+  const { id } = req.user;
+
+  const checklistEndGoalsId = req.params.id;
+  await ChecklistEndGoalsService.deleteChecklistEndGoals(
+    id,
+    checklistEndGoalsId,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "End goals / checklist deleted successfully",
+    data: null,
+  });
+});
 //w: (end)  ╰──────────── deleteChecklistEndGoals ────────────╯
 
 export const ChecklistEndGoalsController = {
   createChecklistEndGoals,
   getMyChecklistOrEndGoals,
   updateChecklistEndGoals,
+  deleteChecklistEndGoals,
 };

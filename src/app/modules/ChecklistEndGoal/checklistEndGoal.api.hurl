@@ -35,3 +35,9 @@ Content-Type: application/json
  "title": "Read 4 h",
  "description":"Study 4h at night"
 }
+
+
+DELETE  {{port6011}}/checklist-end-goals/694d1cadf2f85a0ba12ada34
+
+Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}

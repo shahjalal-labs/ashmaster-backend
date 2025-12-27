@@ -28,4 +28,6 @@ router.patch(
   ChecklistEndGoalsController.updateChecklistEndGoals,
 );
 
+router.delete("/:id", ChecklistEndGoalsController.deleteChecklistEndGoals);
+
 export const ChecklistEndGoalsRoutes = router;
