@@ -25,7 +25,7 @@ const createChecklistEndGoals = async (
 };
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
-//w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
+//w: (start)╭──────────── getAllChecklistOrEndGoals ────────────╮
 const getAllChecklistOrEndGoals = async (
   userId: string,
   paginations: IPaginationOptions,
@@ -39,7 +39,7 @@ const getAllChecklistOrEndGoals = async (
     type: filter.type,
   };
 
-  const [result, total] = await Promise.all([
+  const [result, total, totalForProgress, completed] = await Promise.all([
     prisma.checklistEndGoal.findMany({
       where: whereClause,
       skip,
@@ -52,10 +52,33 @@ const getAllChecklistOrEndGoals = async (
     prisma.checklistEndGoal.count({
       where: whereClause,
     }),
+
+    prisma.checklistEndGoal.count({
+      where: {
+        userId,
+        type: "CHECKLIST",
+      },
+    }),
+
+    prisma.checklistEndGoal.count({
+      where: {
+        userId,
+        type: "CHECKLIST",
+        status: "COMPLETE",
+      },
+    }),
   ]);
+
+  console.log(`progress`, {
+    totalForProgress,
+    completed,
+  });
+
+  const progress = Math.round(totalForProgress / completed);
 
   return {
     meta: {
+      progress,
       page,
       limit,
       total,
@@ -64,7 +87,7 @@ const getAllChecklistOrEndGoals = async (
     data: result,
   };
 };
-//w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
+//w: (end)  ╰──────────── getAllChecklistOrEndGoals ────────────╯
 
 //w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = async (
