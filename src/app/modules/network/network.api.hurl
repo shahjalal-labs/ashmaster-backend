@@ -23,7 +23,7 @@ GET {{port6011}}/network/request-pending?page=1&limit=10
 Authorization: {{ashRaisa}}
 
 
-# Accept request
+# response/remove connection  or cancel sent connection request 
 PATCH {{port6011}}/network/response-or-remove
 #Authorization: {{ashsrahim}}
 Authorization: {{ashRaisa}}

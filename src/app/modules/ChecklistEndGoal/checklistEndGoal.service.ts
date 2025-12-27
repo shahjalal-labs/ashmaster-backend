@@ -57,13 +57,19 @@ const getMyChecklistOrEndGoals = async (
       page,
       limit,
       total,
+      totalPages: Math.ceil(total / limit),
     },
     data: result,
   };
 };
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 
+//w: (start)╭──────────── changeChecklistStatus ────────────╮
+const changeChecklistStatus = async (userId: string, payload: any) => {};
+//w: (end)  ╰──────────── changeChecklistStatus ────────────╯
+
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
   getMyChecklistOrEndGoals,
+  changeChecklistStatus,
 };

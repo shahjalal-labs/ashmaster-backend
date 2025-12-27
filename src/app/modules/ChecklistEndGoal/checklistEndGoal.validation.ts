@@ -1,4 +1,4 @@
-import { ChecklistEndGoalType } from "@prisma/client";
+import { ChecklistEndGoalType, Status } from "@prisma/client";
 import { z } from "zod";
 
 //w: (start)╭──────────── createChecklistEndGoals ────────────╮
@@ -14,6 +14,20 @@ export type TCreateChecklistEndGoals = z.infer<
 >;
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
+//w: (start)╭──────────── changeChecklistStatus ────────────╮
+const changeChecklistStatusSchema = z
+  .object({
+    status: z.nativeEnum(Status),
+  })
+  .strict();
+
+export type TChangeChecklistStatusSchema = z.infer<
+  typeof changeChecklistStatusSchema
+>;
+
+//w: (end)  ╰──────────── changeChecklistStatus ────────────╯
+
 export const ChecklistEndGoalsValidation = {
   createChecklistEndGoalsSchema,
+  changeChecklistStatusSchema,
 };

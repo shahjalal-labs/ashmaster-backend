@@ -319,6 +319,7 @@ const getConnections = async (userId: string, options: TOptions) => {
       total,
       skip,
       page,
+      limit,
       totalPages: Math.ceil(total / limit),
     },
     data: connections,
