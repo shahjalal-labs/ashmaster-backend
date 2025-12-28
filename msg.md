@@ -1,1 +1,11 @@
-in the auth section i have a great issue, prefence model many field take array but i have counted as string, so the service function is failing, about complete profile, update profile where the preference exist. solve the issue. my purpose one user can have many ethncity in preference
+##
+
+mentorView
+id
+menteeId > new > change updated at>
+mentorId
+lastViewed > mentor view> view time updated
+updatedAt
+isSeen > lastViewed > greater than updatedAt then true
+
+uniq(menteeId, mentorId)
