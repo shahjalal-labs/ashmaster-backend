@@ -806,17 +806,14 @@ const deleteChecklistEndGoals = async (
 
 const getChecklistEndGoalById = async () => {};
 
+const mentorChecklist = async (params: any) => {};
+
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
   getAllChecklistOrEndGoals,
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
   getChecklistEndGoalById,
+  mentorChecklist,
 };
 ```
-
----
-
-in mentor progress section will work like, first it will render all his connections for mentee. then he can view the checklist. how many mentee have and how he seen based on i will count the mentor progress. but i am not sure about the flow. how will i know when need to fetch data and which checklist i need to show to the mentor section. think first mentor come i will show all checklist okay nice. but next mentee create now data. but i have now no track which checklist i need to show. clarify me what can i do.
-
-progress logic is how many mentee come with checklist. then number of mentee and number of how much mentee's checklist i have seen.
