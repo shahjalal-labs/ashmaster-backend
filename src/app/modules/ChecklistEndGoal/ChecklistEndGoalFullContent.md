@@ -817,3 +817,6 @@ export const ChecklistEndGoalsService = {
   mentorChecklist,
 };
 ```
+
+I am facing an issue. first try to understand my purpose clearly. Here first off all mentor and mentee can get connected through connection.
+if once connected and mentor come to the progress page mentor can see the connected mentee, those mentee who have created checklist. checklist can one or multiple no matter. then mentor can press the view button and the mentee will be read. think 3 mentee has come with checklist mentor view 1 then mentor progress is 33.3%. then other mentee create checklist again come on that progress page, then mentor is basically seen one mentee's checklist but have 4 then 25 % progress. in the checlist remember only unviewed will come first. Mentee those haven't created checklist won't come. once viewed it will sorted down. clarify my purpose no need code. just clarify my desire. I am giving you the figma design.

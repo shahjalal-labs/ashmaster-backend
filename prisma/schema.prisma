@@ -24,8 +24,8 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id               String             @id @default(auto()) @map("_id") @db.ObjectId
-  email            String             @unique
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
   password         String?
   fullname         String
   fcmToken         String?
@@ -38,11 +38,30 @@ model User {
   sentRequests     Connections[]      @relation("SentRequests")
   receivedRequests Connections[]      @relation("ReceivedRequests")
   checklistEndGoal ChecklistEndGoal[]
-
+viewedMentees   MentorMenteeView[] @relation("MentorViews")
+  viewedByMentors MentorMenteeView[] @relation("MenteeViews")
   @@map("users")
 }
 
 //w: (end)  ╰────────────  User  ────────────╯
+
+
+//w: (start)╭────────────  MentorMenteeView ────────────╮
+model MentorMenteeView {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  mentorId  String   @db.ObjectId
+  menteeId  String   @db.ObjectId
+  viewedAt  DateTime @default(now())
+  mentor    User     @relation(  fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee    User     @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+  
+  @@unique([mentorId, menteeId])
+  @@index([mentorId, viewedAt])
+  @@map("mentor_mentee_views")
+}
+//w: (end)  ╰────────────  MentorMenteeView ────────────╯
+
+
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
