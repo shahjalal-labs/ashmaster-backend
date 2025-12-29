@@ -24,9 +24,8 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id    String @id @default(auto()) @map("_id") @db.ObjectId
-  email String @unique
-
+  id               String             @id @default(auto()) @map("_id") @db.ObjectId
+  email            String             @unique
   password         String?
   fullname         String
   fcmToken         String?
@@ -122,6 +121,15 @@ model ChecklistEndGoal {
 }
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
+
+model MentorChecklistView {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  mentorId   String   @db.ObjectId
+  menteeId   String   @db.ObjectId
+  lastViewAt DateTime @default(now())
+
+  @@unique([mentorId, menteeId])
+}
 
 enum ChecklistEndGoalType {
   CHECKLIST

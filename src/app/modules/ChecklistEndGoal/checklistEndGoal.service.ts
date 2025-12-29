@@ -219,13 +219,10 @@ const deleteChecklistEndGoals = async (
 
 const getChecklistEndGoalById = async () => {};
 
-const mentorChecklist = async (params: any) => {};
-
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
   getAllChecklistOrEndGoals,
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
   getChecklistEndGoalById,
-  mentorChecklist,
 };
