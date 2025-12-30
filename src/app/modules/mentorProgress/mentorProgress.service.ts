@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
-//w: (start)╭──────────── mentorChecklist ────────────╮
+//w: (start)╭──────────── mentorChecklistView ────────────╮
 const mentorChecklistView = async (userId: string) => {
   const mentor = await prisma.user.findUnique({
     where: {
@@ -34,24 +34,20 @@ const mentorChecklistView = async (userId: string) => {
           id: true,
         },
       },
-      receiver: {
+      receiver: true /* {
         select: {
           id: true,
         },
-      },
+      }, */,
     },
   });
-  console.log(connections, "mentorProgress.service.ts", 18);
 
-  const result = connections.flatMap((c) => {
-    return [c.sender.id, c.receiver.id].filter((id) => id !== userId);
-  });
-
-  console.log(result, "mentorProgress.service.ts", 47);
-  const mentees = connections.filter((c) => "");
+  const mentees = connections
+    .flatMap((c) => [c.sender.id, c.receiver.id])
+    .filter((id) => id !== userId);
+  console.log(mentees, "mentorProgress.service.ts", 47);
 };
-
-//w: (end)  ╰──────────── mentorChecklist ────────────╯
+//w: (end)  ╰──────────── mentorChecklistView ────────────╯
 
 export const MentorProgressService = {
   mentorChecklistView,
