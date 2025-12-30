@@ -43,7 +43,7 @@ const mentorChecklistView = async (userId: string) => {
   });
 
   const connectedMenteeIds = [
-    //t: ...new Set makes the array unique if anyway create's any duplicacy. Though no duplicacy will come still for better backend safety
+    //w: ...new Set makes the array unique if anyway create's any duplicacy. Though no duplicacy will come still for better backend safety
     ...new Set(
       connections
         .flatMap((c) => [c.sender.id, c.receiver.id])
@@ -60,13 +60,6 @@ const mentorChecklistView = async (userId: string) => {
       checklistEndGoal: {
         some: {
           type: "CHECKLIST",
-        },
-      },
-    },
-    orderBy: {
-      checklistEndGoal: {
-        _max: {
-          updatedAt: "desc",
         },
       },
     },

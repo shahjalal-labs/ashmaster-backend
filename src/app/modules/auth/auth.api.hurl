@@ -1,12 +1,13 @@
 SjAbc1@Bad
+# Aw32@320
 
 # email password  login
 
 POST {{port6011}}/auth/login
 
 {
-  "email":"gokonam915@emaxasp.com",
-  "password":"Aw32@320",
+  "email":"rasu@merepost.com",
+  "password":"SjAbc1@Bad",
   "fcmToken":""
 }
 
@@ -68,7 +69,7 @@ Authorization: {{tempToken}}
 
 # Complete Profile (Mentee Example)
 POST {{port6011}}/auth/complete-profile
-Authorization: {{ashrahim}}
+Authorization: {{ashsrasu}}
 Content-Type: application/json
 
 {

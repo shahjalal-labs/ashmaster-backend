@@ -2,10 +2,10 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Rasu Hossain",
-   "email":"rasu@merepost.com",
-   "password":"SjAbc1@Bad",
-   "fcmToken":""
+   "fullname":"Sharif Dada Chirokumary",
+   "email":"gokonam915@emaxasp.com",
+   "password":"Aw32@320",
+   "fcmToken":"checking_fcm_token"
 }
 
 
