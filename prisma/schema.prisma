@@ -52,8 +52,8 @@ model MentorMenteeView {
   mentorId  String   @db.ObjectId
   menteeId  String   @db.ObjectId
   viewedAt  DateTime @default(now())
-  mentor    User     @relation(  fields: [mentorId], references: [id], onDelete: Cascade)
-  mentee    User     @relation(fields: [menteeId], references: [id], onDelete: Cascade)
+  mentor    User     @relation("MentorViews", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee    User     @relation("MenteeViews",  fields: [menteeId], references: [id], onDelete: Cascade)
   
   @@unique([mentorId, menteeId])
   @@index([mentorId, viewedAt])

@@ -10,8 +10,13 @@ const getMentorProgress = async (mentorId: string) => {
   // Check if user is a mentor
   const mentor = await prisma.user.findUnique({
     where: { id: mentorId },
+    select: {
+      id: true,
+      role: true,
+    },
   });
 
+  console.log(mentor, "mentorProgress.service.ts", 12);
   if (!mentor || mentor.role !== "MENTOR") {
     throw new ApiError(
       httpStatus.FORBIDDEN,
@@ -48,6 +53,7 @@ const getMentorProgress = async (mentorId: string) => {
   });
 
   // Extract mentees (users who are not the mentor)
+
   const mentees = connections
     .map((connection) => {
       const otherUser =
