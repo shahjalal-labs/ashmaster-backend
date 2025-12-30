@@ -3,7 +3,7 @@ import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 
 //w: (start)╭──────────── mentorChecklist ────────────╮
-const mentorChecklist = async (userId: string) => {
+const mentorChecklistView = async (userId: string) => {
   const mentor = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -33,10 +33,11 @@ const mentorChecklist = async (userId: string) => {
       receiver: true,
     },
   });
+  console.log(connections, "mentorProgress.service.ts", 18);
 };
 
 //w: (end)  ╰──────────── mentorChecklist ────────────╯
 
 export const MentorProgressService = {
-  mentorChecklist,
+  mentorChecklist: mentorChecklistView,
 };

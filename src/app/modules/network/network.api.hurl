@@ -19,20 +19,23 @@ Content-Type: application/json
 
 # Get pending requests
 GET {{port6011}}/network/request-pending?page=1&limit=10
-# Authorization: {{ashsrahim}}
+#/ Authorization: {{ashsrahim}}
 Authorization: {{ashRaisa}}
 
 
 # response/remove connection  or cancel sent connection request 
+
 PATCH {{port6011}}/network/response-or-remove
+
 #Authorization: {{ashsrahim}}
 Authorization: {{ashRaisa}}
+
 Content-Type: application/json
 
 {
-  "requestId": "694cc7f9798af5fc3907ca51",
-  "status": "REMOVE"     # ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection or cancel send request
-}
+  "requestId": "69536bab48dd3657aaf5eea5",
+  "status": "ACCEPTED"
+}     #/ ACCEPTED/ REJECTED/REMOVE   // accpet/reject to response the request & remove to delete existing connection or cancel send request
 
 
 # get connections
