@@ -42,9 +42,15 @@ const mentorChecklistView = async (userId: string) => {
     },
   });
 
-  const connectedMenteeIds = connections
-    .flatMap((c) => [c.sender.id, c.receiver.id])
-    .filter((id) => id !== userId);
+  const connectedMenteeIds = [
+    //t: ...new Set makes the array unique if anyway create's any duplicacy. Though no duplicacy will come still for better backend safety
+    ...new Set(
+      connections
+        .flatMap((c) => [c.sender.id, c.receiver.id])
+        .filter((id) => id !== userId),
+    ),
+  ];
+
   const menteesWithChecklist = await prisma.user.findMany({
     where: {
       id: {
@@ -53,7 +59,14 @@ const mentorChecklistView = async (userId: string) => {
       role: "MENTEE",
       checklistEndGoal: {
         some: {
-          type: "ENDGOALS",
+          type: "CHECKLIST",
+        },
+      },
+    },
+    orderBy: {
+      checklistEndGoal: {
+        _max: {
+          updatedAt: "desc",
         },
       },
     },
