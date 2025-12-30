@@ -32,24 +32,30 @@ const mentorChecklistView = async (userId: string) => {
       sender: {
         select: {
           id: true,
-          checklistEndGoal: true,
         },
       },
       receiver: {
         select: {
           id: true,
-          checklistEndGoal: true,
         },
       },
     },
   });
 
-  const mentees = connections
-    .flatMap((c) => [c.sender, c.receiver])
-    .filter((senderReceiver) => senderReceiver.id !== userId);
-  console.log(mentees, "mentorProgress.service.ts", 47);
-  return mentees;
+  const connectedMenteeIds = connections
+    .flatMap((c) => [c.sender.id, c.receiver.id])
+    .filter((id) => id == userId);
+  console.log(connectedMenteeIds, "mentorProgress.service.ts", 47);
+  const hasChecklist = await prisma.user.findMany({
+    where: {
+      id: {
+        in: connectedMenteeIds,
+      },
+    },
+  });
+  return connectedMenteeIds;
 };
+
 //w: (end)  ╰──────────── mentorChecklistView ────────────╯
 
 export const MentorProgressService = {
