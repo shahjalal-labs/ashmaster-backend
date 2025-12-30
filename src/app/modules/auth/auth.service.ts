@@ -56,6 +56,7 @@ const loginUserIntoDB = async (payload: {
     accessToken,
     profileStatus: user.profilStatus,
     id: user.id,
+    role: user.role,
   };
 };
 //w: (end)  ╰──────────── loginUserIntoDB ────────────╯
@@ -86,6 +87,8 @@ const authLogin = async (payload: User) => {
     return {
       accessToken,
       profileStatus: user.profilStatus,
+      id: user.id,
+      role: user.role,
     };
   } else {
     const user = await prisma.user.create({
@@ -103,6 +106,7 @@ const authLogin = async (payload: User) => {
     return {
       accessToken,
       profileStatus: ProfilStatus.INCOMPLETE,
+      id: user.id,
     };
   }
 };

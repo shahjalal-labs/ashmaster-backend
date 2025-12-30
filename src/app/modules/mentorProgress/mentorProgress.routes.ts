@@ -26,7 +26,7 @@ router.post(
 // Get specific mentee's checklists (this will also mark as viewed)
 router.get(
   "/mentees/:menteeId/checklists",
-  MentorProgressController.getMenteeChecklists,
+  MentorProgressController.getMenteeDetailsWithChecklists,
 );
 
 // Get count of unviewed mentees (for badge/notification)

@@ -8,7 +8,14 @@ import { paginationOptions } from "../../../shared/paginationHelper";
 //w: (start)╭──────────── getMentorProgress ────────────╮
 const getMentorProgress = catchAsync(async (req, res) => {
   const { id: mentorId } = req.user;
-  const result = await MentorProgressService.getMentorProgress(mentorId);
+  const paginations = pick(req.query, paginationOptions);
+  const filter = pick(req.query, ["type"]);
+
+  const result = await MentorProgressService.getMentorProgress(
+    mentorId,
+    paginations,
+    filter,
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -18,7 +25,7 @@ const getMentorProgress = catchAsync(async (req, res) => {
   });
 });
 //w: (end)  ╰──────────── getMentorProgress ────────────╯
-
+//
 //w: (start)╭──────────── markMenteeAsViewed ────────────╮
 const markMenteeAsViewed = catchAsync(async (req, res) => {
   const { id: mentorId } = req.user;
@@ -35,28 +42,28 @@ const markMenteeAsViewed = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── markMenteeAsViewed ────────────╯
 
-//w: (start)╭──────────── getMenteeChecklists ────────────╮
-const getMenteeChecklists = catchAsync(async (req, res) => {
+//w: (start)╭──────────── getMenteeDetailsWithChecklists ────────────╮
+const getMenteeDetailsWithChecklists = catchAsync(async (req, res) => {
   const { id: mentorId } = req.user;
   const { menteeId } = req.params;
-  const pickedPagination = pick(req.query, paginationOptions);
-  const pickedFilter = pick(req.query, ["type"]);
+  const paginations = pick(req.query, paginationOptions);
+  const filter = pick(req.query, ["type"]);
 
-  const result = await MentorProgressService.getMenteeChecklists(
+  const result = await MentorProgressService.getMenteeDetailsWithChecklists(
     mentorId,
     menteeId,
-    pickedPagination,
-    pickedFilter,
+    paginations,
+    filter,
   );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Mentee checklists fetched successfully",
+    message: "Mentee details and checklists fetched successfully",
     data: result,
   });
 });
-//w: (end)  ╰──────────── getMenteeChecklists ────────────╯
+//w: (end)  ╰──────────── getMenteeDetailsWithChecklists ────────────╯
 
 //w: (start)╭──────────── getUnviewedMenteesCount ────────────╮
 const getUnviewedMenteesCount = catchAsync(async (req, res) => {
@@ -76,6 +83,6 @@ const getUnviewedMenteesCount = catchAsync(async (req, res) => {
 export const MentorProgressController = {
   getMentorProgress,
   markMenteeAsViewed,
-  getMenteeChecklists,
+  getMenteeDetailsWithChecklists,
   getUnviewedMenteesCount,
 };
