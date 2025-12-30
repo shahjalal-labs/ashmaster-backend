@@ -10,7 +10,7 @@ const mentorChecklistView = async (userId: string) => {
     },
   });
 
-  if (!mentor || mentor.role === "MENTOR") {
+  if (!mentor || !(mentor.role === "MENTOR")) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Only mentor can view this");
   }
 
@@ -39,5 +39,5 @@ const mentorChecklistView = async (userId: string) => {
 //w: (end)  ╰──────────── mentorChecklist ────────────╯
 
 export const MentorProgressService = {
-  mentorChecklist: mentorChecklistView,
+  mentorChecklistView,
 };
