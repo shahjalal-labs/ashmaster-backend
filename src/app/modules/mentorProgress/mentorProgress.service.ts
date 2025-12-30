@@ -29,11 +29,26 @@ const mentorChecklistView = async (userId: string) => {
     },
     select: {
       id: true,
-      sender: true,
-      receiver: true,
+      sender: {
+        select: {
+          id: true,
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+        },
+      },
     },
   });
   console.log(connections, "mentorProgress.service.ts", 18);
+
+  const result = connections.flatMap((c) => {
+    return [c.sender.id, c.receiver.id].filter((id) => id !== userId);
+  });
+
+  console.log(result, "mentorProgress.service.ts", 47);
+  const mentees = connections.filter((c) => "");
 };
 
 //w: (end)  ╰──────────── mentorChecklist ────────────╯
