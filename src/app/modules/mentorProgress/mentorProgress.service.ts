@@ -150,6 +150,12 @@ const viewSpeficMenteeChecklists = async (
 const mentorProgress = async (userId: string) => {
   const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
+  //  Only count views from last 7 days as "valid"
+  //  those are viewed in last 7 dasy are count as viewd. if any mentee don't view in last 7 dasy he wont count in viewed consequently in progress
+
+  const viewedValidity = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  // const viewedValidity = new Date(Date.now() - 30 * 1000);
+
   const [totalMenteesWithChecklist, totalViewedMenteesWithChecklist] =
     await Promise.all([
       prisma.user.count({
@@ -169,6 +175,9 @@ const mentorProgress = async (userId: string) => {
       await prisma.mentorMenteeView.count({
         where: {
           mentorId: userId,
+          viewedAt: {
+            gte: viewedValidity,
+          },
         },
       }),
     ]);
