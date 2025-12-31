@@ -8,7 +8,12 @@ import { pick } from "../../../shared/pick";
 //w: (start)╭──────────── mentorChecklistView ────────────╮
 const mentorChecklistView = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
-  const result = await MentorProgressService.mentorChecklistView(userId);
+  const pickedPagination = pick(req.query, paginationOptions);
+
+  const result = await MentorProgressService.mentorChecklistView(
+    userId,
+    pickedPagination,
+  );
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

@@ -1,5 +1,5 @@
 # fetch mentor checklist view
-GET {{port6011}}/mentor-progress/checklist-view
+GET {{port6011}}/mentor-progress/checklist-view?page=1&limit=100
 Authorization: {{ashRaisa}}
 
  

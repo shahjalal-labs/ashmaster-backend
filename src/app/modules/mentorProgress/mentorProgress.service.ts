@@ -43,11 +43,18 @@ const findConnetectedMenteeIds = async (userId: string) => {
         .filter((id) => id !== userId),
     ),
   ];
+
   return connectedMenteeIds;
 };
 
 //w: (start)╭──────────── mentorChecklistView ────────────╮
-const mentorChecklistView = async (userId: string) => {
+const mentorChecklistView = async (
+  userId: string,
+  paginations: IPaginationOptions,
+) => {
+  const { page, limit, skip } =
+    paginationHelper.calcalutePagination(paginations);
+
   const mentor = await prisma.user.findUnique({
     where: {
       id: userId,
@@ -59,23 +66,42 @@ const mentorChecklistView = async (userId: string) => {
   }
   const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
-  const menteesWithChecklist = await prisma.user.findMany({
-    where: {
-      id: {
-        in: connectedMenteeIds,
-      },
-      role: "MENTEE",
-      checklistEndGoal: {
-        some: {
-          type: "CHECKLIST",
-        },
+  const whereClause: Prisma.UserWhereInput = {
+    id: {
+      in: connectedMenteeIds,
+    },
+    role: "MENTEE",
+    checklistEndGoal: {
+      some: {
+        type: "CHECKLIST",
       },
     },
-    orderBy: {
-      checklistUpdateTracker: "desc",
+  };
+
+  const [menteesWithChecklist, total] = await Promise.all([
+    prisma.user.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: {
+        checklistUpdateTracker: "desc",
+      },
+    }),
+
+    prisma.user.count({
+      where: whereClause,
+    }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: "",
     },
-  });
-  return menteesWithChecklist;
+    data: menteesWithChecklist,
+  };
 };
 
 //w: (end)  ╰──────────── mentorChecklistView ────────────╯
