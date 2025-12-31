@@ -1,6 +1,9 @@
 import httpStatus from "http-status";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { paginationHelper } from "../../../shared/paginationHelper";
+import { Prisma } from "@prisma/client";
 
 //w: (start)╭──────────── mentorChecklistView ────────────╮
 const mentorChecklistView = async (userId: string) => {
@@ -69,6 +72,43 @@ const mentorChecklistView = async (userId: string) => {
 
 //w: (end)  ╰──────────── mentorChecklistView ────────────╯
 
+//w: (start)╭──────────── viewSpeficMenteeChecklists ────────────╮
+const viewSpeficMenteeChecklists = async (
+  menteeId: string,
+  paginations: IPaginationOptions,
+  filter: { type?: "CHECKLIST" },
+) => {
+  const { page, limit, skip } =
+    paginationHelper.calcalutePagination(paginations);
+
+  const whereClause: Prisma.ChecklistEndGoalWhereInput = {
+    userId: menteeId,
+    type: "CHECKLIST",
+  };
+
+  const [data, total] = await Promise.all([
+    prisma.checklistEndGoal.findMany({
+      where: whereClause,
+      skip,
+      take: limit,
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.checklistEndGoal.count({ where: whereClause }),
+  ]);
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data,
+  };
+};
+//w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
+
 export const MentorProgressService = {
   mentorChecklistView,
+  viewSpeficMenteeChecklists,
 };

@@ -16,6 +16,28 @@ const mentorChecklistView = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── mentorChecklistView ────────────╯
 
+//w: (start)╭──────────── viewSpeficMenteeChecklists ────────────╮
+const getAllChecklistOrEndGoals = catchAsync(async (req, res) => {
+  const pickedPagination = pick(req.query, paginationOptions);
+
+  const pickedFilter = pick(req.query, ["type"]);
+  const { id } = req.params;
+  const result = await ChecklistEndGoalsService.getAllChecklistOrEndGoals(
+    id,
+    pickedPagination,
+    pickedFilter,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: ` fetched successfully`,
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
+
 export const MentorProgressController = {
   mentorChecklistView,
+  viewSpeficMenteeChecklists,
 };

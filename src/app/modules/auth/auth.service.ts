@@ -603,8 +603,8 @@ const completeProfile = async (
       return {
         accessToken,
         id: updatedUser.id,
-        profileStatus: "",
-        role: user.role,
+        profileStatus: updatedUser.profilStatus,
+        role: updatedUser.role,
       };
     });
 
