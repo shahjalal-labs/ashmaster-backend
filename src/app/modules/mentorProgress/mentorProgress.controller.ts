@@ -9,10 +9,12 @@ import { pick } from "../../../shared/pick";
 const mentorChecklistView = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const pickedPagination = pick(req.query, paginationOptions);
+  const pickedFilter = pick(req.query, ["type"]);
 
   const result = await MentorProgressService.mentorChecklistView(
     userId,
     pickedPagination,
+    pickedFilter,
   );
   sendResponse(res, {
     statusCode: httpStatus.OK,

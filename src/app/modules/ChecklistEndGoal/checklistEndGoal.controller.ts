@@ -25,6 +25,7 @@ const getAllChecklistOrEndGoals = catchAsync(async (req, res) => {
   const pickedPagination = pick(req.query, paginationOptions);
 
   const pickedFilter = pick(req.query, ["type"]);
+
   const { id } = req.params;
   const result = await ChecklistEndGoalsService.getAllChecklistOrEndGoals(
     id,

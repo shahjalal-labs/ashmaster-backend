@@ -51,6 +51,7 @@ const findConnetectedMenteeIds = async (userId: string) => {
 const mentorChecklistView = async (
   userId: string,
   paginations: IPaginationOptions,
+  filter: { type?: "CHECKLIST" | "ENDGOALS" },
 ) => {
   const { page, limit, skip } =
     paginationHelper.calcalutePagination(paginations);
@@ -71,12 +72,21 @@ const mentorChecklistView = async (
       in: connectedMenteeIds,
     },
     role: "MENTEE",
-    checklistEndGoal: {
+  };
+
+  if (filter.type === "CHECKLIST") {
+    whereClause.checklistEndGoal = {
       some: {
         type: "CHECKLIST",
       },
-    },
-  };
+    };
+  } else {
+    whereClause.checklistEndGoal = {
+      some: {
+        type: "ENDGOALS",
+      },
+    };
+  }
 
   const [menteesWithChecklist, total] = await Promise.all([
     prisma.user.findMany({
@@ -98,7 +108,7 @@ const mentorChecklistView = async (
       page,
       limit,
       total,
-      totalPages: "",
+      totalPages: Math.ceil(total / limit),
     },
     data: menteesWithChecklist,
   };
