@@ -37,74 +37,6 @@ const createChecklistEndGoals = async (
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
 //w: (start)╭──────────── getAllChecklistOrEndGoals ────────────╮
-/* const getAllChecklistOrEndGoals = async (
-  userId: string,
-  paginations: IPaginationOptions,
-  filter: any,
-) => {
-  const { page, limit, skip } =
-    paginationHelper.calcalutePagination(paginations);
-
-  const whereClause: Prisma.ChecklistEndGoalWhereInput = {
-    userId,
-    type: filter.type,
-  };
-
-  const [result, total, totalForProgress, completed] = await Promise.all([
-    prisma.checklistEndGoal.findMany({
-      where: whereClause,
-      skip,
-      take: limit,
-      orderBy: {
-        createdAt: "desc",
-      },
-    }),
-
-    prisma.checklistEndGoal.count({
-      where: whereClause,
-    }),
-
-    prisma.checklistEndGoal.count({
-      where: {
-        userId,
-        type: "CHECKLIST",
-      },
-    }),
-
-    prisma.checklistEndGoal.count({
-      where: {
-        userId,
-        type: "CHECKLIST",
-        status: "COMPLETE",
-      },
-    }),
-  ]);
-
-  console.log(`progress`, {
-    totalForProgress,
-    completed,
-  });
-
-  let progress;
-  if (completed !== 0) {
-    progress = (completed / totalForProgress).toFixed(1);
-  } else {
-    progress = 0;
-  }
-
-  return {
-    meta: {
-      progress,
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    data: result,
-  };
-
-}; */
-
 const getAllChecklistOrEndGoals = async (
   userId: string,
   paginations: IPaginationOptions,
@@ -169,6 +101,8 @@ const updateChecklistEndGoals = async (
   userId: string,
   payload: TChangeChecklistStatusSchema,
 ) => {
+  if (payload.type === "ENDGOALS" && payload.status) {
+  }
   const checklist = await prisma.checklistEndGoal.findUnique({
     where: {
       id: payload.checklistId,
@@ -196,7 +130,7 @@ const updateChecklistEndGoals = async (
     },
   });
 
-  if (payload === "CHECKLIST") {
+  if (payload.type === "CHECKLIST") {
     await prisma.user.update({
       where: {
         id: userId,
