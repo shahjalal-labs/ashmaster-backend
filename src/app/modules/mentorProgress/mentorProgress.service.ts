@@ -6,21 +6,7 @@ import { paginationHelper } from "../../../shared/paginationHelper";
 import { Prisma } from "@prisma/client";
 
 //-- helper function
-
-const findConnetectedMenteeIds = () => {};
-
-//w: (start)╭──────────── mentorChecklistView ────────────╮
-const mentorChecklistView = async (userId: string) => {
-  const mentor = await prisma.user.findUnique({
-    where: {
-      id: userId,
-    },
-  });
-
-  if (!mentor || !(mentor.role === "MENTOR")) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "Only mentor can view this");
-  }
-
+const findConnetectedMenteeIds = async (userId: string) => {
   const connections = await prisma.connections.findMany({
     where: {
       OR: [
@@ -57,6 +43,21 @@ const mentorChecklistView = async (userId: string) => {
         .filter((id) => id !== userId),
     ),
   ];
+  return connectedMenteeIds;
+};
+
+//w: (start)╭──────────── mentorChecklistView ────────────╮
+const mentorChecklistView = async (userId: string) => {
+  const mentor = await prisma.user.findUnique({
+    where: {
+      id: userId,
+    },
+  });
+
+  if (!mentor || !(mentor.role === "MENTOR")) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Only mentor can view this");
+  }
+  const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
   const menteesWithChecklist = await prisma.user.findMany({
     where: {
@@ -146,44 +147,10 @@ const viewSpeficMenteeChecklists = async (
 //w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
 
 const mentorProgress = async (userId: string) => {
-  const connections = await prisma.connections.findMany({
-    where: {
-      OR: [
-        {
-          receiverId: userId,
-          status: "ACCEPTED",
-        },
-        {
-          senderId: userId,
-          status: "ACCEPTED",
-        },
-      ],
-    },
-    select: {
-      id: true,
-      sender: {
-        select: {
-          id: true,
-        },
-      },
-      receiver: {
-        select: {
-          id: true,
-        },
-      },
-    },
-  });
+  const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
-  const connectedMenteeIds = [
-    //w: ...new Set makes the array unique if anyway create's any duplicacy. Though no duplicacy will come still for better backend safety
-    ...new Set(
-      connections
-        .flatMap((c) => [c.sender.id, c.receiver.id])
-        .filter((id) => id !== userId),
-    ),
-  ];
-
-  const menteesWithChecklist = await prisma.user.count({
+  const [totalMenteesWithChecklist] = await Promise.all([]);
+  const totalMenteesWithChecklist = await prisma.user.count({
     where: {
       id: {
         in: connectedMenteeIds,
@@ -196,6 +163,8 @@ const mentorProgress = async (userId: string) => {
       },
     },
   });
+
+  const totalViewedMenteesWithChecklist = await prisma.mentorMenteeView.count();
 };
 
 export const MentorProgressService = {
