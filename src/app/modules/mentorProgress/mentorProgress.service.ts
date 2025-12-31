@@ -5,6 +5,10 @@ import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
 import { Prisma } from "@prisma/client";
 
+//-- helper function
+
+const findConnetectedMenteeIds = () => {};
+
 //w: (start)╭──────────── mentorChecklistView ────────────╮
 const mentorChecklistView = async (userId: string) => {
   const mentor = await prisma.user.findUnique({
@@ -178,6 +182,20 @@ const mentorProgress = async (userId: string) => {
         .filter((id) => id !== userId),
     ),
   ];
+
+  const menteesWithChecklist = await prisma.user.count({
+    where: {
+      id: {
+        in: connectedMenteeIds,
+      },
+      role: "MENTEE",
+      checklistEndGoal: {
+        some: {
+          type: "CHECKLIST",
+        },
+      },
+    },
+  });
 };
 
 export const MentorProgressService = {
