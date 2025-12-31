@@ -173,10 +173,15 @@ const mentorProgress = async (userId: string) => {
       }),
     ]);
 
-  let progress =
+  let progress = {
+    count: 0,
+  };
+  progress.count =
     totalMenteesWithChecklist > 0
       ? (totalViewedMenteesWithChecklist / totalMenteesWithChecklist) * 100
       : 0;
+
+  console.log(progress, "mentorProgress.service.ts", 177);
 
   return progress;
 };

@@ -42,7 +42,21 @@ const viewSpeficMenteeChecklists = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
 
+//w: (start)╭──────────── mentorProgress ────────────╮
+const mentorProgress = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const result = await MentorProgressService.mentorProgress(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched Successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── mentorProgress ────────────╯
+
 export const MentorProgressController = {
   mentorChecklistView,
   viewSpeficMenteeChecklists,
+  mentorProgress,
 };
