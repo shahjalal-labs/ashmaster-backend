@@ -146,26 +146,42 @@ const viewSpeficMenteeChecklists = async (
 };
 //w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
 
+//w: (start)╭──────────── mentorProgress ────────────╮
 const mentorProgress = async (userId: string) => {
   const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
-  const [totalMenteesWithChecklist] = await Promise.all([]);
-  const totalMenteesWithChecklist = await prisma.user.count({
-    where: {
-      id: {
-        in: connectedMenteeIds,
-      },
-      role: "MENTEE",
-      checklistEndGoal: {
-        some: {
-          type: "CHECKLIST",
+  const [totalMenteesWithChecklist, totalViewedMenteesWithChecklist] =
+    await Promise.all([
+      prisma.user.count({
+        where: {
+          id: {
+            in: connectedMenteeIds,
+          },
+          role: "MENTEE",
+          checklistEndGoal: {
+            some: {
+              type: "CHECKLIST",
+            },
+          },
         },
-      },
-    },
-  });
+      }),
 
-  const totalViewedMenteesWithChecklist = await prisma.mentorMenteeView.count();
+      await prisma.mentorMenteeView.count({
+        where: {
+          mentorId: userId,
+        },
+      }),
+    ]);
+
+  let progress =
+    totalMenteesWithChecklist > 0
+      ? (totalViewedMenteesWithChecklist / totalMenteesWithChecklist) * 100
+      : 0;
+
+  return progress;
 };
+
+//w: (end)  ╰──────────── mentorProgress ────────────╯
 
 export const MentorProgressService = {
   mentorChecklistView,
