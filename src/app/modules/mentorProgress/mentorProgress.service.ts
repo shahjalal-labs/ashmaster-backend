@@ -93,17 +93,20 @@ const viewSpeficMenteeChecklists = async (
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
-      include: {
+      /* include: {
         user: {
           select: {
+            fullname: true,
+            id: true,
             profile: {
               select: {
                 profileImage: true,
+                profession: true,
               },
             },
           },
         },
-      },
+      }, */
     }),
     prisma.checklistEndGoal.count({ where: whereClause }),
   ]);
