@@ -49,7 +49,7 @@ const mentorProgress = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Fetched Successfully",
+    message: "Mentor progress count fetched Successfully",
     data: result,
   });
 });

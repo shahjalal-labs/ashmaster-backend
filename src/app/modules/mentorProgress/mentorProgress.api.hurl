@@ -4,7 +4,7 @@ Authorization: {{ashRaisa}}
 
  
 # view specific mentee checklists 
-GET {{port6011}}/mentor-progress/694a39873340ac9b4e138239?type=CHECKLIST&page=1&limit=100
+GET {{port6011}}/mentor-progress/694a793d6f65b4f863400d6a?type=CHECKLIST&page=1&limit=100
 Authorization: {{ashRaisa}}
 
 

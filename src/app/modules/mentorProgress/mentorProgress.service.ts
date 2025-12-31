@@ -174,9 +174,9 @@ const mentorProgress = async (userId: string) => {
     ]);
 
   let progress = {
-    count: 0,
+    progressPercentage: 0,
   };
-  progress.count =
+  progress.progressPercentage =
     totalMenteesWithChecklist > 0
       ? (totalViewedMenteesWithChecklist / totalMenteesWithChecklist) * 100
       : 0;
