@@ -93,11 +93,22 @@ const viewSpeficMenteeChecklists = async (
       skip,
       take: limit,
       orderBy: { createdAt: "desc" },
+      include: {
+        user: {
+          select: {
+            profile: {
+              select: {
+                profileImage: true,
+              },
+            },
+          },
+        },
+      },
     }),
     prisma.checklistEndGoal.count({ where: whereClause }),
   ]);
 
-  if ((filter.type = "CHECKLIST")) {
+  if (filter?.type === "CHECKLIST") {
     await prisma.mentorMenteeView.upsert({
       where: {
         mentorId_menteeId: {
@@ -108,7 +119,6 @@ const viewSpeficMenteeChecklists = async (
       update: {
         viewedAt: new Date(),
       },
-
       create: {
         mentorId,
         menteeId,
