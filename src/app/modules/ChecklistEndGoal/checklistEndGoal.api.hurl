@@ -1,6 +1,7 @@
 # create checklist / endgoals
 POST {{port6011}}/checklist-end-goals/create
-Authorization: {{ashsrahim}}
+#Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
 Content-Type: application/json
 
 {

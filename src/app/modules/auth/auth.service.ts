@@ -600,7 +600,12 @@ const completeProfile = async (
 
       await clearProfileCache(userId);
 
-      return { accessToken, id: updatedUser.id };
+      return {
+        accessToken,
+        id: updatedUser.id,
+        profileStatus: "",
+        role: user.role,
+      };
     });
 
     return result;

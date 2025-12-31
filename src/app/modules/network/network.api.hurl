@@ -2,18 +2,20 @@
 
 # Get suggestions
 GET {{port6011}}/network/suggestions?page=1&limit=10
-Authorization: {{ashsrahim}}
+#/ Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
 #/Authorization: {{ashRaisa}}
 
 # Send request
 POST {{port6011}}/network/request
 #Authorization: {{ashRaisa}}
-Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
+#Authorization: {{ashsrahim}}
 Content-Type: application/json
 
 {
   "receiverId": "694a254aad128cabeaf7412f",
-  "message": "Hi, let's connect! I have dream to help other"
+  "message": "Hi, let's connect! I have dream to become a software engineer. I want to know many things from you."
 }
 
 
