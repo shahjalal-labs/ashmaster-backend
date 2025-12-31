@@ -48,12 +48,14 @@ model User {
 
 //w: (start)╭────────────  MentorMenteeView ────────────╮
 model MentorMenteeView {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  mentorId String   @db.ObjectId
-  menteeId String   @db.ObjectId
-  viewedAt DateTime @default(now())
-  mentor   User     @relation("MentorViews", fields: [mentorId], references: [id], onDelete: Cascade)
-  mentee   User     @relation("MenteeViews", fields: [menteeId], references: [id], onDelete: Cascade)
+  id                  String   @id @default(auto()) @map("_id") @db.ObjectId
+  mentorId            String   @db.ObjectId
+  menteeId            String   @db.ObjectId
+  viewedAt            DateTime @default(now())
+  // to track last checklist state when viewed
+  lastChecklistUpdate DateTime @default(now())
+  mentor              User     @relation("MentorViews", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentee              User     @relation("MenteeViews", fields: [menteeId], references: [id], onDelete: Cascade)
 
   @@unique([mentorId, menteeId])
   @@index([mentorId, viewedAt])

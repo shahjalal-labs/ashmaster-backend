@@ -117,6 +117,17 @@ const viewSpeficMenteeChecklists = async (
   ]);
 
   if (filter?.type === "CHECKLIST") {
+    const latestChecklistUpdate = await prisma.checklistEndGoal.aggregate({
+      where: {
+        userId: menteeId,
+        type: "CHECKLIST",
+      },
+      _max: {
+        updatedAt: true,
+      },
+    });
+
+    console.log(latestChecklistUpdate, "mentorProgress.service.ts", 121);
     await prisma.mentorMenteeView.upsert({
       where: {
         mentorId_menteeId: {
