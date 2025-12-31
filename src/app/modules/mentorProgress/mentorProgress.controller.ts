@@ -2,6 +2,8 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { MentorProgressService } from "./mentorProgress.service";
+import { paginationOptions } from "../../../shared/paginationHelper";
+import { pick } from "../../../shared/pick";
 
 //w: (start)╭──────────── mentorChecklistView ────────────╮
 const mentorChecklistView = catchAsync(async (req, res) => {
@@ -17,13 +19,15 @@ const mentorChecklistView = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── mentorChecklistView ────────────╯
 
 //w: (start)╭──────────── viewSpeficMenteeChecklists ────────────╮
-const getAllChecklistOrEndGoals = catchAsync(async (req, res) => {
+const viewSpeficMenteeChecklists = catchAsync(async (req, res) => {
   const pickedPagination = pick(req.query, paginationOptions);
 
   const pickedFilter = pick(req.query, ["type"]);
-  const { id } = req.params;
-  const result = await ChecklistEndGoalsService.getAllChecklistOrEndGoals(
-    id,
+  const { id: menteeId } = req.params;
+  const { id: userId } = req.user;
+  const result = await MentorProgressService.viewSpeficMenteeChecklists(
+    userId,
+    menteeId,
     pickedPagination,
     pickedFilter,
   );

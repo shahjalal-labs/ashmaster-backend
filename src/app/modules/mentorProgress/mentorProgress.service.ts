@@ -75,15 +75,16 @@ const mentorChecklistView = async (userId: string) => {
 //w: (start)╭──────────── viewSpeficMenteeChecklists ────────────╮
 const viewSpeficMenteeChecklists = async (
   menteeId: string,
+  menteeId: string,
   paginations: IPaginationOptions,
-  filter: { type?: "CHECKLIST" },
+  filter: { type?: "CHECKLIST" | "ENDGOALS" },
 ) => {
   const { page, limit, skip } =
     paginationHelper.calcalutePagination(paginations);
 
   const whereClause: Prisma.ChecklistEndGoalWhereInput = {
     userId: menteeId,
-    type: "CHECKLIST",
+    ...(filter.type && { type: filter.type }),
   };
 
   const [data, total] = await Promise.all([

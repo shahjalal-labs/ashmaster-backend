@@ -15,4 +15,6 @@ if (config.env === ENV.DEVELOPMENT) {
 
 router.get("/checklist-view", MentorProgressController.mentorChecklistView);
 
+router.get("/:id", MentorProgressController.viewSpeficMenteeChecklists);
+
 export const MentorProgressRoutes = router;
