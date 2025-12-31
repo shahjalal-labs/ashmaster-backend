@@ -71,6 +71,9 @@ const mentorChecklistView = async (userId: string) => {
         },
       },
     },
+    orderBy: {
+      checklistUpdateTracker: "asc",
+    },
   });
   return menteesWithChecklist;
 };

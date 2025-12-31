@@ -21,6 +21,17 @@ const createChecklistEndGoals = async (
     },
   });
 
+  if (payload.type === "CHECKLIST") {
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        checklistUpdateTracker: new Date(),
+      },
+    });
+  }
+
   return;
 };
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
@@ -184,6 +195,17 @@ const updateChecklistEndGoals = async (
       title: payload.title,
     },
   });
+
+  if (payload === "CHECKLIST") {
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        checklistUpdateTracker: new Date(),
+      },
+    });
+  }
 };
 //w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
