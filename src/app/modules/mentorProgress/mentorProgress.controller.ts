@@ -24,9 +24,10 @@ const viewSpeficMenteeChecklists = catchAsync(async (req, res) => {
 
   const pickedFilter = pick(req.query, ["type"]);
   const { id: menteeId } = req.params;
-  const { id: userId } = req.user;
+  const { id: mentorId } = req.user;
+
   const result = await MentorProgressService.viewSpeficMenteeChecklists(
-    userId,
+    mentorId,
     menteeId,
     pickedPagination,
     pickedFilter,
