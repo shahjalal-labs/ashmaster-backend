@@ -27,19 +27,21 @@ Authorization: {{ashRaisa}}
 
 # update checklist
 PATCH  {{port6011}}/checklist-end-goals/status
-#Authorization: {{ashsrahim}}
-Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
+#/Authorization: {{ashRaisa}}
 
 Content-Type: application/json
 
 {
- "checklistId": "694d1cadf2f85a0ba12ada34",
+ "checklistId": "6953996326ae93e4654f0a39",
  "status": "COMPLETE",
  "title": "Read 4 h",
- "description":"Study 4h at night"
+ "description":"Study 4h at night",
+ "type": "CHECKLIST"
 }
 
 
+# delete
 DELETE  {{port6011}}/checklist-end-goals/694fa0aa8a0113dcfa949157
 
 #Authorization: {{ashsrahim}}

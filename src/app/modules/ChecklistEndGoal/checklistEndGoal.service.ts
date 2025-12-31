@@ -102,6 +102,10 @@ const updateChecklistEndGoals = async (
   payload: TChangeChecklistStatusSchema,
 ) => {
   if (payload.type === "ENDGOALS" && payload.status) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Endgoals have not status to change",
+    );
   }
   const checklist = await prisma.checklistEndGoal.findUnique({
     where: {
