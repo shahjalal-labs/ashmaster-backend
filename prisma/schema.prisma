@@ -41,11 +41,27 @@ model User {
   viewedMentees          MentorMenteeView[] @relation("MentorViews")
   viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
   checklistUpdateTracker DateTime?
+  schedule               Schedule[]
 
   @@map("users")
 }
 
 //w: (end)  ╰────────────  User  ────────────╯
+
+//w: (start)╭────────────  Schedule ────────────╮
+model Schedule {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  dateTime    DateTime
+  title       String
+  description String
+  hostId      String   @db.ObjectId
+  host        User     @relation(fields: [hostId], references: [id])
+  guestIds    String[] @db.ObjectId
+
+  @@map("schedules")
+}
+
+//w: (end)  ╰────────────  Schedule ────────────╯
 
 //w: (start)╭────────────  MentorMenteeView ────────────╮
 model MentorMenteeView {
