@@ -68,7 +68,7 @@ router.post(
 router.put(
   "/profile",
   auth(),
-  validateRequest(authValidation.updateProfileSchema),
+  // validateRequest(authValidation.updateProfileSchema),
   authController.updateProfile,
 );
 

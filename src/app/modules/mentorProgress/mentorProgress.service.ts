@@ -186,6 +186,7 @@ const viewSpeficMenteeChecklists = async (
 //w: (end)  ╰──────────── viewSpeficMenteeChecklists ────────────╯
 
 //w: (start)╭──────────── mentorProgress ────────────╮
+//
 const mentorProgress = async (userId: string) => {
   const connectedMenteeIds = await findConnetectedMenteeIds(userId);
 
