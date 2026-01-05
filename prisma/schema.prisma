@@ -57,6 +57,7 @@ model Schedule {
   hostId      String   @db.ObjectId
   host        User     @relation(fields: [hostId], references: [id])
   guestIds    String[] @db.ObjectId
+  images      String[] @default([]) // host or guest embeded images for faster query no complex model required
 
   @@unique([dateTime, hostId])
   @@map("schedules")

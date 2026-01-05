@@ -4,6 +4,7 @@ import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
+import { paginationHelper } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -33,6 +34,8 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
 
 //w: (start)╭──────────── mySchedule ────────────╮
 const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
+  const { skip, page, limit } =
+    paginationHelper.calcalutePagination(pagination);
   const whereClause: Prisma.ScheduleWhereInput = {
     OR: [
       {
@@ -48,8 +51,23 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 
   const result = await prisma.schedule.findMany({
     where: whereClause,
+    skip,
+    take: limit,
   });
-  return result;
+
+  const total = await prisma.schedule.count({
+    where: whereClause,
+  });
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: result,
+  };
 };
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
