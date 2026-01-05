@@ -10,7 +10,8 @@ Content-Type: application/json
     "64f1c2a9e3b14a8c9d0e1234",
     "64f1c2a9e3b14a8c9d0e5678",
     "64f1c2a9e3b14a8c9d0e9999"
-  ]
+  ],
+ "images":[]
 }
 
 

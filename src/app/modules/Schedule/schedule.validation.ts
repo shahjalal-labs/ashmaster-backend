@@ -7,6 +7,7 @@ const createScheduleSchema = z
     title: z.string(),
     description: z.string(),
     guestIds: z.array(z.string().min(24)),
+    images: z.array(z.string()),
   })
   .strict();
 //w: (end)  ╰──────────── createSchedule ────────────╯
