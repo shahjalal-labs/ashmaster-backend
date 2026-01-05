@@ -38,7 +38,9 @@ const mySchedule = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
-const getCurrentMonthSchedules = catchAsync(async (req, res) => {});
+const getCurrentMonthSchedules = catchAsync(async (req, res) => {
+  const result = await ScheduleService.getCurrentMonthSchedules();
+});
 
 export const ScheduleController = {
   createSchedule,

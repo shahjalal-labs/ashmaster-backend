@@ -22,8 +22,7 @@ Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
 
 
-# get schedules
-
+# current-month-schedules
 GET {{port6011}}/schedule/current-month-schedules
 Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}

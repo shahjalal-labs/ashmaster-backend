@@ -5,6 +5,7 @@ import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
+import { endOfMonth, startOfMonth } from "date-fns";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -74,7 +75,40 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
 const getCurrentMonthSchedules = async (userId: string) => {
   const now = new Date();
-  console.log(now, "schedule.service.ts", 77);
+
+  const start = startOfMonth(now);
+
+  const end = endOfMonth(now);
+
+  console.log(
+    {
+      now,
+      start,
+      end,
+    },
+    "schedule.service.ts",
+    77,
+  );
+
+  const whereClause: Prisma.ScheduleWhereInput = {
+    OR: [
+      {
+        hostId: userId,
+      },
+      {
+        guestIds: {
+          has: userId,
+        },
+      },
+    ],
+    dateTime: {
+      lte: end,
+      gte: start,
+    },
+  };
+  const result = await prisma.schedule.findMany({
+    where: whereClause,
+  });
 };
 //w: (end)  ╰──────────── getCurrentMonthSchedules ────────────╯
 
