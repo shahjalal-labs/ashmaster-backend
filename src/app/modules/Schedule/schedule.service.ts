@@ -71,7 +71,15 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 };
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
+//w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
+const getCurrentMonthSchedules = async (userId: string) => {
+  const now = new Date();
+  console.log(now, "schedule.service.ts", 77);
+};
+//w: (end)  ╰──────────── getCurrentMonthSchedules ────────────╯
+
 export const ScheduleService = {
   createSchedule,
   mySchedule,
+  getCurrentMonthSchedules,
 };

@@ -20,3 +20,10 @@ Content-Type: application/json
 GET {{port6011}}/schedule?page=1&limit=1
 Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
+
+
+# get schedules
+
+GET {{port6011}}/schedule/current-month-schedules
+Authorization: {{ashRaisa}}
+#Authorization: {{ashsrahim}}

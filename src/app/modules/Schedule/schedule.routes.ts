@@ -24,4 +24,9 @@ router.post(
 
 router.get("/", ScheduleController.mySchedule);
 
+router.get(
+  "/current-month-schedules",
+  ScheduleController.getCurrentMonthSchedules,
+);
+
 export const ScheduleRoutes = router;
