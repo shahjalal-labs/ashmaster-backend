@@ -58,6 +58,7 @@ model Schedule {
   host        User     @relation(fields: [hostId], references: [id])
   guestIds    String[] @db.ObjectId
 
+  @@unique([dateTime, hostId])
   @@map("schedules")
 }
 
