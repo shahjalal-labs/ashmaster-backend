@@ -3,6 +3,7 @@ import { TCreateSchedule } from "./schedule.validation";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { Prisma } from "@prisma/client";
+import { IPaginationOptions } from "../../../interfaces/paginations";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -30,7 +31,8 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
 
 //w: (end)  ╰──────────── createSchedule ────────────╯
 
-const mySchedule = async (userId: string) => {
+//w: (start)╭──────────── mySchedule ────────────╮
+const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
   const whereClause: Prisma.ScheduleWhereInput = {
     OR: [
       {
@@ -47,8 +49,11 @@ const mySchedule = async (userId: string) => {
   const result = await prisma.schedule.findMany({
     where: whereClause,
   });
+  return result;
 };
+//w: (end)  ╰──────────── mySchedule ────────────╯
 
 export const ScheduleService = {
   createSchedule,
+  mySchedule,
 };

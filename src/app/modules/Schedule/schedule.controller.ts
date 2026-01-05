@@ -2,6 +2,11 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { ScheduleService } from "./schedule.service";
+import { pick } from "../../../shared/pick";
+import {
+  paginationHelper,
+  paginationOptions,
+} from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = catchAsync(async (req, res) => {
@@ -20,7 +25,9 @@ const createSchedule = catchAsync(async (req, res) => {
 const mySchedule = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
 
-  const result = "";
+  const pickedPaginate = pick(req.query, paginationOptions);
+
+  const result = await ScheduleService.mySchedule(userId, pickedPaginate);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

@@ -16,4 +16,6 @@ Content-Type: application/json
 
 # get schedules
 
-GET {{port6011}}/schedules
+GET {{port6011}}/schedule
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}

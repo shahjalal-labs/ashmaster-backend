@@ -22,6 +22,6 @@ router.post(
 );
 //w: (end)  ╰──────────── createSchedule ────────────╯
 
-router.get("/", ScheduleController);
+router.get("/", ScheduleController.mySchedule);
 
 export const ScheduleRoutes = router;
