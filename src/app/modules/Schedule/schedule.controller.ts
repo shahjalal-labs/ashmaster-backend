@@ -39,7 +39,15 @@ const mySchedule = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
 const getCurrentMonthSchedules = catchAsync(async (req, res) => {
-  const result = await ScheduleService.getCurrentMonthSchedules();
+  const { id: userId } = req.user;
+  const result = await ScheduleService.getCurrentMonthSchedules(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched current months schedules",
+    data: result,
+  });
 });
 
 export const ScheduleController = {

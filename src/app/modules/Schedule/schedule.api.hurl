@@ -1,9 +1,9 @@
 # create schedule
 POST {{port6011}}/schedule/create
-Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 Content-Type: application/json
 {
-  "dateTime": "2026-01-01T15:30:00Z",
+  "dateTime": "2026-02-01T15:30:00Z",
   "title": "Backend Architecture Review",
   "description": "Discussion on service boundaries, database schema, and performance bottlenecks.",
   "guestIds": [
@@ -24,5 +24,5 @@ Authorization: {{ashRaisa}}
 
 # current-month-schedules
 GET {{port6011}}/schedule/current-month-schedules
-Authorization: {{ashRaisa}}
-#Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
