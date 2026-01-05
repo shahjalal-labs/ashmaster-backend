@@ -3,7 +3,7 @@ POST {{port6011}}/schedule/create
 Authorization: {{ashRaisa}}
 Content-Type: application/json
 {
-  "dateTime": "2026-01-10T15:30:00Z",
+  "dateTime": "2026-01-01T15:30:00Z",
   "title": "Backend Architecture Review",
   "description": "Discussion on service boundaries, database schema, and performance bottlenecks.",
   "guestIds": [
@@ -13,3 +13,7 @@ Content-Type: application/json
   ]
 }
 
+
+# get schedules
+
+GET {{port6011}}/schedules

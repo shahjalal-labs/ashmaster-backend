@@ -16,6 +16,22 @@ const createSchedule = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── createSchedule ────────────╯
 
+//w: (start)╭──────────── mySchedule ────────────╮
+const mySchedule = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+
+  const result = "";
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched my schedules",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── mySchedule ────────────╯
+
 export const ScheduleController = {
   createSchedule,
+  mySchedule,
 };

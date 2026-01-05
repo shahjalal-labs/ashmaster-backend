@@ -1,4 +1,3 @@
-import { tryCatch } from "bullmq";
 import prisma from "../../../shared/prisma";
 import { TCreateSchedule } from "./schedule.validation";
 import ApiError from "../../../errors/ApiErrors";
@@ -21,9 +20,10 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
     if (error.code === "P2002") {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
-        "This time slot is already booked for the host",
+        "This time slot is already booked.",
       );
     }
+    throw error;
   }
 };
 
