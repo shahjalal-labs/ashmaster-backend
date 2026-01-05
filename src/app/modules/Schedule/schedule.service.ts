@@ -2,6 +2,7 @@ import prisma from "../../../shared/prisma";
 import { TCreateSchedule } from "./schedule.validation";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
+import { Prisma } from "@prisma/client";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -28,6 +29,25 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
 };
 
 //w: (end)  ╰──────────── createSchedule ────────────╯
+
+const mySchedule = async (userId: string) => {
+  const whereClause: Prisma.ScheduleWhereInput = {
+    OR: [
+      {
+        hostId: userId,
+      },
+      {
+        guestIds: {
+          has: userId,
+        },
+      },
+    ],
+  };
+
+  const result = await prisma.schedule.findMany({
+    where: whereClause,
+  });
+};
 
 export const ScheduleService = {
   createSchedule,
