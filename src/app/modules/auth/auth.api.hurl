@@ -26,11 +26,11 @@ PACTH {{port6011}}/auth/profile-image
 Authorization: {{ashRaisa}}
 
 
-
-
 # get my profile
 GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}
+
+
 
 # get other profile
 # profile/userId
