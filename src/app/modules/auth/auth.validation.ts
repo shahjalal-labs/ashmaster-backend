@@ -20,7 +20,6 @@ const authLoginSchema = z
     fcmToken: z.string().optional(),
     fullname: z.string(),
   })
-  .strict()
   .strict();
 //w: (end)  ╰──────────── authLogin ────────────╯
 

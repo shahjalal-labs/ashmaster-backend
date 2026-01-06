@@ -16,7 +16,7 @@ const loginUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-//auth login
+//auth login google login
 const authLogin = catchAsync(async (req, res) => {
   const result = await authService.authLogin(req.body);
 

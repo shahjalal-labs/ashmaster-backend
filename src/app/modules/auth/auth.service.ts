@@ -64,7 +64,6 @@ const loginUserIntoDB = async (payload: {
 // google login
 //w: (start)╭──────────── authLogin ────────────╮
 const authLogin = async (payload: User) => {
-  console.log(payload);
   const user = await prisma.user.findUnique({
     where: {
       email: payload.email,

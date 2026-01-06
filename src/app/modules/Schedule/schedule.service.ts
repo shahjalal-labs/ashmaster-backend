@@ -101,13 +101,17 @@ const getCurrentMonthSchedules = async (userId: string) => {
         },
       },
     ],
-    /* dateTime: {
+    dateTime: {
       lte: end,
       gte: start,
-    }, */
+    },
   };
   const result = await prisma.schedule.findMany({
     where: whereClause,
+    select: {
+      dateTime: true,
+      id: true,
+    },
   });
   return result;
 };

@@ -24,5 +24,5 @@ Authorization: {{ashRaisa}}
 
 # current-month-schedules
 GET {{port6011}}/schedule/current-month-schedules
-#Authorization: {{ashRaisa}}
-Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
+#Authorization: {{ashsrahim}}

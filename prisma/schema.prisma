@@ -60,6 +60,7 @@ model Schedule {
   images      String[] @default([]) // host or guest embeded images for faster query no complex model required
 
   @@unique([dateTime, hostId])
+  @@index([dateTime])
   @@map("schedules")
 }
 
