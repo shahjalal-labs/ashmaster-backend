@@ -18,8 +18,7 @@ Authorization: {{ashsrahim}}
 
 
 
-
-
+# get 
 GET  {{port6011}}/checklist-end-goals?type=CHECKLIST&page=1&limit=10&sortBy=title&sortOrder=asc
 Authorization: {{ashRaisa}}
 
