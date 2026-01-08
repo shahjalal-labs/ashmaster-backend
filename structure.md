@@ -123,11 +123,12 @@
 │   │   └── userSearch.ts
 │   └── utils
 │       └── getUserOrThrow.ts
+├── structure.md
 ├── tsconfig.json
 ├── uploads
 │   └── google.png
 └── vercel.json
 
-28 directories, 98 files
+28 directories, 99 files
 
 ```

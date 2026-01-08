@@ -14,7 +14,7 @@ const createChecklistEndGoals = async (
   userId: string,
   payload: TCreateChecklistEndGoals,
 ) => {
-  const checklistEndGoal = await prisma.checklistEndGoal.create({
+  await prisma.checklistEndGoal.create({
     data: {
       userId,
       ...payload,
@@ -31,8 +31,6 @@ const createChecklistEndGoals = async (
       },
     });
   }
-
-  console.log(checklistEndGoal, "checklistEndGoal.service.ts", 18);
 
   return;
 };
