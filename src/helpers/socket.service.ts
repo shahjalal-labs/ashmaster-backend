@@ -1,27 +1,22 @@
-import config from "../config";
-import { jwtHelpers } from "./jwtHelpers";
+import WebSocket from "ws";
+import jwt from "jsonwebtoken";
 
-export function verifyWebSocketToken(ws: any, token: string) {
-  if (!token) {
-    ws.send(
-      JSON.stringify({ type: "error", message: "You are not authenticated" })
-    );
-    return null;
+type SocketMap = Map<string, WebSocket>;
+
+class SocketService {
+  private users: SocketMap = new Map();
+
+  addUser(userId: string, socket: WebSocket) {
+    this.users.set(userId, socket);
   }
 
-  try {
-    const decoded = jwtHelpers.verifyToken(
-      token,
-      config.jwt.jwt_secret as string
-    );
-    return decoded;
-  } catch (error: any) {
-    const errorMessage =
-      error.name === "TokenExpiredError"
-        ? "Token has expired!"
-        : "Invalid token!";
+  removeUser(userId: string) {
+    this.users.delete(userId);
+  }
 
-    ws.send(JSON.stringify({ type: "error", message: errorMessage }));
-    return null;
+  getUserSocket(userId: string) {
+    return this.users.get(userId);
   }
 }
+
+export const socketService = new SocketService();
