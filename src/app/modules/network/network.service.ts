@@ -391,24 +391,23 @@ const responseRequestOrRemoveConnection = async (
 
 //w: (start)╭──────────── getMyConnectionCount ────────────╮
 const getMyConnectionCount = async (userId: string) => {
-  const connections = await prisma.connections.count({
+  const connectionsCount = await prisma.connections.count({
     where: {
+      status: "ACCEPTED",
       OR: [
         {
           receiverId: userId,
-          status: "ACCEPTED",
         },
         {
           senderId: userId,
-          status: "ACCEPTED",
         },
       ],
     },
-    select: {
-      id: true,
-    },
   });
-  console.log(connections, "network.service.ts", 395);
+  console.log(connectionsCount, "network.service.ts", 395);
+  return {
+    connectionsCount,
+  };
 };
 //w: (end)  ╰──────────── getMyConnectionCount ────────────╯
 

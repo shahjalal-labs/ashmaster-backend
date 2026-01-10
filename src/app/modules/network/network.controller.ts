@@ -88,7 +88,7 @@ const getMyConnectionCount = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Fetched connections count successfully",
+    message: "Fetched my connections count successfully",
     data: result,
   });
 });
