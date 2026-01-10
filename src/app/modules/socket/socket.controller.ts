@@ -29,8 +29,8 @@ export const webSocketServerSetup = (server: Server) => {
       }),
     );
 
-    wsSendResponse(ws, "any type", {
-      any: "any data",
+    wsSendResponse({
+      ws,
     });
   });
 };
