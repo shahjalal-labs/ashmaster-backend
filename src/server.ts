@@ -1,6 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
+import { WebSocket } from "ws";
 
 // let server: Server;
 
@@ -15,6 +16,10 @@ async function main() {
       `http://localhost:${6011}/admin/queues`,
     );
   });
+
+  const wss = new WebSocket.Server({ server });
+
+  wss.on("connection", (ws, req) => {});
 
   const exitHandler = () => {
     if (server) {

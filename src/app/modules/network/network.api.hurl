@@ -2,8 +2,8 @@
 
 # Get suggestions
 GET {{port6011}}/network/suggestions?page=1&limit=10
-#/ Authorization: {{ashsrahim}}
-Authorization: {{ashsrasu}}
+Authorization: {{ashsrahim}}
+#Authorization: {{ashsrasu}}
 #/Authorization: {{ashRaisa}}
 
 # Send request
@@ -43,6 +43,6 @@ Content-Type: application/json
 # get connections
 
 GET {{port6011}}/network/connections?page=1&limit=10
-Authorization: {{ashsrahim}}
-#Authorization: {{ashRaisa}}
+#Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
 

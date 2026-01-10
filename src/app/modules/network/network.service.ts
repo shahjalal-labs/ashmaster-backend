@@ -389,6 +389,23 @@ const responseRequestOrRemoveConnection = async (
 };
 //w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
+const getMyConnectionCount = (userId: string) => {
+  const connections = await prisma.connections.findMany({
+    where: {
+      OR: [
+        {
+          receiverId: userId,
+          status: "ACCEPTED",
+        },
+        {
+          senderId: userId,
+          status: "ACCEPTED",
+        },
+      ],
+    },
+  });
+};
+
 export const NetworkService = {
   getSuggestions,
   sendConnectionRequest,
