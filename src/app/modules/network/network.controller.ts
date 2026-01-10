@@ -79,10 +79,26 @@ const responseRequestOrRemoveConnection = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
+//w: (start)╭──────────── getMyConnectionCount ────────────╮
+const getMyConnectionCount = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+
+  const result = await NetworkService.getMyConnectionCount(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched connections count successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getMyConnectionCount ────────────╯
+
 export const NetworkController = {
   getSuggestions,
   sendConnectionRequest,
   getPendingRequests,
   getConnections,
   responseRequestOrRemoveConnection,
+  getMyConnectionCount,
 };

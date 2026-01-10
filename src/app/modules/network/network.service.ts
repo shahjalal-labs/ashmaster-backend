@@ -389,8 +389,9 @@ const responseRequestOrRemoveConnection = async (
 };
 //w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
-const getMyConnectionCount = (userId: string) => {
-  const connections = await prisma.connections.findMany({
+//w: (start)╭──────────── getMyConnectionCount ────────────╮
+const getMyConnectionCount = async (userId: string) => {
+  const connections = await prisma.connections.count({
     where: {
       OR: [
         {
@@ -403,8 +404,13 @@ const getMyConnectionCount = (userId: string) => {
         },
       ],
     },
+    select: {
+      id: true,
+    },
   });
+  console.log(connections, "network.service.ts", 395);
 };
+//w: (end)  ╰──────────── getMyConnectionCount ────────────╯
 
 export const NetworkService = {
   getSuggestions,
@@ -412,4 +418,5 @@ export const NetworkService = {
   getPendingRequest,
   getConnections,
   responseRequestOrRemoveConnection,
+  getMyConnectionCount,
 };

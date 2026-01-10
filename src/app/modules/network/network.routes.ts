@@ -14,12 +14,7 @@ if (config.env === ENV.DEVELOPMENT) {
 }
 // Get suggestions (for home page)
 //w: (start)╭──────────── getSuggestions ────────────╮
-router.get(
-  "/suggestions",
-  // auth(),
-  // profileGuard(),
-  NetworkController.getSuggestions,
-);
+router.get("/suggestions", NetworkController.getSuggestions);
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
@@ -40,5 +35,7 @@ router.patch(
   validateRequest(NetworkValidation.responseRequestOrRemoveConnection),
   NetworkController.responseRequestOrRemoveConnection,
 );
+
+router.get("/connections-count", NetworkController.getMyConnectionCount);
 
 export const NetworkRoutes = router;

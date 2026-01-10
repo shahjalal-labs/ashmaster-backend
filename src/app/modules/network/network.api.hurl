@@ -46,3 +46,12 @@ GET {{port6011}}/network/connections?page=1&limit=10
 #Authorization: {{ashsrahim}}
 Authorization: {{ashRaisa}}
 
+
+
+# get my connections count
+
+GET {{port6011}}/network/connections-count
+#Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
+
+
