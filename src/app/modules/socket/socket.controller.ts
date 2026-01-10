@@ -25,12 +25,14 @@ export const webSocketServerSetup = (server: Server) => {
     ws.send(
       JSON.stringify({
         type: "any type",
-        data: "any data",
+        payload: {
+          conversation: [],
+        },
       }),
     );
 
-    wsSendResponse({
-      ws,
+    wsSendResponse(ws, "group-conversation", {
+      conversations: [],
     });
   });
 };

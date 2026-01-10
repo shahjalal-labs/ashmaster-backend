@@ -1,22 +1,14 @@
 import { CustomWebSocket } from "./socket.interface";
 
-type TWsSendResponse = {
-  ws: CustomWebSocket;
-  type: string;
-  key: string;
-  value: any;
-};
-
-export const webSocketSendResponse = (
+export const wsSendResponse = (
   ws: CustomWebSocket,
   type: string,
-  key: string,
-  value: any,
+  payload: Record<string, unknown>,
 ) => {
   ws.send(
     JSON.stringify({
       type,
-      [key]: value, // dynamic key
+      payload,
     }),
   );
 };
