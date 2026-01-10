@@ -8,7 +8,7 @@ export const verifyWsToken = (ws: WebSocket, token: string) => {
     ws.send(
       JSON.stringify({
         type: "error",
-        message: "You are not authenticated. Please login first",
+        message: "You are not authenticated. Please login first.",
       }),
     );
   }
@@ -17,5 +17,19 @@ export const verifyWsToken = (ws: WebSocket, token: string) => {
       token,
       config.jwt.jwt_secret as Secret,
     );
-  } catch (error) {}
+    return decoded;
+  } catch (error: any) {
+    let message =
+      error.name === "TokenExpiredError"
+        ? "Token is expired. Please re login !!!"
+        : "Invalid token. Login for revalidate !!!";
+
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message,
+      }),
+    );
+    return null;
+  }
 };
