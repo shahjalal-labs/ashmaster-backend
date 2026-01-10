@@ -42,6 +42,7 @@ model User {
   viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
+  Message                Message[]
 
   @@map("users")
 }
@@ -160,27 +161,32 @@ model ChecklistEndGoal {
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
 
-model chatRoom {
-  id        String    @id @default(auto()) @map("_id") @db.ObjectId
-  type      roomType
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Message   Message[]
+model ChatRoom {
+  id           String    @id @default(auto()) @map("_id") @db.ObjectId
+  type         RoomType
+  participants String[]  @db.ObjectId // both P2P and group
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  messages     Message[]
 
   @@map("chatrooms")
 }
 
 model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  roomId    String   @db.ObjectId
+  senderId  String   @db.ObjectId
   content   String?
   fileUrl   String[]
+  readBy    String[] @db.ObjectId
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  roomId    String   @db.ObjectId
-  room      chatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+
+  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
-enum roomType {
+enum RoomType {
   P2P
   GROUP
 }
