@@ -5,6 +5,7 @@ import { WebSocket } from "ws";
 import { CustomWebSocket } from "./socket.interface";
 
 export const verifyWsToken = (ws: CustomWebSocket, token: string) => {
+  console.log(token, "socket.service.ts", 8);
   if (!token) {
     ws.send(
       JSON.stringify({
@@ -12,6 +13,7 @@ export const verifyWsToken = (ws: CustomWebSocket, token: string) => {
         message: "You are not authenticated. Please login first.",
       }),
     );
+    return;
   }
   try {
     let decoded = jwtHelpers.verifyToken(
