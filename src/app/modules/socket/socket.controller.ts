@@ -5,6 +5,7 @@ import { CustomWebSocket } from "./socket.interface";
 import { verifyWsToken } from "./socket.service";
 import { wsSendResponse } from "./websocketSendResponse";
 import { sendMessage } from "../chat/chat.service";
+import prisma from "../../../shared/prisma";
 
 let wss;
 
@@ -50,14 +51,27 @@ export const webSocketServerSetup = (server: Server) => {
     });
 
     ws.on("message", async (data: any) => {
-      const { type, payload } = JSON.parse(data);
+      const { type, payload, recieverId, groupId } = JSON.parse(data);
       switch (type) {
+        case "subscribe": {
+          if (!recieverId) {
+            return wsSendResponse(ws, "error", {
+              message: "recieverId is required",
+            });
+          }
+          const room = await prisma.chatRoom.findMany({
+            where: {
+              participants: {
+                hasEvery: [userId, recieverId],
+              },
+            },
+          });
+        }
         case "send-message": {
           sendMessage(ws.userId as string, payload);
+          break;
         }
       }
-
-      wsSendResponse(ws, "new message", {});
     });
 
     ws.on("close", () => {
