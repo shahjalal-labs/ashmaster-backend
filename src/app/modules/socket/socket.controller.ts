@@ -8,6 +8,10 @@ import { sendMessage } from "../chat/chat.service";
 
 let wss;
 
+const roomUsers = new Map<string, Set<CustomWebSocket>>();
+
+const connectedUsers = new Set<CustomWebSocket>();
+
 export const webSocketServerSetup = (server: Server) => {
   wss = new WebSocketServer({
     server,
@@ -21,7 +25,16 @@ export const webSocketServerSetup = (server: Server) => {
     // if we dont do this it will still go next and send the belows event
     if (!decoded) return;
 
-    ws.userId = decoded.id;
+    const userId = decoded.id;
+    ws.userId = userId;
+    connectedUsers.add(ws);
+    if (!roomUsers.has(userId)) roomUsers.set(userId, new Set());
+    roomUsers.get(userId)?.add(ws);
+
+    // ping checking connection exist or not by getting pong from client, if pong not get then it will triggure close event
+    const interval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) ws.ping();
+    }, 30000);
 
     ws.send(
       JSON.stringify({
@@ -45,6 +58,12 @@ export const webSocketServerSetup = (server: Server) => {
       }
 
       wsSendResponse(ws, "new message", {});
+    });
+
+    ws.on("close", () => {
+      connectedUsers?.delete(ws);
+      console.log("WebSocket client disconnected!");
+      clearInterval(interval);
     });
   });
 };
