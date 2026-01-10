@@ -4,7 +4,7 @@ import { WebSocketServer } from "ws";
 import { CustomWebSocket } from "./socket.interface";
 import { verifyWsToken } from "./socket.service";
 import { wsSendResponse } from "./websocketSendResponse";
-import { RawData } from "ws";
+import { sendMessage } from "../chat/chat.service";
 
 let wss;
 
@@ -37,8 +37,13 @@ export const webSocketServerSetup = (server: Server) => {
     });
 
     ws.on("message", async (data: any) => {
-      if (data.type === "send-message") {
+      const { type, payload } = JSON.parse(data);
+      switch (type) {
+        case "send-message": {
+          sendMessage(ws.userId as string, payload);
+        }
       }
+
       wsSendResponse(ws, "new message", {});
     });
   });

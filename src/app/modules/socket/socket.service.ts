@@ -1,11 +1,9 @@
 import { Secret } from "jsonwebtoken";
 import config from "../../../config";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
-import { WebSocket } from "ws";
 import { CustomWebSocket } from "./socket.interface";
 
 export const verifyWsToken = (ws: CustomWebSocket, token: string) => {
-  console.log(token, "socket.service.ts", 8);
   if (!token) {
     ws.send(
       JSON.stringify({
