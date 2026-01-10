@@ -2,6 +2,7 @@ import { Server } from "http";
 import app from "./app";
 import config from "./config";
 import { WebSocket } from "ws";
+import { webSocketServerSetup } from "./app/modules/socket/socket.controller";
 
 // let server: Server;
 
@@ -17,9 +18,8 @@ async function main() {
     );
   });
 
-  const wss = new WebSocket.Server({ server });
-
-  wss.on("connection", (ws, req) => {});
+  const wssserver = webSocketServerSetup(server);
+  console.log(wssserver, "server.ts", 22);
 
   const exitHandler = () => {
     if (server) {

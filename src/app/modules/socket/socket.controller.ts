@@ -10,6 +10,20 @@ export const webSocketServerSetup = (server: Server) => {
   });
 
   wss.on("connection", async (ws: CustomWebSocket, req: Request) => {
-    const authToken = req.query.token;
+    const { authToken } = req.query;
+    console.log(
+      {
+        authToken,
+      },
+      "socket.controller.ts",
+      14,
+    );
+
+    ws.send(
+      JSON.stringify({
+        type: "group-conversation",
+        data: "hasn",
+      }),
+    );
   });
 };
