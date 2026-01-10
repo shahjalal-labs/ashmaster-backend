@@ -160,6 +160,31 @@ model ChecklistEndGoal {
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
 
+model chatRoom {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  type      roomType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Message   Message[]
+
+  @@map("chatrooms")
+}
+
+model Message {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  content   String?
+  fileUrl   String[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roomId    String   @db.ObjectId
+  room      chatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+}
+
+enum roomType {
+  P2P
+  GROUP
+}
+
 enum ChecklistEndGoalType {
   CHECKLIST
   ENDGOALS
