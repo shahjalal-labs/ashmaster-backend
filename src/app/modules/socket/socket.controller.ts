@@ -4,6 +4,8 @@ import { WebSocketServer } from "ws";
 import { CustomWebSocket } from "./socket.interface";
 import { verifyWsToken } from "./socket.service";
 import { wsSendResponse } from "./websocketSendResponse";
+import { RawData } from "ws";
+
 let wss;
 
 export const webSocketServerSetup = (server: Server) => {
@@ -15,7 +17,6 @@ export const webSocketServerSetup = (server: Server) => {
     const authToken = req.headers.token;
 
     const decoded = verifyWsToken(ws, authToken as string);
-    console.log(decoded, "socket.controller.ts", 20);
 
     // if we dont do this it will still go next and send the belows event
     if (!decoded) return;
@@ -35,20 +36,10 @@ export const webSocketServerSetup = (server: Server) => {
       conversations: [],
     });
 
-    type TData = {
-      type: string;
-      payload: any;
-    };
-
-    ws.on("message", async (data: TData) => {
-      const message = {
-        ...JSON.parse(data),
-        userId: ws.userId,
-      };
-
-      wsSendResponse(ws, "new message", {
-        message,
-      });
+    ws.on("message", async (data: any) => {
+      if (data.type === "send-message") {
+      }
+      wsSendResponse(ws, "new message", {});
     });
   });
 };
