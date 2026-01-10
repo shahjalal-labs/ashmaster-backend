@@ -18,8 +18,7 @@ async function main() {
     );
   });
 
-  const wssserver = webSocketServerSetup(server);
-  console.log(wssserver, "server.ts", 22);
+  webSocketServerSetup(server);
 
   const exitHandler = () => {
     if (server) {
