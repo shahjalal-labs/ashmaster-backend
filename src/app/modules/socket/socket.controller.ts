@@ -31,6 +31,28 @@ export const setupWebSocketServer = (server: Server) => {
 
     console.log(`User ${ws.userId} connected`);
 
+    // Get all P2P chat rooms of this user
+    const userRooms = await prisma.chatRoom.findMany({
+      where: { type: "P2P", participants: { has: ws.userId } },
+    });
+
+    for (const room of userRooms) {
+      ws.rooms!.add(room.id);
+      if (!roomUsers.has(room.id)) roomUsers.set(room.id, new Set());
+      roomUsers.get(room.id)!.add(ws);
+    }
+
+    // Similarly, join groups
+    const groups = await prisma.group.findMany({
+      where: { memberIds: { has: ws.userId } },
+    });
+
+    for (const group of groups) {
+      ws.groups!.add(group.id);
+      if (!groupUsers.has(group.id)) groupUsers.set(group.id, new Set());
+      groupUsers.get(group.id)!.add(ws);
+    }
+
     // Ping to detect dead connections
     const pingInterval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) ws.ping();
@@ -88,8 +110,12 @@ export const setupWebSocketServer = (server: Server) => {
             });
 
             // Broadcast to room clients
+
             roomUsers.get(roomId)?.forEach((client) => {
-              if (client.readyState === WebSocket.OPEN) {
+              if (
+                client.readyState === WebSocket.OPEN &&
+                client.userId !== ws.userId
+              ) {
                 client.send(JSON.stringify({ type: "p2p-message", message }));
               }
             });
