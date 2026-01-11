@@ -51,33 +51,9 @@ export const webSocketServerSetup = (server: Server) => {
     });
 
     ws.on("message", async (data: any) => {
-      const { type, payload, recieverId, groupId } = JSON.parse(data);
+      const { type, payload } = JSON.parse(data);
       switch (type) {
-        case "subscribe": {
-          if (!recieverId) {
-            return wsSendResponse(ws, "error", {
-              message: "recieverId is required",
-            });
-          }
-          const room = await prisma.chatRoom.findMany({
-            where: {
-              participants: {
-                hasEvery: [userId, recieverId],
-              },
-            },
-          });
-          console.log(room, "socket.controller.ts", 63);
-          if (!room.length) {
-            await prisma.chatRoom.create({
-              data: {
-                type: "P2P",
-                participants: [userId, recieverId],
-              },
-            });
-          }
-          break;
-        }
-        case "send-message": {
+        case "send-group-message": {
           // if(){}
           sendMessage(ws.userId as string, payload);
           break;
