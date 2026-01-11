@@ -1,8 +1,7 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
-import { WebSocket } from "ws";
-import { webSocketServerSetup } from "./app/modules/socket/socket.controller";
+import { setupWebSocketServer } from "./app/modules/socket/socket.controller";
 
 // let server: Server;
 
@@ -18,7 +17,7 @@ async function main() {
     );
   });
 
-  webSocketServerSetup(server);
+  setupWebSocketServer(server);
 
   const exitHandler = () => {
     if (server) {
