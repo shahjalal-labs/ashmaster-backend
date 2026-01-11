@@ -66,8 +66,19 @@ export const webSocketServerSetup = (server: Server) => {
               },
             },
           });
+          console.log(room, "socket.controller.ts", 63);
+          if (!room.length) {
+            await prisma.chatRoom.create({
+              data: {
+                type: "P2P",
+                participants: [userId, recieverId],
+              },
+            });
+          }
+          break;
         }
         case "send-message": {
+          // if(){}
           sendMessage(ws.userId as string, payload);
           break;
         }
