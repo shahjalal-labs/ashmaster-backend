@@ -1,36 +1,31 @@
-import { Secret } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import config from "../../../config";
-import { jwtHelpers } from "../../../helpers/jwtHelpers";
-import { CustomWebSocket } from "./socket.interface";
+import { WebSocket } from "ws";
 
-export const verifyWsToken = (ws: CustomWebSocket, token: string) => {
+// Simple function to verify WebSocket token
+export const verifyWsToken = (ws: WebSocket, token: string) => {
   if (!token) {
     ws.send(
       JSON.stringify({
         type: "error",
-        message: "You are not authenticated. Please login first.",
+        message: "No token provided",
       }),
     );
-    return;
+    ws.close();
+    return null;
   }
-  try {
-    let decoded = jwtHelpers.verifyToken(
-      token,
-      config.jwt.jwt_secret as Secret,
-    );
-    return decoded;
-  } catch (error: any) {
-    let message =
-      error.name === "TokenExpiredError"
-        ? "Token is expired. Please re login !!!"
-        : "Invalid token. Login for revalidate !!!";
 
+  try {
+    const decoded = jwt.verify(token, config.jwt.jwt_secret as string);
+    return decoded as { id: string };
+  } catch (error) {
     ws.send(
       JSON.stringify({
         type: "error",
-        message,
+        message: "Invalid or expired token",
       }),
     );
+    ws.close();
     return null;
   }
 };
