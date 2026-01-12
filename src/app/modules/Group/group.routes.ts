@@ -3,6 +3,8 @@ import auth from "../../middlewares/auth";
 import config, { ENV } from "../../../config";
 import { profileGuard } from "../../middlewares/profile";
 import { GroupController } from "./group.controller";
+import validateRequest from "../../middlewares/validateRequest";
+import { GroupValidation } from "./group.validation";
 
 const router = Router();
 
@@ -12,6 +14,10 @@ if (config.env === ENV.DEVELOPMENT) {
   router.use(profileGuard());
 }
 
-router.post("/create", GroupController.createGroup);
+router.post(
+  "/create",
+  validateRequest(GroupValidation.createGroupSchema),
+  GroupController.createGroup,
+);
 
 export const GroupRoutes = router;

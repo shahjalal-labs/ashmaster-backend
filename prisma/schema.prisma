@@ -161,6 +161,7 @@ model ChecklistEndGoal {
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
 
+//w: (start)╭────────────  Group ────────────╮
 model Group {
   id         String   @id @default(auto()) @map("_id") @db.ObjectId
   title      String
@@ -170,6 +171,8 @@ model Group {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+//w: (end)  ╰──────────── Group  ────────────╯
 
 model ChatRoom {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
