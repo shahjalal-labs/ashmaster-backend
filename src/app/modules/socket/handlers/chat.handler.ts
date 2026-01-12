@@ -1,6 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
+import config, { ENV } from "../../../../config";
 
 // Simple function to handle P2P messages
 export const handleP2PMessage = async (
@@ -18,6 +19,26 @@ export const handleP2PMessage = async (
         "You can't send message to yourself",
       );
     }
+
+    if (config.env === ENV.DEVELOPMENT) {
+      const [sender, receiver] = await Promise.all([
+        prisma.user.findUnique({
+          where: {
+            id: senderId,
+          },
+        }),
+        prisma.user.findUnique({
+          where: {
+            id: receiverId,
+          },
+        }),
+      ]);
+
+      if (!sender || !receiver) {
+        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+      }
+    }
+
     let room = await prisma.chatRoom.findFirst({
       where: {
         type: "P2P",
