@@ -43,6 +43,7 @@ export const setupWebSocketServer = (server: Server) => {
     // 4. SEND USER'S EXISTING CHAT ROOMS
     const userRooms = await prisma.chatRoom.findMany({
       where: { participants: { has: userId } },
+      take: 10,
       include: {
         messages: {
           select: {
@@ -137,7 +138,7 @@ export const setupWebSocketServer = (server: Server) => {
           }
 
           case "group-message": {
-            const { groupId, content } = data;
+            const { groupId, content, fileUrl } = data;
 
             // Save message to database
             const result = await handleGroupMessage(userId, groupId, content);
