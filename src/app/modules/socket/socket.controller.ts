@@ -101,6 +101,7 @@ export const setupWebSocketServer = (server: Server) => {
 
         switch (type) {
           case "p2p-message": {
+            let isNewRoom = false;
             const { receiverId, content, fileUrl } = payload;
 
             // Find or create a P2P room
@@ -116,12 +117,7 @@ export const setupWebSocketServer = (server: Server) => {
                 data: { type: "P2P", participants: [ws.userId!, receiverId] },
               });
 
-              const roomPayload = {
-                id: room.id,
-                type: room.type,
-                participants: room.participants,
-                // lastMessage: message,
-              };
+              isNewRoom = true;
             }
 
             const roomId = room.id;
@@ -137,6 +133,31 @@ export const setupWebSocketServer = (server: Server) => {
                 readBy: [ws.userId!],
               },
             });
+
+            if (isNewRoom) {
+              const roomPayload = {
+                id: room.id,
+                type: room.type,
+                participants: room.participants,
+                lastMessage: message,
+              };
+
+              room.participants.forEach((userId) => {
+                connectedUsers.forEach((client) => {
+                  if (
+                    client.userId === userId &&
+                    client.readyState === WebSocket.OPEN
+                  ) {
+                    client.send(
+                      JSON.stringify({
+                        type: "room-created",
+                        room: roomPayload,
+                      }),
+                    );
+                  }
+                });
+              });
+            }
 
             /* await prisma.chatRoom.updateMany({
               where: {
