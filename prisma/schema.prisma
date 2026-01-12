@@ -42,7 +42,10 @@ model User {
   viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
-  Message                Message[]
+  GroupMessage           GroupMessage[]
+
+  sender   Room[] @relation("user1Relation")
+  receiver Room[] @relation("user2Relation")
 
   @@map("users")
 }
@@ -162,44 +165,64 @@ model ChecklistEndGoal {
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
 
 model Group {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  memberIds  String[]
-  groupPhoto String?
-  creator    String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id           String         @id @default(auto()) @map("_id") @db.ObjectId
+  groupName    String
+  groupPhoto   String
+  creatorId    String         @db.ObjectId
+  memberIds    String[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  groupMessage GroupMessage[]
+
+  @@map("groups")
 }
 
-model ChatRoom {
-  id           String    @id @default(auto()) @map("_id") @db.ObjectId
-  type         RoomType
-  groupId      String?   @db.ObjectId
-  participants String[]  @db.ObjectId // both P2P and group
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  messages     Message[]
+model GroupMessage {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  groupId      String   @db.ObjectId
+  content      String?
+  fullName     String
+  profileImage String
+  fileUrl      String[]
+  senderId     String   @db.ObjectId
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  group        Group    @relation(fields: [groupId], references: [id])
+  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 
-  @@map("chatrooms")
+  @@map("group_messages")
+}
+
+model Room {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user1Id   String?  @db.ObjectId
+  user2Id   String?  @db.ObjectId
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user1 User? @relation("user1Relation", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User? @relation("user2Relation", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  message Message[]
+
+  @@unique([user1Id, user2Id])
+  @@map("rooms")
 }
 
 model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   roomId    String   @db.ObjectId
-  senderId  String   @db.ObjectId
+  user1Id   String   @db.ObjectId
+  user2Id   String   @db.ObjectId
   content   String?
   fileUrl   String[]
-  readBy    String[] @db.ObjectId
+  user1Read Boolean  @default(false)
+  user2Read Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
 
-  room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-}
-
-enum RoomType {
-  P2P
-  GROUP
+  @@map("messages")
 }
 
 enum ChecklistEndGoalType {

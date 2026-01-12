@@ -160,17 +160,17 @@ export const setupWebSocketServer = (server: Server) => {
             }
 
             /* await prisma.chatRoom.updateMany({
-               where: {
-                 type: "P2P",
-                 participants: {
-                   hasEvery: [ws.userId, receiverId],
-                 },
-               },
+              where: {
+                type: "P2P",
+                participants: {
+                  hasEvery: [ws.userId, receiverId],
+                },
+              },
 
-               data: {
-                 updatedAt: new Date(),
-               },
-             }); */
+              data: {
+                updatedAt: new Date(),
+              },
+            }); */
 
             // Broadcast to room clients
 
