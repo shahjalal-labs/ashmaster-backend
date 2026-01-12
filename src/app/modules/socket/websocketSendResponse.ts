@@ -1,4 +1,4 @@
-import { CustomWebSocket } from "./socket.interface";
+/* import { CustomWebSocket } from "./socket.interface";
 export const { stringify,parse } = JSON;
 
 export const wsSendResponse = (
@@ -12,4 +12,4 @@ export const wsSendResponse = (
       payload,
     }),
   );
-};
+}; */

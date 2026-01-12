@@ -42,7 +42,7 @@ model User {
   viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
-  Message                Message[]
+  message                Message[]
 
   @@map("users")
 }
