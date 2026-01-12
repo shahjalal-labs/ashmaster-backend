@@ -167,7 +167,7 @@ model Group {
   title      String
   memberIds  String[]
   groupPhoto String?
-  creator    String   @db.ObjectId
+  creatorId  String   @db.ObjectId
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
