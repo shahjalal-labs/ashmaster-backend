@@ -45,7 +45,16 @@ export const setupWebSocketServer = (server: Server) => {
       where: { participants: { has: userId } },
       include: {
         messages: {
-          select: {},
+          select: {
+            content: true,
+            fileUrl: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+              },
+            },
+          },
           orderBy: { createdAt: "desc" },
           take: 1,
         },
@@ -81,10 +90,15 @@ export const setupWebSocketServer = (server: Server) => {
 
         switch (data.type) {
           case "p2p-message": {
-            const { receiverId, content } = data;
+            const { receiverId, content, fileUrl } = data;
 
             // Save message to database
-            const result = await handleP2PMessage(userId, receiverId, content);
+            const result = await handleP2PMessage(
+              userId,
+              receiverId,
+              content,
+              fileUrl,
+            );
 
             // Send to receiver if online
             const receiverWs = onlineUsers.get(receiverId);

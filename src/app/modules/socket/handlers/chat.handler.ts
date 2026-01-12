@@ -4,7 +4,8 @@ import prisma from "../../../../shared/prisma";
 export const handleP2PMessage = async (
   senderId: string,
   receiverId: string,
-  content: string,
+  content?: string,
+  fileUrl?: string[],
 ) => {
   try {
     // 1. Find or create a chat room between these two users
@@ -30,7 +31,7 @@ export const handleP2PMessage = async (
         roomId: room.id,
         senderId,
         content,
-        fileUrl: [],
+        fileUrl: fileUrl,
         readBy: [senderId],
       },
     });
