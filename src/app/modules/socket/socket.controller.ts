@@ -31,6 +31,14 @@ export const setupWebSocketServer = (server: Server) => {
 
     console.log(`User ${ws.userId} connected`);
 
+    const userAllRooms = await prisma.chatRoom.findMany({
+      where: {
+        participants: {
+          has: ws.userId,
+        },
+      },
+    });
+
     // Get all P2P chat rooms of this user
     const userRooms = await prisma.chatRoom.findMany({
       where: { type: "P2P", participants: { has: ws.userId } },
@@ -79,7 +87,7 @@ export const setupWebSocketServer = (server: Server) => {
 
         switch (type) {
           case "p2p-message": {
-            const { receiverId, content } = payload;
+            const { receiverId, content, fileUrl } = payload;
 
             // Find or create a P2P room
             let room = await prisma.chatRoom.findFirst({
@@ -108,6 +116,19 @@ export const setupWebSocketServer = (server: Server) => {
                 readBy: [ws.userId!],
               },
             });
+
+            /* await prisma.chatRoom.updateMany({
+              where: {
+                type: "P2P",
+                participants: {
+                  hasEvery: [ws.userId, receiverId],
+                },
+              },
+
+              data: {
+                updatedAt: new Date(),
+              },
+            }); */
 
             // Broadcast to room clients
 
@@ -188,6 +209,7 @@ export const setupWebSocketServer = (server: Server) => {
         clients?.delete(ws);
         if (clients?.size === 0) roomUsers.delete(roomId);
       });
+
       ws.groups?.forEach((groupId) => {
         const clients = groupUsers.get(groupId);
         clients?.delete(ws);
