@@ -24,67 +24,25 @@ model PendingUser {
 
 //w: (start)╭────────────  User  ────────────╮
 model User {
-  id                     String             @id @default(auto()) @map("_id") @db.ObjectId
-  email                  String             @unique
-  password               String?
-  fullname               String
-  fcmToken               String?
-  role                   UserRole           @default(MENTEE)
-  profilStatus           ProfilStatus       @default(INCOMPLETE)
-  profile                Profile?
-  preference             Preference?
-  createdAt              DateTime           @default(now())
-  updatedAt              DateTime           @updatedAt
-  sentRequests           Connections[]      @relation("SentRequests")
-  receivedRequests       Connections[]      @relation("ReceivedRequests")
-  checklistEndGoal       ChecklistEndGoal[]
-  viewedMentees          MentorMenteeView[] @relation("MentorViews")
-  viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
-  checklistUpdateTracker DateTime?
-  schedule               Schedule[]
-  GroupMessage           GroupMessage[]
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  email String @unique
 
-  sender   Room[] @relation("user1Relation")
-  receiver Room[] @relation("user2Relation")
+  password         String?
+  fullname         String
+  fcmToken         String?
+  role             UserRole      @default(MENTEE)
+  profilStatus     ProfilStatus  @default(INCOMPLETE)
+  profile          Profile?
+  preference       Preference?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  sentRequests     Connections[] @relation("SentRequests")
+  receivedRequests Connections[] @relation("ReceivedRequests")
 
   @@map("users")
 }
 
 //w: (end)  ╰────────────  User  ────────────╯
-
-//w: (start)╭────────────  Schedule ────────────╮
-model Schedule {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  dateTime    DateTime
-  title       String
-  description String
-  hostId      String   @db.ObjectId
-  host        User     @relation(fields: [hostId], references: [id])
-  guestIds    String[] @db.ObjectId
-  images      String[] @default([]) // host or guest embeded images for faster query no complex model required
-
-  @@unique([dateTime, hostId])
-  @@index([dateTime])
-  @@map("schedules")
-}
-
-//w: (end)  ╰────────────  Schedule ────────────╯
-
-//w: (start)╭────────────  MentorMenteeView ────────────╮
-model MentorMenteeView {
-  id       String   @id @default(auto()) @map("_id") @db.ObjectId
-  mentorId String   @db.ObjectId
-  menteeId String   @db.ObjectId
-  viewedAt DateTime @default(now())
-  mentor   User     @relation("MentorViews", fields: [mentorId], references: [id], onDelete: Cascade)
-  mentee   User     @relation("MenteeViews", fields: [menteeId], references: [id], onDelete: Cascade)
-
-  @@unique([mentorId, menteeId])
-  @@index([mentorId, viewedAt])
-  @@map("mentor_mentee_views")
-}
-
-//w: (end)  ╰────────────  MentorMenteeView ────────────╯
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
@@ -150,80 +108,14 @@ model Connections {
 model ChecklistEndGoal {
   id          String               @id @default(auto()) @map("_id") @db.ObjectId
   type        ChecklistEndGoalType
-  userId      String               @db.ObjectId
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
   status      Status               @default(INCOMPLETE)
   title       String
   description String
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
 
-  @@index([createdAt])
   @@map("checklist_end_goals")
 }
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
-
-model Group {
-  id           String         @id @default(auto()) @map("_id") @db.ObjectId
-  groupName    String
-  groupPhoto   String
-  creatorId    String         @db.ObjectId
-  memberIds    String[]
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime       @updatedAt
-  groupMessage GroupMessage[]
-
-  @@map("groups")
-}
-
-model GroupMessage {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
-  groupId      String   @db.ObjectId
-  content      String?
-  fullName     String
-  profileImage String
-  fileUrl      String[]
-  senderId     String   @db.ObjectId
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-  group        Group    @relation(fields: [groupId], references: [id])
-  sender       User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@map("group_messages")
-}
-
-model Room {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  user1Id   String?  @db.ObjectId
-  user2Id   String?  @db.ObjectId
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user1 User? @relation("user1Relation", fields: [user1Id], references: [id], onDelete: Cascade)
-  user2 User? @relation("user2Relation", fields: [user2Id], references: [id], onDelete: Cascade)
-
-  message Message[]
-
-  @@unique([user1Id, user2Id])
-  @@map("rooms")
-}
-
-model Message {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  roomId    String   @db.ObjectId
-  user1Id   String   @db.ObjectId
-  user2Id   String   @db.ObjectId
-  content   String?
-  fileUrl   String[]
-  user1Read Boolean  @default(false)
-  user2Read Boolean  @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  room      Room     @relation(fields: [roomId], references: [id], onDelete: Cascade)
-
-  @@map("messages")
-}
 
 enum ChecklistEndGoalType {
   CHECKLIST
