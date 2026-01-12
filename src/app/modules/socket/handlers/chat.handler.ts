@@ -1,3 +1,5 @@
+import httpStatus from "http-status";
+import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
 
 // Simple function to handle P2P messages
@@ -9,6 +11,13 @@ export const handleP2PMessage = async (
 ) => {
   try {
     // 1. Find or create a chat room between these two users
+
+    if (senderId === receiverId) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You can't send message to yourself",
+      );
+    }
     let room = await prisma.chatRoom.findFirst({
       where: {
         type: "P2P",

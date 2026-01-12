@@ -200,12 +200,12 @@ export const setupWebSocketServer = (server: Server) => {
               }),
             );
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("❌ Error handling message:", error);
         ws.send(
           JSON.stringify({
             type: "error",
-            message: "Failed to process message",
+            message: error.message || "Failed to process message",
           }),
         );
       }

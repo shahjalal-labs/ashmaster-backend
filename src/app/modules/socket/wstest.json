@@ -1,0 +1,6 @@
+{
+  "type": "p2p-message",
+  "content": "hellow ramim",
+  "fileUrl": ["url1,", "url2"],
+  "receiverId": "694a254aad128cabeaf7412f"
+}
