@@ -112,6 +112,15 @@ export const setupWebSocketServer = (server: Server) => {
               );
             }
 
+            if (result.isNewRoom) {
+              ws.send(
+                JSON.stringify({
+                  type: "newroom-created",
+                  room: result.room,
+                }),
+              );
+            }
+
             // Send confirmation to sender
             ws.send(
               JSON.stringify({

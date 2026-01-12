@@ -52,6 +52,22 @@ export const handleP2PMessage = async (
           type: "P2P",
           participants: [senderId, receiverId],
         },
+        include: {
+          messages: {
+            select: {
+              content: true,
+              fileUrl: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
       });
     }
 
@@ -71,6 +87,7 @@ export const handleP2PMessage = async (
       roomId: room.id,
       message,
       isNewRoom: !room.createdAt,
+      room,
     };
   } catch (error) {
     console.error("❌ Failed to save message:", error);
