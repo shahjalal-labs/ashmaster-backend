@@ -2,6 +2,7 @@ import { WebSocket, WebSocketServer } from "ws";
 import { Request } from "express";
 import prisma from "../../../shared/prisma";
 import { verifyWebSocketToken } from "./socket.service";
+import redisClient from "../../../shared/redis";
 
 interface CustomWebSocket extends WebSocket {
   userId?: string;
@@ -48,10 +49,10 @@ export function setupWebSocketServer(server: any) {
 
       include: {
         user1: {
-          select: { id: true, fullName: true, profileImage: true },
+          select: { id: true, fullname: true },
         },
         user2: {
-          select: { id: true, fullName: true, profileImage: true },
+          select: { id: true, fullname: true },
         },
       },
     });
@@ -71,7 +72,7 @@ export function setupWebSocketServer(server: any) {
         const unreadKey = `room:${room.id}:unread:${userId}`;
 
         const [redisRaw, unreadCountStr] = await Promise.all([
-          redisClient.lRange(redisKey, 0, -1),
+          redisClient.lrange(redisKey, 0, -1),
           redisClient.get(unreadKey),
         ]);
 
@@ -101,8 +102,7 @@ export function setupWebSocketServer(server: any) {
           roomId: room.id,
           partner: {
             id: partner?.id,
-            fullName: partner?.fullName,
-            profileImage: partner?.profileImage,
+            fullname: partner?.fullname,
             isActive,
           },
           lastMessage: latestMessage,
@@ -137,7 +137,7 @@ export function setupWebSocketServer(server: any) {
           );
 
           // Get the latest message from Redis
-          const buffered = await redisClient.lRange(redisKey, -1, -1);
+          const buffered = await redisClient.lrange(redisKey, -1, -1);
           const lastMessage =
             buffered.length > 0 ? JSON.parse(buffered[0]) : null;
 
@@ -183,10 +183,10 @@ export function setupWebSocketServer(server: any) {
             orderBy: { updatedAt: "desc" },
             include: {
               user1: {
-                select: { id: true, fullName: true, profileImage: true },
+                select: { id: true, fullname: true },
               },
               user2: {
-                select: { id: true, fullName: true, profileImage: true },
+                select: { id: true, fullname: true },
               },
             },
           });
@@ -201,7 +201,7 @@ export function setupWebSocketServer(server: any) {
               const unreadKey = `room:${room.id}:unread:${targetUserId}`;
 
               // Get the latest message from Redis
-              const buffered = await redisClient.lRange(redisKey, -1, -1);
+              const buffered = await redisClient.lrange(redisKey, -1, -1);
               const lastMessage =
                 buffered.length > 0 ? JSON.parse(buffered[0]) : null;
 
@@ -218,8 +218,8 @@ export function setupWebSocketServer(server: any) {
                 roomId: room.id,
                 partner: {
                   id: partner?.id,
-                  fullName: partner?.fullName,
-                  profileImage: partner?.profileImage,
+                  fullName: partner?.fullname,
+                  // profileImage: partner?.profileImage,
                   isActive,
                 },
                 lastMessage: lastMessage
@@ -254,7 +254,7 @@ export function setupWebSocketServer(server: any) {
               );
 
               // Get the latest message from Redis
-              const buffered = await redisClient.lRange(redisKey, -1, -1);
+              const buffered = await redisClient.lrange(redisKey, -1, -1);
               const lastMessage =
                 buffered.length > 0 ? JSON.parse(buffered[0]) : null;
 
@@ -321,7 +321,7 @@ export function setupWebSocketServer(server: any) {
             roomUsers.get(roomId)?.add(ws);
 
             const redisKey = `room:${roomId}:messages`;
-            const redisRaw = await redisClient.lRange(redisKey, -15, -1);
+            const redisRaw = await redisClient.lrange(redisKey, -15, -1);
             const messages = redisRaw.reverse().map((msg) => JSON.parse(msg));
 
             ws.send(
@@ -369,13 +369,13 @@ export function setupWebSocketServer(server: any) {
             };
 
             const redisKey = `room:${roomId}:messages`;
-            await redisClient.rPush(redisKey, JSON.stringify(messagePayload));
+            await redisClient.rpush(redisKey, JSON.stringify(messagePayload));
             const unreadKey = `room:${roomId}:unread:${receiverId}`;
             await redisClient.incr(unreadKey);
-            const count = await redisClient.lLen(redisKey);
+            const count = await redisClient.llen(redisKey);
 
             if (count >= 30) {
-              const messagesToSaveRaw = await redisClient.lRange(
+              const messagesToSaveRaw = await redisClient.lrange(
                 redisKey,
                 0,
                 14,
@@ -386,7 +386,7 @@ export function setupWebSocketServer(server: any) {
 
               await prisma.message.createMany({ data: messagesToSave });
 
-              await redisClient.lTrim(redisKey, 15, -1);
+              await redisClient.ltrim(redisKey, 15, -1);
             }
 
             // Update the room's updatedAt
@@ -447,10 +447,10 @@ export function setupWebSocketServer(server: any) {
               orderBy: { updatedAt: "desc" },
               include: {
                 user1: {
-                  select: { id: true, fullName: true, profileImage: true },
+                  select: { id: true, fullname: true },
                 },
                 user2: {
-                  select: { id: true, fullName: true, profileImage: true },
+                  select: { id: true, fullname: true },
                 },
               },
             });
@@ -471,7 +471,7 @@ export function setupWebSocketServer(server: any) {
                 const unreadKey = `room:${room.id}:unread:${userId}`;
 
                 // Get the latest message from Redis (most recent at the end)
-                const latestRaw = await redisClient.lRange(redisKey, -1, -1);
+                const latestRaw = await redisClient.lrange(redisKey, -1, -1);
                 const latestMsg =
                   latestRaw.length > 0 ? JSON.parse(latestRaw[0]) : null;
 
