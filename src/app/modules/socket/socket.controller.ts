@@ -17,9 +17,10 @@ export function setupWebSocketServer(server: any) {
   wss = new WebSocketServer({ server });
 
   wss.on("connection", async (ws: CustomWebSocket, req: Request) => {
-    const authToken = req.headers["x-token"] as string;
+    const authToken = req.headers["token"] as string;
     const decoded = verifyWebSocketToken(ws, authToken);
     if (!decoded) {
+      ws.close();
       return;
     }
     const userId = decoded.id;
@@ -492,8 +493,8 @@ export function setupWebSocketServer(server: any) {
                   roomId: room.id,
                   partner: {
                     id: partner?.id,
-                    fullName: partner?.fullName,
-                    profileImage: partner?.profileImage,
+                    fullName: partner?.fullname,
+                    // profileImage: partner?.profileImage,
                     isActive,
                   },
                   lastMessage: latestMessage,
@@ -551,7 +552,7 @@ export function setupWebSocketServer(server: any) {
             await redisClient.del(`group:${incomingGroupId}:unread:${userId}`);
 
             const redisKey = `group:${incomingGroupId}:messages`;
-            const redisRaw = await redisClient.lRange(redisKey, -15, -1); // Get last 15
+            const redisRaw = await redisClient.lrange(redisKey, -15, -1); // Get last 15
             const messages = redisRaw
               .reverse() // or .sort(...) if you prefer createdAt
               .map((msg) => JSON.parse(msg));
@@ -595,8 +596,8 @@ export function setupWebSocketServer(server: any) {
                 id: userId,
               },
               select: {
-                fullName: true,
-                profileImage: true,
+                fullname: true,
+                // profileImage: true,
               },
             });
 
@@ -623,19 +624,19 @@ export function setupWebSocketServer(server: any) {
             const messagePayload = {
               content,
               senderId: userId,
-              fullName: userInfo?.fullName,
-              profileImage: userInfo?.profileImage,
+              fullname: userInfo?.fullname,
+              // profileImage: userInfo?.profileImage,
               groupId,
               fileUrl,
               createdAt: new Date().toISOString(),
             };
 
             const redisKey = `group:${groupId}:messages`;
-            await redisClient.rPush(redisKey, JSON.stringify(messagePayload));
-            const count = await redisClient.lLen(redisKey);
+            await redisClient.rpush(redisKey, JSON.stringify(messagePayload));
+            const count = await redisClient.llen(redisKey);
 
             if (count >= 30) {
-              const messagesToSaveRaw = await redisClient.lRange(
+              const messagesToSaveRaw = await redisClient.lrange(
                 redisKey,
                 0,
                 14,
@@ -648,7 +649,7 @@ export function setupWebSocketServer(server: any) {
                 data: messagesToSave,
               });
 
-              await redisClient.lTrim(redisKey, 15, -1);
+              await redisClient.ltrim(redisKey, 15, -1);
             }
 
             const pipeline = redisClient.multi();

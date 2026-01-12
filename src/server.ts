@@ -1,10 +1,10 @@
 import { Server } from "http";
 import app from "./app";
 import config from "./config";
+import { setupWebSocketServer } from "./app/modules/socket/socket.controller";
 
 // let server: Server;
 
-// ruhul
 async function main() {
   const server: Server = app.listen(config.port, () => {
     console.log("✅ Server is running on", `http://localhost:${config.port}`);
@@ -15,6 +15,8 @@ async function main() {
       `http://localhost:${6011}/admin/queues`,
     );
   });
+
+  setupWebSocketServer(server);
 
   const exitHandler = () => {
     if (server) {
