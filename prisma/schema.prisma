@@ -42,9 +42,6 @@ model User {
   viewedByMentors        MentorMenteeView[] @relation("MenteeViews")
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
-  GroupMessage           GroupMessage[]
-  Room                   Room[]
-  Room                   Room[]
 
   @@map("users")
 }
@@ -162,6 +159,33 @@ model ChecklistEndGoal {
 }
 
 //w: (end)  ╰────────────  ChecklistEndGoal ────────────╯
+
+model ChatRoom {
+  id          String               @id @default(auto()) @map("_id") @db.ObjectId
+  type        ChecklistEndGoalType
+  userId      String               @db.ObjectId
+  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status      Status               @default(INCOMPLETE)
+  title       String
+  description String
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  @@index([createdAt])
+  @@map("checklist_end_goals")
+}
+
+
+enum RoomType{
+P2P
+GROUP
+}
+
+
+
+
+
+
 
 enum ChecklistEndGoalType {
   CHECKLIST
