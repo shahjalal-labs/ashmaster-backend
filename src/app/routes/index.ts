@@ -6,6 +6,7 @@ import { NetworkRoutes } from "../modules/network/network.routes";
 import { ChecklistEndGoalsRoutes } from "../modules/ChecklistEndGoal/checklistEndGoal.routes";
 import { MentorProgressRoutes } from "../modules/mentorProgress/mentorProgress.routes";
 import { ScheduleRoutes } from "../modules/Schedule/schedule.routes";
+import { GroupRoutes } from "../modules/Group/group.routes";
 
 type TAllRoutes = {
   path: string;
@@ -37,6 +38,10 @@ const allRoutes: TAllRoutes[] = [
   {
     path: "/schedule",
     route: ScheduleRoutes,
+  },
+  {
+    path: "/group",
+    route: GroupRoutes,
   },
 ];
 //w: (end)  ╰──────────── allRoutes ────────────╯
