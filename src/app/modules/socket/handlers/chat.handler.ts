@@ -12,6 +12,8 @@ export const handleP2PMessage = async (
 ) => {
   try {
     // 1. Find or create a chat room between these two users
+    let isNewRoom = false;
+    let newRoom;
 
     if (senderId === receiverId) {
       throw new ApiError(
@@ -69,6 +71,32 @@ export const handleP2PMessage = async (
           },
         },
       });
+
+      isNewRoom = true;
+    }
+
+    if (isNewRoom) {
+      newRoom = await prisma.chatRoom.findUnique({
+        where: {
+          id: room.id,
+        },
+        include: {
+          messages: {
+            select: {
+              content: true,
+              fileUrl: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+        },
+      });
     }
 
     // 2. Save the message to database
@@ -86,8 +114,8 @@ export const handleP2PMessage = async (
     return {
       roomId: room.id,
       message,
-      isNewRoom: !room.createdAt,
-      room,
+      isNewRoom,
+      newRoom,
     };
   } catch (error) {
     console.error("❌ Failed to save message:", error);

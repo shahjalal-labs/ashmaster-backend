@@ -100,6 +100,8 @@ export const setupWebSocketServer = (server: Server) => {
               fileUrl,
             );
 
+            console.log(result, "socket.controller.ts", 97);
+
             // Send to receiver if online
             const receiverWs = onlineUsers.get(receiverId);
             if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
@@ -113,10 +115,11 @@ export const setupWebSocketServer = (server: Server) => {
             }
 
             if (result.isNewRoom) {
+              console.log(`working`);
               ws.send(
                 JSON.stringify({
                   type: "newroom-created",
-                  room: result.room,
+                  room: result.newRoom,
                 }),
               );
             }
