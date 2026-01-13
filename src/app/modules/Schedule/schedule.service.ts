@@ -76,7 +76,7 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
-const getCurrentMonthSchedules = async (userId: string, date: Date) => {
+const getSchedulesOfMonth = async (userId: string, date: Date) => {
   const now = new Date();
 
   const start = startOfMonth(date);
@@ -132,6 +132,6 @@ const getScheduleDetails = async (scheduleId: string) => {
 export const ScheduleService = {
   createSchedule,
   mySchedule,
-  getCurrentMonthSchedules,
+  getSchedulesOfMonth,
   getScheduleDetails,
 };

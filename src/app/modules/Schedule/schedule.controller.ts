@@ -52,13 +52,12 @@ const getScheduleDetails = catchAsync(async (req, res) => {
 //w: (end)  ╰──────────── getScheduleDetails ────────────╯
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
-const getCurrentMonthSchedules = catchAsync(async (req, res) => {
+const getSchedulesOfMonth = catchAsync(async (req, res) => {
   const { date } = req.query;
+
+  const datea = new Date(date as Date);
   const { id: userId } = req.user;
-  const result = await ScheduleService.getCurrentMonthSchedules(
-    userId,
-    new Date(date),
-  );
+  const result = await ScheduleService.getSchedulesOfMonth(userId, datea);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
@@ -72,6 +71,6 @@ const getCurrentMonthSchedules = catchAsync(async (req, res) => {
 export const ScheduleController = {
   createSchedule,
   mySchedule,
-  getCurrentMonthSchedules,
+  getSchedulesOfMonth,
   getScheduleDetails,
 };

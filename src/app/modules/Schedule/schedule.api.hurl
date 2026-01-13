@@ -22,9 +22,9 @@ GET {{port6011}}/schedule?page=1&limit=100
 Authorization: {{ashsrahim}}
 
 
-# current-month-schedules
+# get schedules for a month
 
-GET {{port6011}}/schedule/current-month-schedules?date=
+GET {{port6011}}/schedule/schedules-of-month?date=2026-01-01T00:00:00.000Z 
 Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
 
