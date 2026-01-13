@@ -76,22 +76,10 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
-const getSchedulesOfMonth = async (userId: string, date: Date) => {
-  const now = new Date();
-
+const getSchedulesOfMonth = async (userId: string, date: any) => {
   const start = startOfMonth(date);
 
   const end = endOfMonth(date);
-
-  console.log(
-    {
-      now,
-      start,
-      end,
-    },
-    "schedule.service.ts",
-    77,
-  );
 
   const whereClause: Prisma.ScheduleWhereInput = {
     OR: [

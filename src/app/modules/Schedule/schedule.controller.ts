@@ -3,10 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { ScheduleService } from "./schedule.service";
 import { pick } from "../../../shared/pick";
-import {
-  paginationHelper,
-  paginationOptions,
-} from "../../../shared/paginationHelper";
+import { paginationOptions } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = catchAsync(async (req, res) => {
@@ -55,9 +52,8 @@ const getScheduleDetails = catchAsync(async (req, res) => {
 const getSchedulesOfMonth = catchAsync(async (req, res) => {
   const { date } = req.query;
 
-  const datea = new Date(date as Date);
   const { id: userId } = req.user;
-  const result = await ScheduleService.getSchedulesOfMonth(userId, datea);
+  const result = await ScheduleService.getSchedulesOfMonth(userId, date);
 
   sendResponse(res, {
     statusCode: httpStatus.OK,
