@@ -76,12 +76,12 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
-const getCurrentMonthSchedules = async (userId: string) => {
+const getCurrentMonthSchedules = async (userId: string, date: Date) => {
   const now = new Date();
 
-  const start = startOfMonth(now);
+  const start = startOfMonth(date);
 
-  const end = endOfMonth(now);
+  const end = endOfMonth(date);
 
   console.log(
     {

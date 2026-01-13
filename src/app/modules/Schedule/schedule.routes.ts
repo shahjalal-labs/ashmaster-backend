@@ -29,6 +29,6 @@ router.get(
   ScheduleController.getCurrentMonthSchedules,
 );
 
-router.get("/:id", ScheduleController.getCurrentMonthSchedules);
+router.get("/details/:id", ScheduleController.getScheduleDetails);
 
 export const ScheduleRoutes = router;

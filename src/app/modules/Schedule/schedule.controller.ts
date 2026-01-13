@@ -53,8 +53,12 @@ const getScheduleDetails = catchAsync(async (req, res) => {
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
 const getCurrentMonthSchedules = catchAsync(async (req, res) => {
+  const { date } = req.query;
   const { id: userId } = req.user;
-  const result = await ScheduleService.getCurrentMonthSchedules(userId);
+  const result = await ScheduleService.getCurrentMonthSchedules(
+    userId,
+    new Date(date),
+  );
 
   sendResponse(res, {
     statusCode: httpStatus.OK,

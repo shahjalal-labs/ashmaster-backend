@@ -23,13 +23,16 @@ Authorization: {{ashsrahim}}
 
 
 # current-month-schedules
-GET {{port6011}}/schedule/current-month-schedules
+
+GET {{port6011}}/schedule/current-month-schedules?date=
 Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
 
 
-#  getScheduleDetails
+#  get schedule details
 
-GET {{port6011}}/schedule/6965d8252209f2f3a8edf6a5
-#Authorization: {{ashsrahim}}
+GET {{port6011}}/schedule/details/6965d8252209f2f3a8edf6a5
+Authorization: {{ashsrahim}}
+
+
 
