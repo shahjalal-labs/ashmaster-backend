@@ -38,6 +38,20 @@ const mySchedule = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
+//w: (start)╭──────────── getScheduleDetails ────────────╮
+const getScheduleDetails = catchAsync(async (req, res) => {
+  const { id: scheduleId } = req.params;
+  const schedule = await ScheduleService.getScheduleDetails(scheduleId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Schedule details fetched successfully",
+    data: schedule,
+  });
+});
+//w: (end)  ╰──────────── getScheduleDetails ────────────╯
+
+//w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
 const getCurrentMonthSchedules = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const result = await ScheduleService.getCurrentMonthSchedules(userId);
@@ -49,9 +63,11 @@ const getCurrentMonthSchedules = catchAsync(async (req, res) => {
     data: result,
   });
 });
+//w: (end)  ╰──────────── getCurrentMonthSchedules ────────────╯
 
 export const ScheduleController = {
   createSchedule,
   mySchedule,
   getCurrentMonthSchedules,
+  getScheduleDetails,
 };

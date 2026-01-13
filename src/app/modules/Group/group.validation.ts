@@ -3,7 +3,6 @@ import { z } from "zod";
 //w: (start)╭──────────── createGroup ────────────╮
 
 const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid ObjectId");
-
 const createGroupSchema = z
   .object({
     title: z.string().min(4),

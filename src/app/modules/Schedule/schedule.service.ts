@@ -52,6 +52,9 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 
   const result = await prisma.schedule.findMany({
     where: whereClause,
+    orderBy: {
+      dateTime: "asc",
+    },
     skip,
     take: limit,
   });
@@ -117,8 +120,18 @@ const getCurrentMonthSchedules = async (userId: string) => {
 };
 //w: (end)  ╰──────────── getCurrentMonthSchedules ────────────╯
 
+const getScheduleDetails = async (scheduleId: string) => {
+  const schedule = await prisma.schedule.findUniqueOrThrow({
+    where: {
+      id: scheduleId,
+    },
+  });
+  return schedule;
+};
+
 export const ScheduleService = {
   createSchedule,
   mySchedule,
   getCurrentMonthSchedules,
+  getScheduleDetails,
 };
