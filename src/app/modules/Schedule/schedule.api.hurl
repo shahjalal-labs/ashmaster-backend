@@ -26,7 +26,14 @@ Authorization: {{ashsrahim}}
 
 GET {{port6011}}/schedule/schedules-of-month?date=2026-01-01T00:00:00.000Z 
 Authorization: {{ashRaisa}}
+# Authorization: {{ashsrahim}}
+
+
+GET {{port6011}}/schedule/current-month-schedules
+Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
+
+
 
 
 #  get schedule details

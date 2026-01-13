@@ -77,9 +77,10 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
 const getSchedulesOfMonth = async (userId: string, date: any) => {
-  const start = startOfMonth(date);
+  const now = new Date();
+  const start = startOfMonth(now);
 
-  const end = endOfMonth(date);
+  const end = endOfMonth(now);
 
   const whereClause: Prisma.ScheduleWhereInput = {
     OR: [
@@ -108,6 +109,7 @@ const getSchedulesOfMonth = async (userId: string, date: any) => {
 };
 //w: (end)  ╰──────────── getCurrentMonthSchedules ────────────╯
 
+//w: (start)╭──────────── getScheduleDetails ────────────╮
 const getScheduleDetails = async (scheduleId: string) => {
   const schedule = await prisma.schedule.findUniqueOrThrow({
     where: {
@@ -116,6 +118,7 @@ const getScheduleDetails = async (scheduleId: string) => {
   });
   return schedule;
 };
+//w: (end)  ╰──────────── getScheduleDetails ────────────╯
 
 export const ScheduleService = {
   createSchedule,
