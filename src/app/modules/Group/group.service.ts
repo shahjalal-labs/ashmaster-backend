@@ -83,30 +83,27 @@ const updateGroup = async (
 };
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
-const fetchAllMembers = async (userId: string, groupId: string) => {
-  const result = await prisma.group.findUnique({
-    where: {
-      id: groupId,
-    },
+//w: (start)╭──────────── fetchAllMembers ────────────╮
+const fetchAllMembers = async (groupId: string) => {
+  const group = await prisma.group.findUnique({
+    where: { id: groupId },
     select: {
-      id: true,
       memberIds: true,
       creatorId: true,
     },
   });
 
+  if (!group) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+  }
+
+  //merge + convert
+  const userIds = Array.from(new Set([...group.memberIds, group.creatorId]));
+
+  //Single, clean query
   const members = await prisma.user.findMany({
     where: {
-      OR: [
-        {
-          id: {
-            in: result?.memberIds,
-          },
-        },
-        {
-          id: result!.creatorId,
-        },
-      ],
+      id: { in: userIds },
     },
     select: {
       id: true,
@@ -119,8 +116,11 @@ const fetchAllMembers = async (userId: string, groupId: string) => {
       },
     },
   });
+
   return members;
 };
+
+//w: (end)  ╰──────────── fetchAllMembers ────────────╯
 
 export const GroupService = {
   createGroup,
