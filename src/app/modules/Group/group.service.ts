@@ -230,6 +230,36 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
 };
 //w: (end)  ╰──────────── findMembersToAdd ────────────╯
 
+//w: (start)╭──────────── addMembersIntoGroup ────────────╮
+const addMembersIntoGroup = async (memberId: string, groupId: string) => {
+  return prisma.$transaction(async (tx) => {
+    const group = await tx.group.findUnique({
+      where: { id: groupId },
+      select: { memberIds: true },
+    });
+
+    if (!group) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+    }
+
+    // already a member → no-op (idempotent)
+    if (group.memberIds.includes(memberId)) {
+      return group;
+    }
+
+    const updatedMembers = [...group.memberIds, memberId];
+
+    return tx.group.update({
+      where: { id: groupId },
+      data: {
+        memberIds: updatedMembers,
+      },
+    });
+  });
+};
+
+//w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
+
 export const GroupService = {
   createGroup,
   getGroupDetails,
@@ -237,4 +267,5 @@ export const GroupService = {
   fetchAllMembers,
   leaveGroup,
   findMembersToAdd,
+  addMembersIntoGroup,
 };
