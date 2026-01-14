@@ -15,6 +15,10 @@ const createGroup = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── createGroup ────────────╯
 
+const getGroupDetails = catchAsync(async (req, res) => {
+  const groupId = req.params.id;
+});
+
 export const GroupController = {
   createGroup,
 };

@@ -146,7 +146,7 @@ const viewSpeficMenteeChecklists = async (
       where: whereClause,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      orderBy: { id: "desc" },
       /* include: {
         user: {
           select: {

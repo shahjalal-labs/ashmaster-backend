@@ -3,6 +3,7 @@ import config, { ENV } from "../../../config";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 import { TCreateGroupSchema } from "./group.validation";
+import { group } from "console";
 
 //w: (start)╭──────────── createGroup ────────────╮
 const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
@@ -29,6 +30,20 @@ const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
 };
 //w: (end)  ╰──────────── createGroup ────────────╯
 
+//w: (start)╭──────────── getGroupDetails ────────────╮
+const getGroupDetails = async (groupId: string) => {
+  const group = await prisma.group.findUnique({
+    where: {
+      id: groupId,
+    },
+  });
+
+  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found!");
+  return group;
+};
+//w: (end)  ╰──────────── getGroupDetails ────────────╯
+
 export const GroupService = {
   createGroup,
+  getGroupDetails,
 };
