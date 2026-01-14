@@ -16,11 +16,11 @@ Authorization: {{ashRaisa}}
 
 # update group (creator only)
 PATCH {{port6011}}/group/6964e4e1656ea48b225e0eb4
-Authorization: {{ashRaisa}}
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 
 Content-Type: application/json
 
 {
- "title":"Data Science Mentoring",
- "groupPhoto": ""
+ "title":"Data Science Mentoring"
 }

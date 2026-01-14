@@ -45,10 +45,30 @@ const getGroupDetails = async (groupId: string) => {
 
 //w: (start)╭──────────── updateGroup ────────────╮
 const updateGroup = async (userId: string, groupId: string) => {
-  console.log({
-    groupId,
-    userId,
-  });
+  const [group, user] = await Promise.all([
+    prisma.group.findUnique({
+      where: {
+        id: groupId,
+      },
+    }),
+
+    prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    }),
+  ]);
+
+  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+
+  if (group.creatorId !== userId)
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "Only the creator can update the group",
+    );
+
+  return;
 };
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
