@@ -50,7 +50,7 @@ const fetchAllMembers = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Group updated successfully",
+    message: "Fetched all members successfully",
     data: result,
   });
 });

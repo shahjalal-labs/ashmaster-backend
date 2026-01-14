@@ -97,11 +97,29 @@ const fetchAllMembers = async (userId: string, groupId: string) => {
 
   const members = await prisma.user.findMany({
     where: {
-      id: {
-        in: result?.memberIds,
+      OR: [
+        {
+          id: {
+            in: result?.memberIds,
+          },
+        },
+        {
+          id: result!.creatorId,
+        },
+      ],
+    },
+    select: {
+      id: true,
+      fullname: true,
+      profile: {
+        select: {
+          profileImage: true,
+          profession: true,
+        },
       },
     },
   });
+  return members;
 };
 
 export const GroupService = {
