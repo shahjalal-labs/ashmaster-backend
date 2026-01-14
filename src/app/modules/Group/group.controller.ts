@@ -28,7 +28,11 @@ const getGroupDetails = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
-const updateGroup = catchAsync(async (req, res) => {});
+const updateGroup = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const { id: groupId } = req.params;
+  await GroupService.updateGroup(userId, groupId);
+});
 
 export const GroupController = {
   createGroup,

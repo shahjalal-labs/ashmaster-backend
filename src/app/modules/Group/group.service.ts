@@ -44,7 +44,12 @@ const getGroupDetails = async (groupId: string) => {
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
 //w: (start)╭──────────── updateGroup ────────────╮
-const updateGroup = async (groupId: string) => {};
+const updateGroup = async (userId: string, groupId: string) => {
+  console.log({
+    groupId,
+    userId,
+  });
+};
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
 export const GroupService = {

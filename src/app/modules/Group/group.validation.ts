@@ -19,8 +19,18 @@ const createGroupSchema = z
 
 //w: (end)  ╰──────────── createGroup ────────────╯
 
+//w: (start)╭──────────── updateGroup ────────────╮
+const updateGroupSchema = z
+  .object({
+    title: z.string().min(4),
+    groupPhoto: z.string().url().optional(),
+  })
+  .strict();
+//w: (end)  ╰──────────── updateGroup ────────────╯
+
 export type TCreateGroupSchema = z.infer<typeof createGroupSchema>;
 
 export const GroupValidation = {
   createGroupSchema,
+  updateGroupSchema,
 };

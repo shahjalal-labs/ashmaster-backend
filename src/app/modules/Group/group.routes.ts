@@ -22,4 +22,10 @@ router.post(
 
 router.get("/:id", GroupController.getGroupDetails);
 
+router.patch(
+  "/:id",
+  validateRequest(GroupValidation.updateGroupSchema),
+  GroupController.updateGroup,
+);
+
 export const GroupRoutes = router;
