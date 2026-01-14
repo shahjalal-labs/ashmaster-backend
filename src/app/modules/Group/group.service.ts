@@ -97,7 +97,7 @@ const fetchAllMembers = async (groupId: string) => {
     throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
   }
 
-  //merge + convert
+  //merge + convert into unique ids
   const userIds = Array.from(new Set([...group.memberIds, group.creatorId]));
 
   //Single, clean query
@@ -121,6 +121,31 @@ const fetchAllMembers = async (groupId: string) => {
 };
 
 //w: (end)  ╰──────────── fetchAllMembers ────────────╯
+
+const leaveGroup = async (userId: string, groupId: string) => {
+
+  const group = await prisma.group.findUnique({
+    where: {
+      id: groupId
+    }
+  });
+
+  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found")
+  if (userId === group.creatorId) throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group")
+
+
+
+   const remainMemberIds=  ;
+
+  const result = await prisma.group.update({
+    where: {
+      id: groupId,
+    },
+    data: {
+      memberIds: 
+    },
+  });
+};
 
 export const GroupService = {
   createGroup,
