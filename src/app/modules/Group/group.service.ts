@@ -164,18 +164,12 @@ const leaveGroup = async (userId: string, groupId: string) => {
 //w: (end)  ╰──────────── leaveGroup ────────────╯
 
 //w: (start)╭──────────── findMembersToAdd ────────────╮
+
 const findMembersToAdd = async (userId: string, groupId: string) => {
   const connections = await prisma.connections.findMany({
     where: {
       status: "ACCEPTED",
-      OR: [
-        {
-          receiverId: userId,
-        },
-        {
-          senderId: userId,
-        },
-      ],
+      OR: [{ receiverId: userId }, { senderId: userId }],
     },
     select: {
       senderId: true,
@@ -207,27 +201,29 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
     },
   });
 
+  // normalize connections → always "the other user"
   const connectedWithMe = connections.map((c) =>
     c.senderId === userId ? c.receiver : c.sender,
   );
 
   const group = await prisma.group.findUnique({
-    where: {
-      id: groupId,
-    },
-    select: {
-      id: true,
-      memberIds: true,
-    },
+    where: { id: groupId },
+    select: { memberIds: true },
   });
 
-  const groupMemberSet = new Set(group?.memberIds);
+  if (!group) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+  }
+
+  const groupMemberSet = new Set(group.memberIds);
 
   const connectedButNotInGroup = connectedWithMe.filter(
-    (id: any) => !groupMemberSet.has(id),
+    (user) => !groupMemberSet.has(user.id),
   );
+
   return connectedButNotInGroup;
 };
+
 //w: (end)  ╰──────────── findMembersToAdd ────────────╯
 
 //w: (start)╭──────────── addMembersIntoGroup ────────────╮
