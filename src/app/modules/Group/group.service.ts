@@ -163,7 +163,8 @@ const leaveGroup = async (userId: string, groupId: string) => {
 };
 //w: (end)  ╰──────────── leaveGroup ────────────╯
 
-const findMembersToAdd = (userId: string, groupId: string) => {
+//w: (start)╭──────────── findMembersToAdd ────────────╮
+const findMembersToAdd = async (userId: string, groupId: string) => {
   const connections = await prisma.connections.findMany({
     where: {
       status: "ACCEPTED",
@@ -180,17 +181,33 @@ const findMembersToAdd = (userId: string, groupId: string) => {
       sender: {
         select: {
           id: true,
+          fullname: true,
+          profile: {
+            select: {
+              profession: true,
+            },
+          },
         },
       },
       receiver: {
         select: {
           id: true,
           fullname: true,
+          profile: {
+            select: {
+              profession: true,
+            },
+          },
         },
       },
     },
   });
+
+  console.log({
+    connections,
+  });
 };
+//w: (end)  ╰──────────── findMembersToAdd ────────────╯
 
 export const GroupService = {
   createGroup,
@@ -198,5 +215,5 @@ export const GroupService = {
   updateGroup,
   fetchAllMembers,
   leaveGroup,
-  findMembersToInvite: findMembersToAdd,
+ findMembersToAdd,
 };

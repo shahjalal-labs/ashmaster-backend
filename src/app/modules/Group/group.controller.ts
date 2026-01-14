@@ -55,6 +55,7 @@ const fetchAllMembers = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── fetchAllMembers ────────────╯
 
+//w: (start)╭──────────── leaveGroup ────────────╮
 const leaveGroup = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const { id: groupId } = req.params;
@@ -66,6 +67,21 @@ const leaveGroup = catchAsync(async (req, res) => {
     data: result,
   });
 });
+//w: (end)  ╰──────────── leaveGroup ────────────╯
+
+//w: (start)╭──────────── findMembersToAdd ────────────╮
+const findMembersToAdd = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const { id: groupId } = req.params;
+  const result = await GroupService.findMembersToAdd(userId, groupId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Left group successfully.",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── findMembersToAdd ────────────╯
 
 export const GroupController = {
   createGroup,
@@ -73,4 +89,5 @@ export const GroupController = {
   updateGroup,
   fetchAllMembers,
   leaveGroup,
+  findMembersToAdd,
 };

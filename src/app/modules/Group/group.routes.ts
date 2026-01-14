@@ -28,8 +28,13 @@ router.patch(
   GroupController.updateGroup,
 );
 
+//  /members/groupId
 router.get("/members/:id", GroupController.fetchAllMembers);
 
+// /groupId/leave
 router.delete("/:id/leave", GroupController.leaveGroup);
+
+// /groupId/find-members
+router.get("/:id/find-members", GroupController.findMembersToAdd);
 
 export const GroupRoutes = router;
