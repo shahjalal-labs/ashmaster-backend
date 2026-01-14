@@ -77,7 +77,7 @@ const findMembersToAdd = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "Left group successfully.",
+    message: "Fetched connections to add into group",
     data: result,
   });
 });

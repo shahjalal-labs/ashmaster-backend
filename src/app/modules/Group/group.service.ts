@@ -178,6 +178,7 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
       ],
     },
     select: {
+      senderId: true,
       sender: {
         select: {
           id: true,
@@ -189,6 +190,7 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
           },
         },
       },
+      receiverId: true,
       receiver: {
         select: {
           id: true,
@@ -203,9 +205,10 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
     },
   });
 
-  console.log({
-    connections,
-  });
+  const excludedMe = connections.map((c) =>
+    c.senderId === userId ? c.receiver : c.sender,
+  );
+  console.log(excludedMe, "group.service.ts", 209);
 };
 //w: (end)  ╰──────────── findMembersToAdd ────────────╯
 
@@ -215,5 +218,5 @@ export const GroupService = {
   updateGroup,
   fetchAllMembers,
   leaveGroup,
- findMembersToAdd,
+  findMembersToAdd,
 };
