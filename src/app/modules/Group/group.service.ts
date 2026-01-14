@@ -186,6 +186,7 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
           profile: {
             select: {
               profession: true,
+              profileImage: true,
             },
           },
         },
@@ -198,6 +199,7 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
           profile: {
             select: {
               profession: true,
+              profileImage: true,
             },
           },
         },
@@ -205,10 +207,26 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
     },
   });
 
-  const excludedMe = connections.map((c) =>
+  const connectedWithMe = connections.map((c) =>
     c.senderId === userId ? c.receiver : c.sender,
   );
-  console.log(excludedMe, "group.service.ts", 209);
+
+  const group = await prisma.group.findUnique({
+    where: {
+      id: groupId,
+    },
+    select: {
+      id: true,
+      memberIds: true,
+    },
+  });
+
+  const groupMemberSet = new Set(group?.memberIds);
+
+  const connectedButNotInGroup = connectedWithMe.filter(
+    (id: any) => !groupMemberSet.has(id),
+  );
+  return connectedButNotInGroup;
 };
 //w: (end)  ╰──────────── findMembersToAdd ────────────╯
 

@@ -38,6 +38,6 @@ Authorization: {{ashsrahim}}
 
 #  find members to add
 GET {{port6011}}/group/6964e4e1656ea48b225e0eb4/find-members
-Authorization: {{ashRaisa}}
-#Authorization: {{ashsrahim}}
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 
