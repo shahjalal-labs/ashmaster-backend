@@ -31,7 +31,7 @@ const getGroupDetails = catchAsync(async (req, res) => {
 const updateGroup = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const { id: groupId } = req.params;
-  await GroupService.updateGroup(userId, groupId);
+  await GroupService.updateGroup(userId, groupId, req.body);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

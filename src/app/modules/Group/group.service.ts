@@ -2,7 +2,7 @@ import httpStatus from "http-status";
 import config, { ENV } from "../../../config";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
-import { TCreateGroupSchema } from "./group.validation";
+import { TCreateGroupSchema, TUpdateGroupSchema } from "./group.validation";
 import { group } from "console";
 
 //w: (start)╭──────────── createGroup ────────────╮
@@ -44,7 +44,11 @@ const getGroupDetails = async (groupId: string) => {
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
 //w: (start)╭──────────── updateGroup ────────────╮
-const updateGroup = async (userId: string, groupId: string) => {
+const updateGroup = async (
+  userId: string,
+  groupId: string,
+  payload: TUpdateGroupSchema,
+) => {
   const [group, user] = await Promise.all([
     prisma.group.findUnique({
       where: {
@@ -67,6 +71,13 @@ const updateGroup = async (userId: string, groupId: string) => {
       httpStatus.UNAUTHORIZED,
       "Only the creator can update the group",
     );
+
+  await prisma.group.update({
+    where: {
+      id: groupId,
+    },
+    data: payload,
+  });
 
   return;
 };

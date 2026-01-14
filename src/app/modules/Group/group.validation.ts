@@ -26,6 +26,9 @@ const updateGroupSchema = z
     groupPhoto: z.string().url().optional(),
   })
   .strict();
+
+export type TUpdateGroupSchema = z.infer<typeof updateGroupSchema>;
+
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
 export type TCreateGroupSchema = z.infer<typeof createGroupSchema>;
