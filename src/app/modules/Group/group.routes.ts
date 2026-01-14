@@ -20,4 +20,6 @@ router.post(
   GroupController.createGroup,
 );
 
+router.get("/:id", GroupController.getGroupDetails);
+
 export const GroupRoutes = router;

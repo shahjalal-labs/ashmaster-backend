@@ -15,10 +15,20 @@ const createGroup = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── createGroup ────────────╯
 
+//w: (start)╭──────────── getGroupDetails ────────────╮
 const getGroupDetails = catchAsync(async (req, res) => {
-  const groupId = req.params.id;
+  const { id: groupId } = req.params;
+  const group = await GroupService.getGroupDetails(groupId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Group details fetched successfully.",
+    data: group,
+  });
 });
+//w: (end)  ╰──────────── getGroupDetails ────────────╯
 
 export const GroupController = {
   createGroup,
+  getGroupDetails,
 };
