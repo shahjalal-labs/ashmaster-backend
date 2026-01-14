@@ -3,7 +3,6 @@ import config, { ENV } from "../../../config";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 import { TCreateGroupSchema, TUpdateGroupSchema } from "./group.validation";
-import { group } from "console";
 
 //w: (start)╭──────────── createGroup ────────────╮
 const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
@@ -131,6 +130,7 @@ const leaveGroup = async (userId: string, groupId: string) => {
         id: groupId,
       },
       select: {
+        id: true,
         creatorId: true,
         memberIds: true,
       },
@@ -141,14 +141,9 @@ const leaveGroup = async (userId: string, groupId: string) => {
       throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group");
 
     if (!group.memberIds.includes(userId)) {
-      throw new ApiError(
-        httpStatus.NOT_FOUND,
-        "Member doesn't exist in the group",
-      );
+      return group;
     }
     const remainMemberIds = group.memberIds.filter((id) => id !== userId);
-    console.log(remainMemberIds, "group.service.ts", 141);
-    console.log(group, "group.service.ts", 128);
 
     const result = await tx.group.update({
       where: {
@@ -168,10 +163,40 @@ const leaveGroup = async (userId: string, groupId: string) => {
 };
 //w: (end)  ╰──────────── leaveGroup ────────────╯
 
+const findMembersToAdd = (userId: string, groupId: string) => {
+  const connections = await prisma.connections.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [
+        {
+          receiverId: userId,
+        },
+        {
+          senderId: userId,
+        },
+      ],
+    },
+    select: {
+      sender: {
+        select: {
+          id: true,
+        },
+      },
+      receiver: {
+        select: {
+          id: true,
+          fullname: true,
+        },
+      },
+    },
+  });
+};
+
 export const GroupService = {
   createGroup,
   getGroupDetails,
   updateGroup,
   fetchAllMembers,
   leaveGroup,
+  findMembersToInvite: findMembersToAdd,
 };
