@@ -43,7 +43,12 @@ const getGroupDetails = async (groupId: string) => {
 };
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
+//w: (start)╭──────────── updateGroup ────────────╮
+const updateGroup = async (groupId: string) => {};
+//w: (end)  ╰──────────── updateGroup ────────────╯
+
 export const GroupService = {
   createGroup,
   getGroupDetails,
+  updateGroup,
 };

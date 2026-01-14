@@ -28,7 +28,10 @@ const getGroupDetails = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
+const updateGroup = catchAsync(async (req, res) => {});
+
 export const GroupController = {
   createGroup,
   getGroupDetails,
+  updateGroup,
 };

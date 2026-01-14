@@ -7,8 +7,15 @@ import { bullBoardRouter } from "./jobs/bullBoard";
 import basicAuth from "express-basic-auth";
 import { entryMessage } from "./app/middlewares/entry";
 import { notFound } from "./app/middlewares/notFound";
+import helmet from "helmet";
+import config, { ENV } from "./config";
 
 const app: Application = express();
+
+if (config.env === ENV.PRODUCTION) {
+  app.use(helmet());
+}
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
