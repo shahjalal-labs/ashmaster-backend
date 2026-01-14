@@ -48,8 +48,8 @@ DELETE  {{port6011}}/checklist-end-goals/694fa0aa8a0113dcfa949157
 Authorization: {{ashRaisa}}
 
 
-# delete
-DELETE  {{port6011}}/checklist-end-goals/694fa0aa8a0113dcfa949157
+# eet checklist endgoal by id
+GET  {{port6011}}/checklist-end-goals/details/695e8298a06df40ba65b0ecf
 
 #Authorization: {{ashsrahim}}
 Authorization: {{ashRaisa}}

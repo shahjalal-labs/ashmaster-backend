@@ -93,6 +93,16 @@ const mentorChecklistView = async (
       where: whereClause,
       skip,
       take: limit,
+      select: {
+        id: true,
+        fullname: true,
+        profile: {
+          select: {
+            profession: true,
+            profileImage: true,
+          },
+        },
+      },
       orderBy: {
         checklistUpdateTracker: "desc",
       },
@@ -131,7 +141,7 @@ const viewSpeficMenteeChecklists = async (
     ...(filter.type && { type: filter.type }),
   };
 
-  const [data, total] = await Promise.all([
+  const [data, total, mentee] = await Promise.all([
     prisma.checklistEndGoal.findMany({
       where: whereClause,
       skip,
@@ -153,6 +163,21 @@ const viewSpeficMenteeChecklists = async (
       }, */
     }),
     prisma.checklistEndGoal.count({ where: whereClause }),
+
+    prisma.user.findUnique({
+      where: {
+        id: menteeId,
+      },
+      select: {
+        id: true,
+        fullname: true,
+        profile: {
+          select: {
+            profession: true,
+          },
+        },
+      },
+    }),
   ]);
 
   if (filter?.type === "CHECKLIST") {
@@ -180,6 +205,7 @@ const viewSpeficMenteeChecklists = async (
       total,
       totalPages: Math.ceil(total / limit),
     },
+    mentee,
     data,
   };
 };
