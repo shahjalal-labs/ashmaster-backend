@@ -28,4 +28,6 @@ router.patch(
   GroupController.updateGroup,
 );
 
+router.get("/members/:id", GroupController.fetchAllMembers);
+
 export const GroupRoutes = router;

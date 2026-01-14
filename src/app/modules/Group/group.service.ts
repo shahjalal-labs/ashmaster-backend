@@ -83,8 +83,30 @@ const updateGroup = async (
 };
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
+const fetchAllMembers = async (userId: string, groupId: string) => {
+  const result = await prisma.group.findUnique({
+    where: {
+      id: groupId,
+    },
+    select: {
+      id: true,
+      memberIds: true,
+      creatorId: true,
+    },
+  });
+
+  const members = await prisma.user.findMany({
+    where: {
+      id: {
+        in: result?.memberIds,
+      },
+    },
+  });
+};
+
 export const GroupService = {
   createGroup,
   getGroupDetails,
   updateGroup,
+  fetchAllMembers,
 };

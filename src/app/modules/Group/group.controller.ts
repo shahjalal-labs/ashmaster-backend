@@ -28,6 +28,7 @@ const getGroupDetails = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 
+//w: (start)╭──────────── updateGroup ────────────╮
 const updateGroup = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const { id: groupId } = req.params;
@@ -39,9 +40,25 @@ const updateGroup = catchAsync(async (req, res) => {
     data: null,
   });
 });
+//w: (end)  ╰──────────── updateGroup ────────────╯
+
+//w: (start)╭──────────── fetchAllMembers ────────────╮
+const fetchAllMembers = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const { id: groupId } = req.params;
+  const result = await GroupService.fetchAllMembers(userId, groupId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Group updated successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── fetchAllMembers ────────────╯
 
 export const GroupController = {
   createGroup,
   getGroupDetails,
   updateGroup,
+  fetchAllMembers,
 };

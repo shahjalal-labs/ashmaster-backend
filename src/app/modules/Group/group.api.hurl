@@ -24,3 +24,10 @@ Content-Type: application/json
 {
  "title":"Data Science Mentoring"
 }
+
+
+# fetchAllMembers
+GET {{port6011}}/group/members/6964e4e1656ea48b225e0eb4
+Authorization: {{ashRaisa}}
+
+
