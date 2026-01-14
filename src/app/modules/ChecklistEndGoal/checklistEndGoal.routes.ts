@@ -30,4 +30,6 @@ router.patch(
 
 router.delete("/:id", ChecklistEndGoalsController.deleteChecklistEndGoals);
 
+router.get("/details/:id", ChecklistEndGoalsController.getChecklistEndGoalById);
+
 export const ChecklistEndGoalsRoutes = router;

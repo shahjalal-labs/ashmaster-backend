@@ -177,7 +177,20 @@ const deleteChecklistEndGoals = async (
 };
 //w: (end)  ╰──────────── deleteChecklistEndGoals ────────────╯
 
-const getChecklistEndGoalById = async () => {};
+//w: (start)╭──────────── getChecklistEndGoalById ────────────╮
+const getChecklistEndGoalById = async (id: string) => {
+  const result = await prisma.checklistEndGoal.findUnique({
+    where: {
+      id,
+    },
+  });
+
+  if (!result) {
+    throw new ApiError(httpStatus.NOT_FOUND, "ChecklistEndgoal not found");
+  }
+  return result;
+};
+//w: (end)  ╰──────────── getChecklistEndGoalById ────────────╯
 
 export const ChecklistEndGoalsService = {
   createChecklistEndGoals,
