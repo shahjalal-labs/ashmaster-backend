@@ -55,9 +55,22 @@ const fetchAllMembers = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── fetchAllMembers ────────────╯
 
+const leaveGroup = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const { id: groupId } = req.params;
+  const result = await GroupService.leaveGroup(userId, groupId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Left group successfully.",
+    data: result,
+  });
+});
+
 export const GroupController = {
   createGroup,
   getGroupDetails,
   updateGroup,
   fetchAllMembers,
+  leaveGroup,
 };

@@ -30,4 +30,6 @@ router.patch(
 
 router.get("/members/:id", GroupController.fetchAllMembers);
 
+router.delete("/:id/leave", GroupController.leaveGroup);
+
 export const GroupRoutes = router;

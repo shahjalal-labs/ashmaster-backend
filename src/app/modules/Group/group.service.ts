@@ -122,34 +122,40 @@ const fetchAllMembers = async (groupId: string) => {
 
 //w: (end)  ╰──────────── fetchAllMembers ────────────╯
 
+//w: (start)╭──────────── leaveGroup ────────────╮
 const leaveGroup = async (userId: string, groupId: string) => {
-
   const group = await prisma.group.findUnique({
     where: {
-      id: groupId
-    }
+      id: groupId,
+    },
+    select: {
+      creatorId: true,
+      memberIds: true,
+    },
   });
 
-  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found")
-  if (userId === group.creatorId) throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group")
+  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+  if (userId === group.creatorId)
+    throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group");
 
+  const remainMemberIds = group.memberIds.filter((id) => id !== userId);
+  console.log(remainMemberIds, "group.service.ts", 141);
 
-
-   const remainMemberIds=  ;
-
-  const result = await prisma.group.update({
+  /* const result = await prisma.group.update({
     where: {
       id: groupId,
     },
     data: {
       memberIds: 
     },
-  });
+  }); */
 };
+//w: (end)  ╰──────────── leaveGroup ────────────╯
 
 export const GroupService = {
   createGroup,
   getGroupDetails,
   updateGroup,
   fetchAllMembers,
+  leaveGroup,
 };
