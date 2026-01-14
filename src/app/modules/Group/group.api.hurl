@@ -33,5 +33,6 @@ Authorization: {{ashRaisa}}
 
 #  leave group (member only)
 DELETE {{port6011}}/group/6964e4e1656ea48b225e0eb4/leave
-Authorization: {{ashRaisa}}
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 

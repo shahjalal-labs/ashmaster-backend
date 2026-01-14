@@ -124,31 +124,47 @@ const fetchAllMembers = async (groupId: string) => {
 
 //w: (start)╭──────────── leaveGroup ────────────╮
 const leaveGroup = async (userId: string, groupId: string) => {
-  const group = await prisma.group.findUnique({
-    where: {
-      id: groupId,
-    },
-    select: {
-      creatorId: true,
-      memberIds: true,
-    },
+  // transaction to solve race conditions
+  const result = await prisma.$transaction(async (tx) => {
+    const group = await tx.group.findUnique({
+      where: {
+        id: groupId,
+      },
+      select: {
+        creatorId: true,
+        memberIds: true,
+      },
+    });
+
+    if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+    if (userId === group.creatorId)
+      throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group");
+
+    if (!group.memberIds.includes(userId)) {
+      throw new ApiError(
+        httpStatus.NOT_FOUND,
+        "Member doesn't exist in the group",
+      );
+    }
+    const remainMemberIds = group.memberIds.filter((id) => id !== userId);
+    console.log(remainMemberIds, "group.service.ts", 141);
+    console.log(group, "group.service.ts", 128);
+
+    const result = await tx.group.update({
+      where: {
+        id: groupId,
+      },
+      data: {
+        memberIds: remainMemberIds,
+      },
+    });
+    return result;
   });
-
-  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-  if (userId === group.creatorId)
-    throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group");
-
-  const remainMemberIds = group.memberIds.filter((id) => id !== userId);
-  console.log(remainMemberIds, "group.service.ts", 141);
-
-  /* const result = await prisma.group.update({
-    where: {
-      id: groupId,
-    },
-    data: {
-      memberIds: 
-    },
-  }); */
+  return {
+    id: result.id,
+    memberIds: result.memberIds,
+    creatorId: result.creatorId,
+  };
 };
 //w: (end)  ╰──────────── leaveGroup ────────────╯
 
