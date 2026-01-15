@@ -226,7 +226,7 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           orderBy: { createdAt: "desc" },
           take: 1,
         },
-        ...({
+        /* ...{
           include: {
             group: {
               select: {
@@ -236,7 +236,7 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
               },
             },
           },
-        } as any),
+        }, */
       },
       orderBy: { updatedAt: "desc" },
       take: limit,

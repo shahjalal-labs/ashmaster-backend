@@ -2,10 +2,11 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import prisma from "../../../shared/prisma";
+import { chatRedisService } from "../../../shared/redis-services/chat.service";
 
 // Get user chat rooms (for REST API pagination)
 export const getChatRooms = catchAsync(async (req, res) => {
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 2, limit = 20 } = req.query;
   const userId = req.user.id;
 
   const skip = (Number(page) - 1) * Number(limit);

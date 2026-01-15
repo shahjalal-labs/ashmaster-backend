@@ -253,10 +253,19 @@ const mentorProgress = async (userId: string) => {
     progressPercentage: "0.0",
   };
 
-  const rawPercentage =
+  console.log({
+    totalMenteesWithChecklist,
+    totalViewedMenteesWithChecklist,
+  });
+
+  let rawPercentage =
     totalMenteesWithChecklist > 0
       ? (totalViewedMenteesWithChecklist / totalMenteesWithChecklist) * 100
       : 0;
+
+  if (rawPercentage > 100) {
+    rawPercentage = 100;
+  }
 
   progress.progressPercentage = rawPercentage.toFixed(1);
 
