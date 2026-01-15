@@ -4,9 +4,9 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
- "title":"Data Science Mentoring",
+ "title":"Checking group creation",
  "groupPhoto": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png",
- "memberIds": ["694a39873340ac9b4e13823d"]
+ "memberIds": ["694a39873340ac9b4e138239"]
 }
 
 # fetch group details

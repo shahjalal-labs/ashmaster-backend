@@ -9,21 +9,31 @@ import { paginationHelper } from "../../../shared/paginationHelper";
 const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
   const uniqueMemberIds = [...new Set(payload.memberIds)];
 
-  const users = await prisma.user.findMany({
-    where: {
-      id: {
-        in: uniqueMemberIds,
+  await prisma.$transaction(async (tx) => {
+    const users = await tx.user.findMany({
+      where: {
+        id: {
+          in: uniqueMemberIds,
+        },
       },
-    },
-  });
-  if (users.length !== uniqueMemberIds.length)
-    throw new ApiError(httpStatus.NOT_FOUND, "some of  member is not found");
+    });
+    if (users.length !== uniqueMemberIds.length)
+      throw new ApiError(httpStatus.NOT_FOUND, "some of  member is not found");
 
-  await prisma.group.create({
-    data: {
-      ...payload,
-      creatorId: userId,
-    },
+    const group = await tx.group.create({
+      data: {
+        ...payload,
+        creatorId: userId,
+      },
+    });
+
+    await tx.chatRoom.create({
+      data: {
+        type: "GROUP",
+        groupId: group.id,
+        participants: [...uniqueMemberIds, userId],
+      },
+    });
   });
 };
 //w: (end)  ╰──────────── createGroup ────────────╯
