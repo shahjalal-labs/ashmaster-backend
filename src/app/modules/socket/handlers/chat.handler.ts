@@ -8,7 +8,7 @@ import {
 import { v4 as uuidv4 } from "uuid";
 
 // Get user details for message sender
-const getUserDetails = async (userId: string) => {
+export const getUserDetails = async (userId: string) => {
   return prisma.user.findUnique({
     where: { id: userId },
     select: {

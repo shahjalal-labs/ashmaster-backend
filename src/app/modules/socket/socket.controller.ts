@@ -7,6 +7,7 @@ import {
   sendP2PMessage,
   sendGroupMessage,
   getUserChatRooms,
+  getUserDetails,
 } from "./handlers/chat.handler";
 import { chatRedisService } from "../../../shared/redis-services/chat.service";
 import prisma from "../../../shared/prisma";
@@ -112,6 +113,123 @@ export const setupWebSocketServer = (server: Server) => {
 
             // Update conversation list for both users
             updateConversationsForUsers([userId, receiverId]);
+            break;
+          }
+
+          // Add this to the switch case in the message handler:
+          case "subscribe-room": {
+            const { roomId } = data;
+
+            // 1. Verify user has access to this room
+            const room = await prisma.chatRoom.findFirst({
+              where: {
+                id: roomId,
+                participants: { has: userId },
+              },
+              include: {
+                messages: {
+                  select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    sender: {
+                      select: {
+                        id: true,
+                        fullname: true,
+                        profile: {
+                          select: {
+                            profileImage: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                  orderBy: { createdAt: "desc" },
+                  take: 1,
+                },
+                group: {
+                  select: {
+                    id: true,
+                    title: true,
+                    groupPhoto: true,
+                  },
+                },
+              },
+            });
+
+            if (!room) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You don't have access to this room",
+                }),
+              );
+              break;
+            }
+
+            // 2. Subscribe to the room
+            subscribeToRoom(userId, roomId, ws);
+            ws.activeRoomId = roomId;
+
+            // 3. Get initial messages from Redis (latest 20)
+            const initialMessages = await chatRedisService.getMessages(
+              roomId,
+              20,
+            );
+
+            // 4. Mark messages as read
+            await chatRedisService.markAsRead(roomId, userId);
+
+            // 5. Get partner/group details
+            let partner = null;
+            let roomName = "";
+            let roomImage = null;
+            let groupInfo = null;
+
+            if (room.type === "P2P") {
+              const partnerId = room.participants.find((id) => id !== userId);
+              if (partnerId) {
+                const partnerUser = await getUserDetails(partnerId);
+                if (partnerUser) {
+                  partner = {
+                    id: partnerUser.id,
+                    name: partnerUser.fullname,
+                    image: partnerUser.profile?.profileImage,
+                    online: await chatRedisService.isUserOnline(partnerId),
+                  };
+                  roomName = partnerUser.fullname;
+                  roomImage = partnerUser.profile?.profileImage;
+                }
+              }
+            } else if (room.type === "GROUP") {
+              if (room.group) {
+                roomName = room.group.title;
+                roomImage = room.group.groupPhoto;
+                groupInfo = {
+                  id: room.group.id,
+                  title: room.group.title,
+                  photo: room.group.groupPhoto,
+                };
+              }
+            }
+
+            // 6. Send room details to user
+            ws.send(
+              JSON.stringify({
+                type: "room-subscribed",
+                roomId: room.id,
+                roomType: room.type,
+                isNewRoom: false,
+                initialMessages: initialMessages.reverse(), // Oldest to newest
+                partner,
+                group: groupInfo,
+                hasMoreMessages: initialMessages.length >= 20,
+              }),
+            );
+
+            console.log(
+              `👥 User ${userId} subscribed to existing room ${roomId}`,
+            );
             break;
           }
 
