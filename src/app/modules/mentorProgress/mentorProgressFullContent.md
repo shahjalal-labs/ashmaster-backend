@@ -706,5 +706,3 @@ GET {{port6011}}/mentor-progress/progress-count
 Authorization: {{ashRaisa}}
 
 ```
-
-here has a logical bug, that is, currently mentor view mentee once then it's counted as valid for progress. But if mentee create any new checklist or update checklist then it should not count for completed. clarify my logic.

@@ -174,6 +174,7 @@ const viewSpeficMenteeChecklists = async (
         profile: {
           select: {
             profession: true,
+            profileImage: true,
           },
         },
       },
