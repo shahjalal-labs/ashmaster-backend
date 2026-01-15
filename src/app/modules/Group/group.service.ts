@@ -190,7 +190,7 @@ const leaveGroup = async (userId: string, groupId: string) => {
 //w: (end)  ╰──────────── leaveGroup ────────────╯
 
 //w: (start)╭──────────── findMembersToAdd ────────────╮
-
+// connected by connections and not a member in the particular group
 const findMembersToAdd = async (userId: string, groupId: string) => {
   const connections = await prisma.connections.findMany({
     where: {
