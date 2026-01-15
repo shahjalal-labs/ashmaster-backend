@@ -119,9 +119,12 @@ export const getChatRooms = catchAsync(async (req, res) => {
 
 // Get room messages (for REST API)
 export const getMessages = catchAsync(async (req, res) => {
-  const { roomId } = req.params;
+  const { id: roomId } = req.params;
+  console.log(roomId, "chat.controller.ts", 123);
+  console.log(req.user, "chat.controller.ts", 126);
+
   const { page = 1, limit = 50 } = req.query;
-  const userId = req.user.id;
+  const { id: userId } = req.user;
 
   const skip = (Number(page) - 1) * Number(limit);
 
@@ -219,5 +222,6 @@ export const markAsRead = catchAsync(async (req, res) => {
 export const ChatController = {
   getChatRooms,
   getMessages,
+
   markAsRead,
 };
