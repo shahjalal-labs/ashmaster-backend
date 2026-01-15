@@ -3,6 +3,9 @@ import config, { ENV } from "../../../config";
 import ApiError from "../../../errors/ApiErrors";
 import prisma from "../../../shared/prisma";
 import { TCreateGroupSchema, TUpdateGroupSchema } from "./group.validation";
+import { IPaginationOptions } from "../../../interfaces/paginations";
+import { paginationHelper } from "../../../shared/paginationHelper";
+import { Prisma } from "@prisma/client";
 
 //w: (start)╭──────────── createGroup ────────────╮
 const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
@@ -83,7 +86,12 @@ const updateGroup = async (
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
 //w: (start)╭──────────── fetchAllMembers ────────────╮
-const fetchAllMembers = async (groupId: string) => {
+const fetchAllMembers = async (
+  groupId: string,
+  paginations: IPaginationOptions,
+) => {
+  const { page, limit, skip } =
+    paginationHelper.calcalutePagination(paginations);
   const group = await prisma.group.findUnique({
     where: { id: groupId },
     select: {
@@ -99,24 +107,46 @@ const fetchAllMembers = async (groupId: string) => {
   //merge + convert into unique ids
   const userIds = Array.from(new Set([...group.memberIds, group.creatorId]));
 
-  //Single, clean query
-  const members = await prisma.user.findMany({
-    where: {
-      id: { in: userIds },
-    },
-    select: {
-      id: true,
-      fullname: true,
-      profile: {
-        select: {
-          profileImage: true,
-          profession: true,
+  const [total, members] = await Promise.all([
+    // total count
+    prisma.user.count({
+      where: {
+        id: { in: userIds },
+      },
+    }),
+    // members
+    prisma.user.findMany({
+      where: {
+        id: { in: userIds },
+      },
+      select: {
+        id: true,
+        fullname: true,
+        profile: {
+          select: {
+            profileImage: true,
+            profession: true,
+          },
         },
       },
-    },
-  });
+      skip,
+      take: limit,
+      // sort with createdAt:desc same  as id desc
+      orderBy: { id: "desc" },
+    }),
+  ]);
 
-  return members;
+  //Single, clean query
+
+  return {
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+    data: members,
+  };
 };
 
 //w: (end)  ╰──────────── fetchAllMembers ────────────╯

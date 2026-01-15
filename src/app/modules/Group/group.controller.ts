@@ -45,7 +45,9 @@ const updateGroup = catchAsync(async (req, res) => {
 //w: (start)╭──────────── fetchAllMembers ────────────╮
 const fetchAllMembers = catchAsync(async (req, res) => {
   const { id: groupId } = req.params;
-  const result = await GroupService.fetchAllMembers(groupId);
+  const pickedPagination = pick(req.query, paginationOptions);
+
+  const result = await GroupService.fetchAllMembers(groupId, pickedPagination);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

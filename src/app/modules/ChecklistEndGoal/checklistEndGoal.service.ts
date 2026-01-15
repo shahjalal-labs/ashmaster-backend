@@ -55,7 +55,8 @@ const getAllChecklistOrEndGoals = async (
       where: whereClause,
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" },
+      // sort with createdAt:desc same  as id desc
+      orderBy: { id: "desc" },
     }),
     prisma.checklistEndGoal.count({ where: whereClause }),
   ]);
