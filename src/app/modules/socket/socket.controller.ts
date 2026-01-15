@@ -43,7 +43,7 @@ export const setupWebSocketServer = (server: Server) => {
     // 4. SEND USER'S EXISTING CHAT ROOMS
     const userRooms = await prisma.chatRoom.findMany({
       where: { participants: { has: userId } },
-      take: 10,
+      take: 20,
       include: {
         messages: {
           select: {

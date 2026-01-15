@@ -10,3 +10,5 @@
 | ,,Message                              | Payload sent over socket       |
 | ,,Broadcast                            | Send to many users             |
 | ,,Disconnect                           | Cleanup when user leaves       |
+
+---

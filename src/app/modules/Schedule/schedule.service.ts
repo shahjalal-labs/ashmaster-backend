@@ -34,7 +34,9 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
 //w: (end)  ╰──────────── createSchedule ────────────╯
 
 //w: (start)╭──────────── mySchedule ────────────╮
+// Allow upcoming schedules and past schedules up to 60 minutes ago
 const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
+  const before60Min = new Date(Date.now() - 60 * 60 * 1000);
   const { skip, page, limit } =
     paginationHelper.calcalutePagination(pagination);
   const whereClause: Prisma.ScheduleWhereInput = {
@@ -48,6 +50,9 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
         },
       },
     ],
+    dateTime: {
+      gte: before60Min,
+    },
   };
 
   const result = await prisma.schedule.findMany({
