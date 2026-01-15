@@ -226,17 +226,13 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           orderBy: { createdAt: "desc" },
           take: 1,
         },
-        /* ...{
-          include: {
-            group: {
-              select: {
-                id: true,
-                title: true,
-                groupPhoto: true,
-              },
-            },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            groupPhoto: true,
           },
-        }, */
+        },
       },
       orderBy: { updatedAt: "desc" },
       take: limit,
@@ -251,6 +247,7 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
         let partner = null;
         let roomName = "";
         let roomImage = null;
+        let groupInfo = null;
 
         if (room.type === "P2P") {
           // Find the other user in P2P chat
@@ -268,11 +265,16 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
               roomImage = partnerUser.profile?.profileImage;
             }
           }
-        } else if (room.type === "GROUP" && room.groupId) {
-          const group = (room as any).group;
-          if (group) {
-            roomName = group.title;
-            roomImage = group.groupPhoto;
+        } else if (room.type === "GROUP") {
+          // For group chats, get group info
+          if (room.group) {
+            roomName = room.group.title;
+            roomImage = room.group.groupPhoto;
+            groupInfo = {
+              id: room.group.id,
+              title: room.group.title,
+              photo: room.group.groupPhoto,
+            };
           }
         }
 
@@ -292,8 +294,9 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           name: roomName,
           image: roomImage,
           partner,
-          lastMessage: lastMessage?.content,
-          lastMessageTime: lastMessage?.createdAt || room.updatedAt,
+          group: groupInfo, // Add group info for GROUP rooms
+          lastMessage: lastMessage?.content || null,
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Only set if there's a message
           unreadCount,
           participants: room.participants,
           updatedAt: room.updatedAt,
