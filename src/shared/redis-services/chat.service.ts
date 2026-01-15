@@ -1,9 +1,7 @@
 import redisClient from "../redis";
 import prisma from "../prisma";
-import { v4 as uuidv4 } from "uuid";
 
 export interface IMessage {
-  id: string;
   roomId: string;
   senderId: string;
   content?: string;

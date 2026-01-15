@@ -5,7 +5,6 @@ import {
   chatRedisService,
   IMessage,
 } from "../../../../shared/redis-services/chat.service";
-import { v4 as uuidv4 } from "uuid";
 
 // Get user details for message sender
 const getUserDetails = async (userId: string) => {
@@ -63,14 +62,22 @@ export const handleP2PMessage = async (
         data: {
           type: "P2P",
           participants: [senderId, receiverId],
+          // Set both createdAt and updatedAt to now for new room
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       });
       isNewRoom = true;
+    } else {
+      // Only update updatedAt if room already exists and we're adding a message
+      await prisma.chatRoom.update({
+        where: { id: room.id },
+        data: { updatedAt: new Date() },
+      });
     }
 
     // Create message object
     const message: IMessage = {
-      id: uuidv4(),
       roomId: room.id,
       senderId,
       content,
@@ -91,12 +98,6 @@ export const handleP2PMessage = async (
     if (await chatRedisService.shouldFlushToDB(room.id)) {
       await chatRedisService.flushToDatabase(room.id);
     }
-
-    // Update room's updatedAt in database
-    await prisma.chatRoom.update({
-      where: { id: room.id },
-      data: { updatedAt: new Date() },
-    });
 
     return {
       roomId: room.id,
@@ -161,7 +162,6 @@ export const handleGroupMessage = async (
 
     // Create message object
     const message: IMessage = {
-      id: uuidv4(),
       roomId: room.id,
       senderId,
       content,
