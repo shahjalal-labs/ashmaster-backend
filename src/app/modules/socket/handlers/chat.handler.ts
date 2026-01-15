@@ -5,6 +5,7 @@ import {
   chatRedisService,
   IMessage,
 } from "../../../../shared/redis-services/chat.service";
+import { v4 as uuidv4 } from "uuid";
 
 // Get user details for message sender
 const getUserDetails = async (userId: string) => {
@@ -22,113 +23,130 @@ const getUserDetails = async (userId: string) => {
   });
 };
 
-// Simple function to handle P2P messages
-export const handleP2PMessage = async (
-  senderId: string,
+// Find or create P2P room
+export const findOrCreateP2PRoom = async (
+  userId: string,
   receiverId: string,
-  content?: string,
-  fileUrl?: string[],
 ) => {
   try {
-    if (senderId === receiverId) {
+    if (userId === receiverId) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
-        "You can't send message to yourself",
+        "You can't chat with yourself",
       );
     }
 
     // Verify both users exist
-    const [sender, receiver] = await Promise.all([
-      getUserDetails(senderId),
+    const [user, receiver] = await Promise.all([
+      getUserDetails(userId),
       prisma.user.findUnique({ where: { id: receiverId } }),
     ]);
 
-    if (!sender || !receiver) {
+    if (!user || !receiver) {
       throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
-    // Find or create a chat room
+    // Find existing P2P room
     let room = await prisma.chatRoom.findFirst({
       where: {
         type: "P2P",
-        participants: { hasEvery: [senderId, receiverId] },
+        participants: { hasEvery: [userId, receiverId] },
+      },
+      include: {
+        messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+                profile: {
+                  select: {
+                    profileImage: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
     });
 
     let isNewRoom = false;
 
+    // Create room if doesn't exist
     if (!room) {
       room = await prisma.chatRoom.create({
         data: {
           type: "P2P",
-          participants: [senderId, receiverId],
-          // Set both createdAt and updatedAt to now for new room
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          participants: [userId, receiverId],
+        },
+        include: {
+          messages: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  profile: {
+                    select: {
+                      profileImage: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
       });
       isNewRoom = true;
-    } else {
-      // Only update updatedAt if room already exists and we're adding a message
-      await prisma.chatRoom.update({
-        where: { id: room.id },
-        data: { updatedAt: new Date() },
-      });
     }
 
-    // Create message object
-    const message: IMessage = {
-      roomId: room.id,
-      senderId,
-      content,
-      fileUrl: fileUrl || [],
-      readBy: [senderId], // Sender has read their own message
-      createdAt: new Date(),
-      sender: {
-        id: sender.id,
-        fullname: sender.fullname,
-        profileImage: sender.profile?.profileImage || null,
-      },
-    };
+    // Get initial messages from Redis (latest 20)
+    const initialMessages = await chatRedisService.getMessages(room.id, 20);
 
-    // Save to Redis immediately for real-time delivery
-    await chatRedisService.saveMessage(room.id, message);
-
-    // Check if we should flush to database
-    if (await chatRedisService.shouldFlushToDB(room.id)) {
-      await chatRedisService.flushToDatabase(room.id);
-    }
+    // Get partner details
+    const partnerId = room.participants.find((id) => id !== userId);
+    const partner = partnerId ? await getUserDetails(partnerId) : null;
 
     return {
-      roomId: room.id,
-      message,
+      room,
       isNewRoom,
+      initialMessages: initialMessages.reverse(), // Oldest to newest
+      partner,
       roomType: "P2P" as const,
-      participants: [senderId, receiverId],
     };
   } catch (error) {
-    console.error("❌ Failed to save message:", error);
+    console.error("❌ Failed to find/create P2P room:", error);
     throw error;
   }
 };
 
-// Function to handle group messages
-export const handleGroupMessage = async (
-  senderId: string,
+// Find or create Group room
+export const findOrCreateGroupRoom = async (
+  userId: string,
   groupId: string,
-  content?: string,
-  fileUrl?: string[],
 ) => {
   try {
-    const sender = await getUserDetails(senderId);
-    if (!sender) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
-    }
-
     // Verify group exists and user is a member
     const group = await prisma.group.findUnique({
       where: { id: groupId },
-      select: { memberIds: true, creatorId: true },
+      select: {
+        id: true,
+        title: true,
+        groupPhoto: true,
+        memberIds: true,
+        creatorId: true,
+      },
     });
 
     if (!group) {
@@ -138,18 +156,54 @@ export const handleGroupMessage = async (
     const allMemberIds = Array.from(
       new Set([...group.memberIds, group.creatorId]),
     );
-    if (!allMemberIds.includes(senderId)) {
+
+    if (!allMemberIds.includes(userId)) {
       throw new ApiError(
         httpStatus.FORBIDDEN,
         "You are not a member of this group",
       );
     }
 
-    // Find or create group chat room
+    // Find existing group room
     let room = await prisma.chatRoom.findFirst({
-      where: { type: "GROUP", groupId },
+      where: {
+        type: "GROUP",
+        groupId,
+      },
+      include: {
+        messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+                profile: {
+                  select: {
+                    profileImage: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            groupPhoto: true,
+          },
+        },
+      },
     });
 
+    let isNewRoom = false;
+
+    // Create room if doesn't exist
     if (!room) {
       room = await prisma.chatRoom.create({
         data: {
@@ -157,16 +211,89 @@ export const handleGroupMessage = async (
           groupId,
           participants: allMemberIds,
         },
+        include: {
+          messages: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  profile: {
+                    select: {
+                      profileImage: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+          group: {
+            select: {
+              id: true,
+              title: true,
+              groupPhoto: true,
+            },
+          },
+        },
       });
+      isNewRoom = true;
+    }
+
+    // Get initial messages from Redis (latest 20)
+    const initialMessages = await chatRedisService.getMessages(room.id, 20);
+
+    return {
+      room,
+      isNewRoom,
+      initialMessages: initialMessages.reverse(), // Oldest to newest
+      group: room.group,
+      roomType: "GROUP" as const,
+    };
+  } catch (error) {
+    console.error("❌ Failed to find/create group room:", error);
+    throw error;
+  }
+};
+
+// Send P2P message (after room is created)
+export const sendP2PMessage = async (
+  roomId: string,
+  senderId: string,
+  content?: string,
+  fileUrl?: string[],
+) => {
+  try {
+    const room = await prisma.chatRoom.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room || room.type !== "P2P") {
+      throw new ApiError(httpStatus.NOT_FOUND, "P2P room not found");
+    }
+
+    const sender = await getUserDetails(senderId);
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
+    }
+
+    // Get receiver
+    const receiverId = room.participants.find((id) => id !== senderId);
+    if (!receiverId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid P2P room");
     }
 
     // Create message object
     const message: IMessage = {
-      roomId: room.id,
+      roomId,
       senderId,
       content,
       fileUrl: fileUrl || [],
-      readBy: [senderId], // Sender has read their own message
+      readBy: [senderId],
       createdAt: new Date(),
       sender: {
         id: sender.id,
@@ -175,45 +302,118 @@ export const handleGroupMessage = async (
       },
     };
 
-    // Save to Redis immediately for real-time delivery
-    await chatRedisService.saveMessage(room.id, message);
+    // Save to Redis immediately
+    await chatRedisService.saveMessage(roomId, message);
 
     // Check if we should flush to database
-    if (await chatRedisService.shouldFlushToDB(room.id)) {
-      await chatRedisService.flushToDatabase(room.id);
+    if (await chatRedisService.shouldFlushToDB(roomId)) {
+      await chatRedisService.flushToDatabase(roomId);
     }
 
-    // Update room's updatedAt in database
+    // Update room's updatedAt
     await prisma.chatRoom.update({
-      where: { id: room.id },
+      where: { id: roomId },
       data: { updatedAt: new Date() },
     });
 
     return {
-      roomId: room.id,
+      roomId,
       message,
-      isNewRoom: false,
-      roomType: "GROUP" as const,
-      participants: allMemberIds,
-      groupId,
+      receiverId,
+      participants: room.participants,
     };
   } catch (error) {
-    console.error("❌ Failed to save group message:", error);
+    console.error("❌ Failed to send P2P message:", error);
     throw error;
   }
 };
 
-// Function to get chat rooms for a user with last message and online status
+// Send group message (after room is created)
+export const sendGroupMessage = async (
+  roomId: string,
+  senderId: string,
+  content?: string,
+  fileUrl?: string[],
+) => {
+  try {
+    const room = await prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        group: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    if (!room || room.type !== "GROUP") {
+      throw new ApiError(httpStatus.NOT_FOUND, "Group room not found");
+    }
+
+    const sender = await getUserDetails(senderId);
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
+    }
+
+    // Create message object
+    const message: IMessage = {
+      roomId,
+      senderId,
+      content,
+      fileUrl: fileUrl || [],
+      readBy: [senderId],
+      createdAt: new Date(),
+      sender: {
+        id: sender.id,
+        fullname: sender.fullname,
+        profileImage: sender.profile?.profileImage || null,
+      },
+    };
+
+    // Save to Redis immediately
+    await chatRedisService.saveMessage(roomId, message);
+
+    // Check if we should flush to database
+    if (await chatRedisService.shouldFlushToDB(roomId)) {
+      await chatRedisService.flushToDatabase(roomId);
+    }
+
+    // Update room's updatedAt
+    await prisma.chatRoom.update({
+      where: { id: roomId },
+      data: { updatedAt: new Date() },
+    });
+
+    return {
+      roomId,
+      message,
+      participants: room.participants,
+      groupId: room.groupId,
+      group: room.group,
+    };
+  } catch (error) {
+    console.error("❌ Failed to send group message:", error);
+    throw error;
+  }
+};
+
+// Get user chat rooms (conversations list)
 export const getUserChatRooms = async (userId: string, limit: number = 20) => {
   try {
-    // Get rooms from database
     const rooms = await prisma.chatRoom.findMany({
       where: {
         participants: { has: userId },
+        // Only show rooms that have at least one message
+        messages: {
+          some: {},
+        },
       },
       include: {
         messages: {
           select: {
+            id: true,
             content: true,
             createdAt: true,
             sender: {
@@ -241,7 +441,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
     // Get online users
     const onlineUsers = await chatRedisService.getOnlineUsers();
 
-    // Enhance rooms with partner info and online status
     const enhancedRooms = await Promise.all(
       rooms.map(async (room) => {
         let partner = null;
@@ -250,7 +449,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
         let groupInfo = null;
 
         if (room.type === "P2P") {
-          // Find the other user in P2P chat
           const partnerId = room.participants.find((id) => id !== userId);
           if (partnerId) {
             const partnerUser = await getUserDetails(partnerId);
@@ -266,7 +464,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
             }
           }
         } else if (room.type === "GROUP") {
-          // For group chats, get group info
           if (room.group) {
             roomName = room.group.title;
             roomImage = room.group.groupPhoto;
@@ -278,7 +475,7 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           }
         }
 
-        // Get last message from Redis (more up-to-date)
+        // Get latest message from Redis (more up-to-date)
         const redisMessages = await chatRedisService.getMessages(room.id, 1);
         const lastMessage = redisMessages[0] || room.messages[0];
 
@@ -294,9 +491,10 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           name: roomName,
           image: roomImage,
           partner,
-          group: groupInfo, // Add group info for GROUP rooms
+          group: groupInfo,
           lastMessage: lastMessage?.content || null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Only set if there's a message
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+          lastMessageSender: lastMessage?.sender,
           unreadCount,
           participants: room.participants,
           updatedAt: room.updatedAt,
@@ -305,90 +503,9 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
       }),
     );
 
-    // Cache the rooms
-    await chatRedisService.cacheUserRooms(userId, enhancedRooms);
-
     return enhancedRooms;
   } catch (error) {
     console.error("❌ Failed to get user chat rooms:", error);
-    throw error;
-  }
-};
-
-// Function to get message history for a room
-export const getRoomMessages = async (
-  roomId: string,
-  userId: string,
-  limit: number = 50,
-) => {
-  try {
-    // Verify user has access to this room
-    const room = await prisma.chatRoom.findFirst({
-      where: {
-        id: roomId,
-        participants: { has: userId },
-      },
-    });
-
-    if (!room) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        "You don't have access to this room",
-      );
-    }
-
-    // Get messages from Redis (most recent)
-    const redisMessages = await chatRedisService.getMessages(roomId, limit);
-
-    // If we need more messages, fetch from database
-    let dbMessages: any[] = [];
-    if (redisMessages.length < limit) {
-      const needed = limit - redisMessages.length;
-      dbMessages = await prisma.message.findMany({
-        where: { roomId },
-        select: {
-          id: true,
-          content: true,
-          fileUrl: true,
-          senderId: true,
-          readBy: true,
-          createdAt: true,
-          sender: {
-            select: {
-              id: true,
-              fullname: true,
-              profile: {
-                select: {
-                  profileImage: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: needed,
-        skip: 0,
-      });
-    }
-
-    // Combine and sort messages (newest first)
-    const allMessages = [...redisMessages, ...dbMessages]
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, limit);
-
-    // Mark messages as read for this user
-    await chatRedisService.markAsRead(roomId, userId);
-
-    return {
-      roomId,
-      messages: allMessages,
-      hasMore: allMessages.length >= limit,
-    };
-  } catch (error) {
-    console.error("❌ Failed to get room messages:", error);
     throw error;
   }
 };

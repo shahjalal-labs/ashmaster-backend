@@ -1,4 +1,4 @@
-# socketFullContent.md
+e socketFullContent.md
 
 ## 🌲 Full Project Structure
 
@@ -1922,3 +1922,7 @@ export const setupWebSocketServer = (server: Server) => {
   return wss;
 };
 ```
+
+give me another 2 event which task is: think i have userId now i need to show user's messages, right? think that user messages will come by websocket redis the latest 20 and other message will come from db and it will be sorted with updatedAt desc. Here will have the pagination for rest api. My main purpose whenever new message come it will udate with latest message so ui can render instantly it's for last 20 messages as it will store in redis other message will fetch with rest api pagination. I am not sure about the flow, i think you are understanding, better, i mean i need a event from where front end can real time render message. and past message through rest api pagination.
+
+similarly for with groupId. whenever new message come it will updates the list so that frontend can simultaneously update the ui,

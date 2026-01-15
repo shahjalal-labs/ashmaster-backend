@@ -2,10 +2,11 @@ import { Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { verifyWsToken } from "./socket.service";
 import {
-  handleP2PMessage,
-  handleGroupMessage,
+  findOrCreateP2PRoom,
+  findOrCreateGroupRoom,
+  sendP2PMessage,
+  sendGroupMessage,
   getUserChatRooms,
-  getRoomMessages,
 } from "./handlers/chat.handler";
 import { chatRedisService } from "../../../shared/redis-services/chat.service";
 import prisma from "../../../shared/prisma";
@@ -14,10 +15,15 @@ import prisma from "../../../shared/prisma";
 interface UserSocket extends WebSocket {
   userId?: string;
   isAlive: boolean;
+  subscribedRooms?: Set<string>;
+  activeRoomId?: string;
 }
 
 // Store connected users: userId -> WebSocket
 const onlineUsers = new Map<string, UserSocket>();
+
+// Store room subscribers: roomId -> Set<userId>
+const roomSubscribers = new Map<string, Set<string>>();
 
 export const setupWebSocketServer = (server: Server) => {
   const wss = new WebSocketServer({ server });
@@ -35,6 +41,7 @@ export const setupWebSocketServer = (server: Server) => {
     const userId = decoded.id;
     ws.userId = userId;
     ws.isAlive = true;
+    ws.subscribedRooms = new Set();
 
     // 2. ADD USER TO ONLINE LIST & REDIS
     onlineUsers.set(userId, ws);
@@ -44,23 +51,20 @@ export const setupWebSocketServer = (server: Server) => {
       `✅ User ${userId} connected. Online users: ${onlineUsers.size}`,
     );
 
-    // 3. BROADCAST ONLINE STATUS TO USER'S CONNECTIONS
-    broadcastToUserConnections(userId, "user-online", { userId });
-
-    // 4. SEND USER'S CHAT ROOMS
+    // 3. SEND USER'S EXISTING CONVERSATIONS (rooms with messages)
     try {
-      const rooms = await getUserChatRooms(userId, 20);
+      const conversations = await getUserChatRooms(userId, 20);
       ws.send(
         JSON.stringify({
-          type: "chatrooms",
-          rooms,
+          type: "conversations",
+          conversations,
         }),
       );
     } catch (error) {
-      console.error("❌ Failed to fetch chat rooms:", error);
+      console.error("❌ Failed to fetch conversations:", error);
     }
 
-    // 5. SET UP HEARTBEAT (keep connection alive)
+    // 4. SET UP HEARTBEAT
     const heartbeat = setInterval(() => {
       if (!ws.isAlive) {
         ws.terminate();
@@ -74,126 +78,191 @@ export const setupWebSocketServer = (server: Server) => {
       ws.isAlive = true;
     });
 
-    // 6. HANDLE INCOMING MESSAGES
+    // 5. HANDLE INCOMING MESSAGES
     ws.on("message", async (rawData) => {
       try {
         const data = JSON.parse(rawData.toString());
         console.log(`📨 Message from ${userId}:`, data.type);
 
         switch (data.type) {
-          case "p2p-message": {
-            const { receiverId, content, fileUrl } = data;
+          case "member-subscribe": {
+            // Subscribe to P2P chat with a user (create room if doesn't exist)
+            const { receiverId } = data;
 
-            // Save and process message
-            const result = await handleP2PMessage(
-              userId,
-              receiverId,
-              content,
-              fileUrl,
-            );
+            const result = await findOrCreateP2PRoom(userId, receiverId);
 
-            // Send to receiver if online
-            const receiverWs = onlineUsers.get(receiverId);
-            if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "p2p-message",
-                  message: result.message,
-                  roomId: result.roomId,
-                  senderId: userId,
-                  isNewRoom: result.isNewRoom,
-                }),
-              );
-            }
+            // Subscribe to room
+            subscribeToRoom(userId, result.room.id, ws);
+            ws.activeRoomId = result.room.id;
 
-            // Send confirmation to sender
+            // Mark messages as read
+            await chatRedisService.markAsRead(result.room.id, userId);
+
+            // Send room details to user
             ws.send(
               JSON.stringify({
-                type: "message-sent",
-                // messageId: result.message.id,
-                roomId: result.roomId,
+                type: "room-subscribed",
+                roomId: result.room.id,
+                roomType: "P2P",
+                isNewRoom: result.isNewRoom,
+                initialMessages: result.initialMessages,
+                partner: result.partner,
               }),
             );
 
-            // Update chat rooms for both users
-            updateChatRoomsForUsers([userId, receiverId]);
+            // Update conversation list for both users
+            updateConversationsForUsers([userId, receiverId]);
             break;
           }
 
-          case "group-message": {
-            const { groupId, content, fileUrl } = data;
+          case "group-subscribe": {
+            // Subscribe to group chat
+            const { groupId } = data;
 
-            // Save and process group message
-            const result = await handleGroupMessage(
+            const result = await findOrCreateGroupRoom(userId, groupId);
+
+            // Subscribe to room
+            subscribeToRoom(userId, result.room.id, ws);
+            ws.activeRoomId = result.room.id;
+
+            // Mark messages as read
+            await chatRedisService.markAsRead(result.room.id, userId);
+
+            // Send room details to user
+            ws.send(
+              JSON.stringify({
+                type: "room-subscribed",
+                roomId: result.room.id,
+                roomType: "GROUP",
+                isNewRoom: result.isNewRoom,
+                initialMessages: result.initialMessages,
+                group: result.group,
+              }),
+            );
+
+            // Update conversation list for all group members
+            updateConversationsForUsers(result.room.participants);
+            break;
+          }
+
+          case "member-send-message": {
+            // Send message in P2P room
+            const { roomId, content, fileUrl } = data;
+
+            // Verify user is subscribed to this room
+            if (!ws.subscribedRooms?.has(roomId)) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You are not subscribed to this room",
+                }),
+              );
+              break;
+            }
+
+            const result = await sendP2PMessage(
+              roomId,
               userId,
-              groupId,
               content,
               fileUrl,
             );
 
-            // Send to all online group members except sender
-            result.participants.forEach((memberId) => {
-              if (memberId !== userId) {
-                const memberWs = onlineUsers.get(memberId);
-                if (memberWs && memberWs.readyState === WebSocket.OPEN) {
-                  memberWs.send(
-                    JSON.stringify({
-                      type: "group-message",
-                      message: result.message,
-                      roomId: result.roomId,
-                      senderId: userId,
-                      groupId,
-                    }),
-                  );
-                }
-              }
-            });
-
-            // Send confirmation to sender
+            // Send to sender
             ws.send(
               JSON.stringify({
-                type: "group-message-sent",
-                // messageId: result.message.id,
-                roomId: result.roomId,
+                type: "new-message",
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "P2P",
               }),
             );
 
-            // Update chat rooms for all group members
-            updateChatRoomsForUsers(result.participants);
+            // Broadcast to other room subscribers (including receiver)
+            broadcastToRoomSubscribers(
+              roomId,
+              "new-message",
+              {
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "P2P",
+              },
+              userId, // Exclude sender
+            );
+
+            // Update conversation list for both users
+            updateConversationsForUsers(result.participants);
+            break;
+          }
+
+          case "group-send-message": {
+            // Send message in group room
+            const { roomId, content, fileUrl } = data;
+
+            // Verify user is subscribed to this room
+            if (!ws.subscribedRooms?.has(roomId)) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You are not subscribed to this room",
+                }),
+              );
+              break;
+            }
+
+            const result = await sendGroupMessage(
+              roomId,
+              userId,
+              content,
+              fileUrl,
+            );
+
+            // Send to sender
+            ws.send(
+              JSON.stringify({
+                type: "new-message",
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "GROUP",
+                groupId: result.groupId,
+              }),
+            );
+
+            // Broadcast to all room subscribers
+            broadcastToRoomSubscribers(
+              roomId,
+              "new-message",
+              {
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "GROUP",
+                groupId: result.groupId,
+              },
+              userId, // Exclude sender
+            );
+
+            // Update conversation list for all group members
+            updateConversationsForUsers(result.participants);
             break;
           }
 
           case "typing": {
-            const { receiverId, roomId } = data;
-            const receiverWs = onlineUsers.get(receiverId);
+            const { roomId, isTyping = true } = data;
 
-            if (receiverWs) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "typing",
-                  senderId: userId,
-                  roomId,
-                  isTyping: true,
-                }),
-              );
-            }
-            break;
-          }
-
-          case "typing-stop": {
-            const { receiverId, roomId } = data;
-            const receiverWs = onlineUsers.get(receiverId);
-
-            if (receiverWs) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "typing",
-                  senderId: userId,
-                  roomId,
-                  isTyping: false,
-                }),
-              );
-            }
+            // Broadcast typing indicator to room subscribers
+            broadcastToRoomSubscribers(
+              roomId,
+              "typing",
+              {
+                roomId,
+                senderId: userId,
+                isTyping,
+              },
+              userId,
+            );
             break;
           }
 
@@ -201,56 +270,65 @@ export const setupWebSocketServer = (server: Server) => {
             const { roomId } = data;
             await chatRedisService.markAsRead(roomId, userId);
 
-            // Notify others in the room that messages are read
-            const room = await prisma.chatRoom.findUnique({
-              where: { id: roomId },
-              select: { participants: true },
-            });
-
-            if (room) {
-              room.participants.forEach((participantId) => {
-                if (participantId !== userId) {
-                  const participantWs = onlineUsers.get(participantId);
-                  if (participantWs) {
-                    participantWs.send(
-                      JSON.stringify({
-                        type: "messages-read",
-                        roomId,
-                        userId,
-                      }),
-                    );
-                  }
-                }
-              });
-            }
-            break;
-          }
-
-          case "get-messages": {
-            const { roomId, limit = 50 } = data;
-            const result = await getRoomMessages(roomId, userId, limit);
-
-            ws.send(
-              JSON.stringify({
-                type: "room-messages",
+            // Notify room subscribers that messages are read
+            broadcastToRoomSubscribers(
+              roomId,
+              "messages-read",
+              {
                 roomId,
-                messages: result.messages,
-                hasMore: result.hasMore,
-              }),
+                userId,
+              },
+              userId,
             );
+
+            // Update conversation list for user
+            updateConversationsForUsers([userId]);
             break;
           }
 
           case "get-more-messages": {
             const { roomId, before, limit = 20 } = data;
-            // This would fetch older messages from database
-            // Implement pagination based on before timestamp
+
+            // Get older messages from database
+            const olderMessages = await getOlderMessagesFromDB(
+              roomId,
+              before,
+              limit,
+              userId,
+            );
+
             ws.send(
               JSON.stringify({
                 type: "more-messages",
                 roomId,
-                messages: [], // Implement pagination logic here
-                hasMore: false,
+                messages: olderMessages.messages,
+                hasMore: olderMessages.hasMore,
+                before: olderMessages.newBefore,
+              }),
+            );
+            break;
+          }
+
+          case "unsubscribe-room": {
+            const { roomId } = data;
+            unsubscribeFromRoom(userId, roomId, ws);
+            ws.activeRoomId = undefined;
+
+            ws.send(
+              JSON.stringify({
+                type: "room-unsubscribed",
+                roomId,
+              }),
+            );
+            break;
+          }
+
+          case "get-conversations": {
+            const conversations = await getUserChatRooms(userId, 20);
+            ws.send(
+              JSON.stringify({
+                type: "conversations",
+                conversations,
               }),
             );
             break;
@@ -275,62 +353,186 @@ export const setupWebSocketServer = (server: Server) => {
       }
     });
 
-    // 7. HANDLE DISCONNECTION
+    // 6. HANDLE DISCONNECTION
     ws.on("close", async () => {
       console.log(`❌ User ${userId} disconnected`);
+
+      // Unsubscribe from all rooms
+      if (ws.subscribedRooms) {
+        ws.subscribedRooms.forEach((roomId) => {
+          unsubscribeFromRoom(userId, roomId, ws);
+        });
+      }
 
       // Remove from online users
       onlineUsers.delete(userId);
 
-      // Mark as offline in Redis with delay
+      // Mark as offline in Redis
       setTimeout(async () => {
-        // Check if user reconnected in the meantime
         if (!onlineUsers.has(userId)) {
           await chatRedisService.setUserOffline(userId);
           broadcastToUserConnections(userId, "user-offline", { userId });
         }
-      }, 5000); // 5 second delay to handle reconnections
+      }, 5000);
 
       // Clean up heartbeat
       clearInterval(heartbeat);
     });
 
-    // 8. HANDLE ERRORS
+    // 7. HANDLE ERRORS
     ws.on("error", (error) => {
       console.error(`❌ WebSocket error for user ${userId}:`, error);
     });
   });
 
-  // Function to broadcast to all connections of a user
-  const broadcastToUserConnections = (
-    userId: string,
-    type: string,
-    payload: any,
-  ) => {
-    // This would get all users who have chat rooms with this user
-    // For simplicity, we'll implement this based on your requirements
+  // Helper functions
+  const subscribeToRoom = (userId: string, roomId: string, ws: UserSocket) => {
+    if (!roomSubscribers.has(roomId)) {
+      roomSubscribers.set(roomId, new Set());
+    }
+    roomSubscribers.get(roomId)!.add(userId);
+
+    if (ws.subscribedRooms) {
+      ws.subscribedRooms.add(roomId);
+    }
   };
 
-  // Function to update chat rooms for users
-  const updateChatRoomsForUsers = async (userIds: string[]) => {
+  const unsubscribeFromRoom = (
+    userId: string,
+    roomId: string,
+    ws: UserSocket,
+  ) => {
+    if (roomSubscribers.has(roomId)) {
+      roomSubscribers.get(roomId)!.delete(userId);
+      if (roomSubscribers.get(roomId)!.size === 0) {
+        roomSubscribers.delete(roomId);
+      }
+    }
+
+    if (ws.subscribedRooms) {
+      ws.subscribedRooms.delete(roomId);
+    }
+  };
+
+  const broadcastToRoomSubscribers = (
+    roomId: string,
+    type: string,
+    payload: any,
+    excludeUserId?: string,
+  ) => {
+    const subscribers = roomSubscribers.get(roomId);
+    if (!subscribers) return;
+
+    subscribers.forEach((subscriberId) => {
+      if (subscriberId === excludeUserId) return;
+
+      const subscriberWs = onlineUsers.get(subscriberId);
+      if (subscriberWs && subscriberWs.readyState === WebSocket.OPEN) {
+        subscriberWs.send(
+          JSON.stringify({
+            type,
+            ...payload,
+          }),
+        );
+      }
+    });
+  };
+
+  const updateConversationsForUsers = async (userIds: string[]) => {
     for (const userId of userIds) {
       const userWs = onlineUsers.get(userId);
       if (userWs && userWs.readyState === WebSocket.OPEN) {
         try {
-          const rooms = await getUserChatRooms(userId, 20);
+          const conversations = await getUserChatRooms(userId, 20);
           userWs.send(
             JSON.stringify({
-              type: "chatrooms-updated",
-              rooms,
+              type: "conversations-updated",
+              conversations,
             }),
           );
         } catch (error) {
-          console.error(`❌ Failed to update rooms for ${userId}:`, error);
+          console.error(
+            `❌ Failed to update conversations for ${userId}:`,
+            error,
+          );
         }
       }
     }
   };
 
-  console.log("✅ WebSocket server is running");
+  const getOlderMessagesFromDB = async (
+    roomId: string,
+    before: string,
+    limit: number,
+    userId: string,
+  ) => {
+    try {
+      const beforeDate = new Date(before);
+
+      const messages = await prisma.message.findMany({
+        where: {
+          roomId,
+          createdAt: { lt: beforeDate },
+        },
+        select: {
+          id: true,
+          content: true,
+          fileUrl: true,
+          senderId: true,
+          readBy: true,
+          createdAt: true,
+          sender: {
+            select: {
+              id: true,
+              fullname: true,
+              profile: {
+                select: {
+                  profileImage: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      });
+
+      const hasMore = messages.length >= limit;
+      const newBefore =
+        messages.length > 0
+          ? messages[messages.length - 1].createdAt.toISOString()
+          : before;
+
+      return {
+        messages,
+        hasMore,
+        newBefore,
+      };
+    } catch (error) {
+      console.error("❌ Error getting older messages:", error);
+      throw error;
+    }
+  };
+
+  const broadcastToUserConnections = (
+    userId: string,
+    type: string,
+    payload: any,
+  ) => {
+    onlineUsers.forEach((userWs, wsUserId) => {
+      if (wsUserId === userId) return;
+
+      if (userWs && userWs.readyState === WebSocket.OPEN) {
+        userWs.send(
+          JSON.stringify({
+            type,
+            ...payload,
+          }),
+        );
+      }
+    });
+  };
+
+  console.log("✅ WebSocket server is running with proper room flow");
   return wss;
 };
