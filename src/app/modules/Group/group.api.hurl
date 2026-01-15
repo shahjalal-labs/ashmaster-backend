@@ -45,7 +45,8 @@ Authorization: {{ashRaisa}}
 
 
 # addMembersIntoGroup
-POST {{port6011}}/group//add-member
+#/ /group/groupId
+POST {{port6011}}/group/6964e4e1656ea48b225e0eb4/add-member
 Authorization: {{ashRaisa}}
 Content-Type: application/json
 

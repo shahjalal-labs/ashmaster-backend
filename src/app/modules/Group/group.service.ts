@@ -280,6 +280,9 @@ const addMembersIntoGroup = async (memberId: string, groupId: string) => {
       data: {
         memberIds: updatedMembers,
       },
+      select: {
+        memberIds: true,
+      },
     });
   });
 };

@@ -92,7 +92,7 @@ const addMembersIntoGroup = catchAsync(async (req, res) => {
   // const { id: userId } = req.user;
   const { memberId } = req.body;
   const { id: groupId } = req.params;
-  const result = await GroupService.findMembersToAdd(memberId, groupId);
+  const result = await GroupService.addMembersIntoGroup(memberId, groupId);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

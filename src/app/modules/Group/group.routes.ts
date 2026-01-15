@@ -38,7 +38,7 @@ router.delete("/:id/leave", GroupController.leaveGroup);
 router.get("/:id/find-members", GroupController.findMembersToAdd);
 
 router.post(
-  "/add-member",
+  "/:id/add-member",
   validateRequest(GroupValidation.addMembersIntoGroupSchema),
   GroupController.addMembersIntoGroup,
 );
