@@ -36,6 +36,9 @@
 │   │   │   │   ├── auth.validation.ts
 │   │   │   │   └── profiledata.md
 │   │   │   ├── chat
+│   │   │   │   ├── chat.api.hurl
+│   │   │   │   ├── chat.controller.ts
+│   │   │   │   ├── chat.routes.ts
 │   │   │   │   └── chat.service.ts
 │   │   │   ├── ChecklistEndGoal
 │   │   │   │   ├── checklistEndGoal.api.hurl
@@ -48,6 +51,7 @@
 │   │   │   ├── Group
 │   │   │   │   ├── group.api.hurl
 │   │   │   │   ├── group.controller.ts
+│   │   │   │   ├── GroupFullContent.md
 │   │   │   │   ├── group.routes.ts
 │   │   │   │   ├── group.service.ts
 │   │   │   │   └── group.validation.ts
@@ -76,6 +80,7 @@
 │   │   │   │   ├── handlers
 │   │   │   │   │   └── chat.handler.ts
 │   │   │   │   ├── socket.controller.ts
+│   │   │   │   ├── socketFullContentPrev.md
 │   │   │   │   ├── socket.interface.ts
 │   │   │   │   ├── socket.note.md
 │   │   │   │   ├── socket.service.ts
@@ -131,6 +136,7 @@
 │   │   ├── pick.ts
 │   │   ├── prisma.ts
 │   │   ├── redis-services
+│   │   │   ├── chat.service.ts
 │   │   │   └── otp.service.ts
 │   │   ├── redis.ts
 │   │   ├── searchFilter.ts
@@ -145,7 +151,7 @@
 │   └── google.png
 └── vercel.json
 
-31 directories, 110 files
+31 directories, 116 files
 ```
 
 ## 📁 socket Module Tree
@@ -155,13 +161,14 @@
 ├── handlers
 │   └── chat.handler.ts
 ├── socket.controller.ts
+├── socketFullContentPrev.md
 ├── socket.interface.ts
 ├── socket.note.md
 ├── socket.service.ts
 ├── websocketSendResponse.ts
 └── wstest.json
 
-2 directories, 7 files
+2 directories, 8 files
 ```
 
 ## 📋 schema.prisma
@@ -333,13 +340,14 @@ model ChecklistEndGoal {
 
 //w: (start)╭────────────  Group ────────────╮
 model Group {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   memberIds  String[]
   groupPhoto String?
-  creatorId  String   @db.ObjectId
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  creatorId  String    @db.ObjectId
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  chatRoom   ChatRoom?
 }
 
 //w: (end)  ╰──────────── Group  ────────────╯
@@ -347,7 +355,8 @@ model Group {
 model ChatRoom {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
   type         RoomType
-  groupId      String?   @db.ObjectId
+  groupId      String?   @unique @db.ObjectId
+  group        Group?    @relation(fields: [groupId], references: [id])
   participants String[]  @db.ObjectId // both P2P and group
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
@@ -477,6 +486,7 @@ type AgeRange {
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.4",
     "stripe": "^18.0.0",
+    "uuid": "^13.0.0",
     "ws": "^8.19.0",
     "zod": "^3.23.8"
   }
@@ -487,10 +497,13 @@ type AgeRange {
 
 ```javascripton
 {
-  "type": "p2p-message",
-  "content": "hellow ramim",
-  "fileUrl": ["url1,", "url2"],
-  "receiverId": "694a254aad128cabeaf7412f"
+  "type": "group-message",
+  "groupId": "69688cf384544dd7cf4441a1",
+  "content": "Hello every one!!, are you ready for the mentoring session",
+  "fileUrl": [
+    "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png",
+    "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png"
+  ]
 }
 ```
 
@@ -500,7 +513,26 @@ type AgeRange {
 import httpStatus from "http-status";
 import ApiError from "../../../../errors/ApiErrors";
 import prisma from "../../../../shared/prisma";
-import config, { ENV } from "../../../../config";
+import {
+  chatRedisService,
+  IMessage,
+} from "../../../../shared/redis-services/chat.service";
+
+// Get user details for message sender
+const getUserDetails = async (userId: string) => {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      fullname: true,
+      profile: {
+        select: {
+          profileImage: true,
+        },
+      },
+    },
+  });
+};
 
 // Simple function to handle P2P messages
 export const handleP2PMessage = async (
@@ -510,10 +542,6 @@ export const handleP2PMessage = async (
   fileUrl?: string[],
 ) => {
   try {
-    // 1. Find or create a chat room between these two users
-    let isNewRoom = false;
-    let newRoom;
-
     if (senderId === receiverId) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
@@ -521,25 +549,17 @@ export const handleP2PMessage = async (
       );
     }
 
-    if (config.env === ENV.DEVELOPMENT) {
-      const [sender, receiver] = await Promise.all([
-        prisma.user.findUnique({
-          where: {
-            id: senderId,
-          },
-        }),
-        prisma.user.findUnique({
-          where: {
-            id: receiverId,
-          },
-        }),
-      ]);
+    // Verify both users exist
+    const [sender, receiver] = await Promise.all([
+      getUserDetails(senderId),
+      prisma.user.findUnique({ where: { id: receiverId } }),
+    ]);
 
-      if (!sender || !receiver) {
-        throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-      }
+    if (!sender || !receiver) {
+      throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
+    // Find or create a chat room
     let room = await prisma.chatRoom.findFirst({
       where: {
         type: "P2P",
@@ -547,74 +567,56 @@ export const handleP2PMessage = async (
       },
     });
 
+    let isNewRoom = false;
+
     if (!room) {
       room = await prisma.chatRoom.create({
         data: {
           type: "P2P",
           participants: [senderId, receiverId],
-        },
-        include: {
-          messages: {
-            select: {
-              content: true,
-              fileUrl: true,
-              sender: {
-                select: {
-                  id: true,
-                  fullname: true,
-                },
-              },
-            },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
+          // Set both createdAt and updatedAt to now for new room
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       });
-
       isNewRoom = true;
-    }
-
-    if (isNewRoom) {
-      newRoom = await prisma.chatRoom.findUnique({
-        where: {
-          id: room.id,
-        },
-        include: {
-          messages: {
-            select: {
-              content: true,
-              fileUrl: true,
-              sender: {
-                select: {
-                  id: true,
-                  fullname: true,
-                },
-              },
-            },
-            orderBy: { createdAt: "desc" },
-            take: 1,
-          },
-        },
+    } else {
+      // Only update updatedAt if room already exists and we're adding a message
+      await prisma.chatRoom.update({
+        where: { id: room.id },
+        data: { updatedAt: new Date() },
       });
     }
 
-    // 2. Save the message to database
-    const message = await prisma.message.create({
-      data: {
-        roomId: room.id,
-        senderId,
-        content,
-        fileUrl: fileUrl,
-        readBy: [senderId],
+    // Create message object
+    const message: IMessage = {
+      roomId: room.id,
+      senderId,
+      content,
+      fileUrl: fileUrl || [],
+      readBy: [senderId], // Sender has read their own message
+      createdAt: new Date(),
+      sender: {
+        id: sender.id,
+        fullname: sender.fullname,
+        profileImage: sender.profile?.profileImage || null,
       },
-    });
+    };
 
-    // 3. Return what we need to send to clients
+    // Save to Redis immediately for real-time delivery
+    await chatRedisService.saveMessage(room.id, message);
+
+    // Check if we should flush to database
+    if (await chatRedisService.shouldFlushToDB(room.id)) {
+      await chatRedisService.flushToDatabase(room.id);
+    }
+
     return {
       roomId: room.id,
       message,
       isNewRoom,
-      newRoom,
+      roomType: "P2P" as const,
+      participants: [senderId, receiverId],
     };
   } catch (error) {
     console.error("❌ Failed to save message:", error);
@@ -622,52 +624,283 @@ export const handleP2PMessage = async (
   }
 };
 
-// Simple function to handle group messages
+// Function to handle group messages
 export const handleGroupMessage = async (
   senderId: string,
   groupId: string,
-  content: string,
+  content?: string,
+  fileUrl?: string[],
 ) => {
   try {
-    // 1. Find or create group chat room
+    const sender = await getUserDetails(senderId);
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
+    }
+
+    // Verify group exists and user is a member
+    const group = await prisma.group.findUnique({
+      where: { id: groupId },
+      select: { memberIds: true, creatorId: true },
+    });
+
+    if (!group) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
+    }
+
+    const allMemberIds = Array.from(
+      new Set([...group.memberIds, group.creatorId]),
+    );
+    if (!allMemberIds.includes(senderId)) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "You are not a member of this group",
+      );
+    }
+
+    // Find or create group chat room
     let room = await prisma.chatRoom.findFirst({
       where: { type: "GROUP", groupId },
     });
 
     if (!room) {
-      // Get group members
-      const group = await prisma.group.findUnique({
-        where: { id: groupId },
-      });
-
-      if (!group) throw new Error("Group not found");
-
       room = await prisma.chatRoom.create({
         data: {
           type: "GROUP",
           groupId,
-          participants: group.memberIds,
+          participants: allMemberIds,
         },
       });
     }
 
-    // 2. Save message
-    const message = await prisma.message.create({
-      data: {
-        roomId: room.id,
-        senderId,
-        content,
-        fileUrl: [],
-        readBy: [senderId],
+    // Create message object
+    const message: IMessage = {
+      roomId: room.id,
+      senderId,
+      content,
+      fileUrl: fileUrl || [],
+      readBy: [senderId], // Sender has read their own message
+      createdAt: new Date(),
+      sender: {
+        id: sender.id,
+        fullname: sender.fullname,
+        profileImage: sender.profile?.profileImage || null,
       },
+    };
+
+    // Save to Redis immediately for real-time delivery
+    await chatRedisService.saveMessage(room.id, message);
+
+    // Check if we should flush to database
+    if (await chatRedisService.shouldFlushToDB(room.id)) {
+      await chatRedisService.flushToDatabase(room.id);
+    }
+
+    // Update room's updatedAt in database
+    await prisma.chatRoom.update({
+      where: { id: room.id },
+      data: { updatedAt: new Date() },
     });
 
     return {
       roomId: room.id,
       message,
+      isNewRoom: false,
+      roomType: "GROUP" as const,
+      participants: allMemberIds,
+      groupId,
     };
   } catch (error) {
     console.error("❌ Failed to save group message:", error);
+    throw error;
+  }
+};
+
+// Function to get chat rooms for a user with last message and online status
+export const getUserChatRooms = async (userId: string, limit: number = 20) => {
+  try {
+    // Get rooms from database
+    const rooms = await prisma.chatRoom.findMany({
+      where: {
+        participants: { has: userId },
+      },
+      include: {
+        messages: {
+          select: {
+            content: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            groupPhoto: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+    });
+
+    // Get online users
+    const onlineUsers = await chatRedisService.getOnlineUsers();
+
+    // Enhance rooms with partner info and online status
+    const enhancedRooms = await Promise.all(
+      rooms.map(async (room) => {
+        let partner = null;
+        let roomName = "";
+        let roomImage = null;
+        let groupInfo = null;
+
+        if (room.type === "P2P") {
+          // Find the other user in P2P chat
+          const partnerId = room.participants.find((id) => id !== userId);
+          if (partnerId) {
+            const partnerUser = await getUserDetails(partnerId);
+            if (partnerUser) {
+              partner = {
+                id: partnerUser.id,
+                name: partnerUser.fullname,
+                image: partnerUser.profile?.profileImage,
+                online: onlineUsers.includes(partnerId),
+              };
+              roomName = partnerUser.fullname;
+              roomImage = partnerUser.profile?.profileImage;
+            }
+          }
+        } else if (room.type === "GROUP") {
+          // For group chats, get group info
+          if (room.group) {
+            roomName = room.group.title;
+            roomImage = room.group.groupPhoto;
+            groupInfo = {
+              id: room.group.id,
+              title: room.group.title,
+              photo: room.group.groupPhoto,
+            };
+          }
+        }
+
+        // Get last message from Redis (more up-to-date)
+        const redisMessages = await chatRedisService.getMessages(room.id, 1);
+        const lastMessage = redisMessages[0] || room.messages[0];
+
+        // Get unread count
+        const unreadCount = await chatRedisService.getUnreadCount(
+          room.id,
+          userId,
+        );
+
+        return {
+          id: room.id,
+          type: room.type,
+          name: roomName,
+          image: roomImage,
+          partner,
+          group: groupInfo, // Add group info for GROUP rooms
+          lastMessage: lastMessage?.content || null,
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Only set if there's a message
+          unreadCount,
+          participants: room.participants,
+          updatedAt: room.updatedAt,
+          groupId: room.groupId,
+        };
+      }),
+    );
+
+    // Cache the rooms
+    await chatRedisService.cacheUserRooms(userId, enhancedRooms);
+
+    return enhancedRooms;
+  } catch (error) {
+    console.error("❌ Failed to get user chat rooms:", error);
+    throw error;
+  }
+};
+
+// Function to get message history for a room
+export const getRoomMessages = async (
+  roomId: string,
+  userId: string,
+  limit: number = 50,
+) => {
+  try {
+    // Verify user has access to this room
+    const room = await prisma.chatRoom.findFirst({
+      where: {
+        id: roomId,
+        participants: { has: userId },
+      },
+    });
+
+    if (!room) {
+      throw new ApiError(
+        httpStatus.FORBIDDEN,
+        "You don't have access to this room",
+      );
+    }
+
+    // Get messages from Redis (most recent)
+    const redisMessages = await chatRedisService.getMessages(roomId, limit);
+
+    // If we need more messages, fetch from database
+    let dbMessages: any[] = [];
+    if (redisMessages.length < limit) {
+      const needed = limit - redisMessages.length;
+      dbMessages = await prisma.message.findMany({
+        where: { roomId },
+        select: {
+          id: true,
+          content: true,
+          fileUrl: true,
+          senderId: true,
+          readBy: true,
+          createdAt: true,
+          sender: {
+            select: {
+              id: true,
+              fullname: true,
+              profile: {
+                select: {
+                  profileImage: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: needed,
+        skip: 0,
+      });
+    }
+
+    // Combine and sort messages (newest first)
+    const allMessages = [...redisMessages, ...dbMessages]
+      .sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      )
+      .slice(0, limit);
+
+    // Mark messages as read for this user
+    await chatRedisService.markAsRead(roomId, userId);
+
+    return {
+      roomId,
+      messages: allMessages,
+      hasMore: allMessages.length >= limit,
+    };
+  } catch (error) {
+    console.error("❌ Failed to get room messages:", error);
     throw error;
   }
 };
@@ -683,331 +916,9 @@ export interface CustomWebSocket extends WebSocket {
 }
 ```
 
-## 📄 websocketSendResponse.ts
+## 📖 socketFullContentPrev.md
 
-```ts
-/* import { CustomWebSocket } from "./socket.interface";
-export const { stringify,parse } = JSON;
-
-export const wsSendResponse = (
-  ws: CustomWebSocket,
-  type: string,
-  payload: Record<string, unknown>,
-) => {
-  ws.send(
-    JSON.stringify({
-      type,
-      payload,
-    }),
-  );
-}; */
-```
-
-## 🛠️ socket.service.ts
-
-```ts
-import jwt from "jsonwebtoken";
-import config from "../../../config";
-import { WebSocket } from "ws";
-
-// Simple function to verify WebSocket token
-export const verifyWsToken = (ws: WebSocket, token: string) => {
-  if (!token) {
-    ws.send(
-      JSON.stringify({
-        type: "error",
-        message: "No token provided",
-      }),
-    );
-    ws.close();
-    return null;
-  }
-
-  try {
-    const decoded = jwt.verify(token, config.jwt.jwt_secret as string);
-    return decoded as { id: string };
-  } catch (error) {
-    ws.send(
-      JSON.stringify({
-        type: "error",
-        message: "Invalid or expired token",
-      }),
-    );
-    ws.close();
-    return null;
-  }
-};
-```
-
-## 📖 socket.note.md
-
-```markdown
-### Core chat concepts (only 6 things you must know)
-
-> ,,w,ca,r,me,b,d (ocar,mebd)
-
-| Concept                                | Meaning                        |
-| -------------------------------------- | ------------------------------ |
-| ,,WebSocket connection                 | Persistent connection per user |
-| ,,Client ID                            | Who is connected               |
-| > ,,Roo,c(ruk) ,,Room / ,,Conversation | Group of users chatting        |
-| ,,Message                              | Payload sent over socket       |
-| ,,Broadcast                            | Send to many users             |
-| ,,Disconnect                           | Cleanup when user leaves       |
-
----
-```
-
-## 🎮 socket.controller.ts
-
-```ts
-import { Server } from "http";
-import { WebSocket, WebSocketServer } from "ws";
-import { verifyWsToken } from "./socket.service";
-import { handleP2PMessage, handleGroupMessage } from "./handlers/chat.handler";
-import prisma from "../../../shared/prisma";
-
-// Simple interface for our WebSocket
-interface UserSocket extends WebSocket {
-  userId?: string;
-  isAlive: boolean;
-}
-
-// Store connected users: userId -> WebSocket
-const onlineUsers = new Map<string, UserSocket>();
-
-// Store room connections: roomId -> userId[]
-const roomConnections = new Map<string, string[]>();
-
-// Store group connections: groupId -> userId[]
-const groupConnections = new Map<string, string[]>();
-
-export const setupWebSocketServer = (server: Server) => {
-  const wss = new WebSocketServer({ server });
-
-  wss.on("connection", async (ws: UserSocket, req) => {
-    // 1. AUTHENTICATE USER
-    const token = req.headers.token as string;
-    const decoded = verifyWsToken(ws, token);
-
-    if (!decoded) {
-      ws.close();
-      return;
-    }
-
-    const userId = decoded.id;
-    ws.userId = userId;
-    ws.isAlive = true;
-
-    // 2. ADD USER TO ONLINE LIST
-    onlineUsers.set(userId, ws);
-    console.log(`✅ User ${userId} connected`);
-
-    // 4. SEND USER'S EXISTING CHAT ROOMS
-    const userRooms = await prisma.chatRoom.findMany({
-      where: { participants: { has: userId } },
-      take: 20,
-      include: {
-        messages: {
-          select: {
-            content: true,
-            fileUrl: true,
-            sender: {
-              select: {
-                id: true,
-                fullname: true,
-              },
-            },
-          },
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-      },
-    });
-
-    ws.send(
-      JSON.stringify({
-        type: "chatrooms",
-        rooms: userRooms,
-      }),
-    );
-
-    // 5. SET UP HEARTBEAT (keep connection alive)
-    const heartbeat = setInterval(() => {
-      if (!ws.isAlive) {
-        ws.terminate();
-        return;
-      }
-      ws.isAlive = false;
-      ws.ping();
-    }, 30000);
-
-    ws.on("pong", () => {
-      ws.isAlive = true;
-    });
-
-    // 6. HANDLE INCOMING MESSAGES
-    ws.on("message", async (rawData) => {
-      try {
-        const data = JSON.parse(rawData.toString());
-        console.log(`📨 Message from ${userId}:`, data.type);
-
-        switch (data.type) {
-          case "p2p-message": {
-            const { receiverId, content, fileUrl } = data;
-
-            // Save message to database
-            const result = await handleP2PMessage(
-              userId,
-              receiverId,
-              content,
-              fileUrl,
-            );
-
-            console.log(result, "socket.controller.ts", 97);
-
-            // Send to receiver if online
-            const receiverWs = onlineUsers.get(receiverId);
-            if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "p2p-message",
-                  message: result.message,
-                  senderId: userId,
-                }),
-              );
-            }
-
-            if (result.isNewRoom) {
-              console.log(`working`);
-              ws.send(
-                JSON.stringify({
-                  type: "newroom-created",
-                  room: result.newRoom,
-                }),
-              );
-            }
-
-            // Send confirmation to sender
-            ws.send(
-              JSON.stringify({
-                type: "message-sent",
-                messageId: result.message.id,
-                roomId: result.roomId,
-              }),
-            );
-
-            break;
-          }
-
-          case "group-message": {
-            const { groupId, content, fileUrl } = data;
-
-            // Save message to database
-            const result = await handleGroupMessage(userId, groupId, content);
-
-            // Get group members
-            const group = await prisma.group.findUnique({
-              where: { id: groupId },
-              select: { memberIds: true },
-            });
-
-            if (!group) {
-              ws.send(
-                JSON.stringify({
-                  type: "error",
-                  message: "Group not found",
-                }),
-              );
-              break;
-            }
-
-            // Send to all online group members
-            group.memberIds.forEach((memberId) => {
-              if (memberId !== userId) {
-                // Don't send to self
-                const memberWs = onlineUsers.get(memberId);
-                if (memberWs && memberWs.readyState === WebSocket.OPEN) {
-                  memberWs.send(
-                    JSON.stringify({
-                      type: "group-message",
-                      message: result.message,
-                      groupId,
-                      senderId: userId,
-                    }),
-                  );
-                }
-              }
-            });
-
-            // Send confirmation to sender
-            ws.send(
-              JSON.stringify({
-                type: "group-message-sent",
-                messageId: result.message.id,
-              }),
-            );
-
-            break;
-          }
-
-          case "typing": {
-            // Notify the other user that typing is happening
-            const { receiverId } = data;
-            const receiverWs = onlineUsers.get(receiverId);
-
-            if (receiverWs) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "typing",
-                  senderId: userId,
-                  isTyping: true,
-                }),
-              );
-            }
-            break;
-          }
-
-          default:
-            ws.send(
-              JSON.stringify({
-                type: "error",
-                message: "Unknown message type",
-              }),
-            );
-        }
-      } catch (error: any) {
-        console.error("❌ Error handling message:", error);
-        ws.send(
-          JSON.stringify({
-            type: "error",
-            message: error.message || "Failed to process message",
-          }),
-        );
-      }
-    });
-
-    // 7. HANDLE DISCONNECTION
-    ws.on("close", () => {
-      console.log(`❌ User ${userId} disconnected`);
-
-      // Remove from online users
-      onlineUsers.delete(userId);
-
-      // Clean up heartbeat
-      clearInterval(heartbeat);
-    });
-
-    // 8. HANDLE ERRORS
-    ws.on("error", (error) => {
-      console.error(`❌ WebSocket error for user ${userId}:`, error);
-    });
-  });
-
-  console.log("✅ WebSocket server is running");
-};
-```
-
+````markdown
 ## another model for better clarity rest api pattern,
 
 ## 🎮 group.controller.ts
@@ -1127,6 +1038,7 @@ export const GroupController = {
   addMembersIntoGroup,
 };
 ```
+````
 
 ## 🧪 group.api.hurl
 
@@ -1591,4 +1503,422 @@ router.post(
 export const GroupRoutes = router;
 ```
 
-I need to implement web socket chatting system, where personal message and group message will have, the follow is, when user connect with websocket i will send 20 chatrooms sorting with updated at desc, further chatrooms will come via rest api pagination, also i need to show in the ui room partner image, name, online status, last message, last message time for chatrooms, when user click a specific room it will enter that room and render past messages based on updatedat desc, you need to implement this properly as i donnow websocket, also i have looked my senior code where has member-subscribe event, which basically create room, and render past messages. you need to implement ioredis, when redis have 20 messages then it will send to main db. guide me with details. I am giving you screen shot of the figma for better clarification. Keep everything super simple for a beginner, and make sure everything working perfectly
+````
+
+## 📄 websocketSendResponse.ts
+
+```ts
+/* import { CustomWebSocket } from "./socket.interface";
+export const { stringify,parse } = JSON;
+
+export const wsSendResponse = (
+  ws: CustomWebSocket,
+  type: string,
+  payload: Record<string, unknown>,
+) => {
+  ws.send(
+    JSON.stringify({
+      type,
+      payload,
+    }),
+  );
+}; */
+````
+
+## 🛠️ socket.service.ts
+
+```ts
+import jwt from "jsonwebtoken";
+import config from "../../../config";
+import { WebSocket } from "ws";
+
+// Simple function to verify WebSocket token
+export const verifyWsToken = (ws: WebSocket, token: string) => {
+  if (!token) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "No token provided",
+      }),
+    );
+    ws.close();
+    return null;
+  }
+
+  try {
+    const decoded = jwt.verify(token, config.jwt.jwt_secret as string);
+    return decoded as { id: string };
+  } catch (error) {
+    ws.send(
+      JSON.stringify({
+        type: "error",
+        message: "Invalid or expired token",
+      }),
+    );
+    ws.close();
+    return null;
+  }
+};
+```
+
+## 📖 socket.note.md
+
+```markdown
+### Core chat concepts (only 6 things you must know)
+
+> ,,w,ca,r,me,b,d (ocar,mebd)
+
+| Concept                                | Meaning                        |
+| -------------------------------------- | ------------------------------ |
+| ,,WebSocket connection                 | Persistent connection per user |
+| ,,Client ID                            | Who is connected               |
+| > ,,Roo,c(ruk) ,,Room / ,,Conversation | Group of users chatting        |
+| ,,Message                              | Payload sent over socket       |
+| ,,Broadcast                            | Send to many users             |
+| ,,Disconnect                           | Cleanup when user leaves       |
+
+---
+
+I am good, what's about you, are you fine?
+```
+
+## 🎮 socket.controller.ts
+
+```ts
+import { Server } from "http";
+import { WebSocket, WebSocketServer } from "ws";
+import { verifyWsToken } from "./socket.service";
+import {
+  handleP2PMessage,
+  handleGroupMessage,
+  getUserChatRooms,
+  getRoomMessages,
+} from "./handlers/chat.handler";
+import { chatRedisService } from "../../../shared/redis-services/chat.service";
+import prisma from "../../../shared/prisma";
+
+// Simple interface for our WebSocket
+interface UserSocket extends WebSocket {
+  userId?: string;
+  isAlive: boolean;
+}
+
+// Store connected users: userId -> WebSocket
+const onlineUsers = new Map<string, UserSocket>();
+
+export const setupWebSocketServer = (server: Server) => {
+  const wss = new WebSocketServer({ server });
+
+  wss.on("connection", async (ws: UserSocket, req) => {
+    // 1. AUTHENTICATE USER
+    const token = req.headers.token as string;
+    const decoded = verifyWsToken(ws, token);
+
+    if (!decoded) {
+      ws.close();
+      return;
+    }
+
+    const userId = decoded.id;
+    ws.userId = userId;
+    ws.isAlive = true;
+
+    // 2. ADD USER TO ONLINE LIST & REDIS
+    onlineUsers.set(userId, ws);
+    await chatRedisService.setUserOnline(userId);
+
+    console.log(
+      `✅ User ${userId} connected. Online users: ${onlineUsers.size}`,
+    );
+
+    // 3. BROADCAST ONLINE STATUS TO USER'S CONNECTIONS
+    broadcastToUserConnections(userId, "user-online", { userId });
+
+    // 4. SEND USER'S CHAT ROOMS
+    try {
+      const rooms = await getUserChatRooms(userId, 20);
+      ws.send(
+        JSON.stringify({
+          type: "chatrooms",
+          rooms,
+        }),
+      );
+    } catch (error) {
+      console.error("❌ Failed to fetch chat rooms:", error);
+    }
+
+    // 5. SET UP HEARTBEAT (keep connection alive)
+    const heartbeat = setInterval(() => {
+      if (!ws.isAlive) {
+        ws.terminate();
+        return;
+      }
+      ws.isAlive = false;
+      ws.ping();
+    }, 30000);
+
+    ws.on("pong", () => {
+      ws.isAlive = true;
+    });
+
+    // 6. HANDLE INCOMING MESSAGES
+    ws.on("message", async (rawData) => {
+      try {
+        const data = JSON.parse(rawData.toString());
+        console.log(`📨 Message from ${userId}:`, data.type);
+
+        switch (data.type) {
+          case "p2p-message": {
+            const { receiverId, content, fileUrl } = data;
+
+            // Save and process message
+            const result = await handleP2PMessage(
+              userId,
+              receiverId,
+              content,
+              fileUrl,
+            );
+
+            // Send to receiver if online
+            const receiverWs = onlineUsers.get(receiverId);
+            if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
+              receiverWs.send(
+                JSON.stringify({
+                  type: "p2p-message",
+                  message: result.message,
+                  roomId: result.roomId,
+                  senderId: userId,
+                  isNewRoom: result.isNewRoom,
+                }),
+              );
+            }
+
+            // Send confirmation to sender
+            ws.send(
+              JSON.stringify({
+                type: "message-sent",
+                // messageId: result.message.id,
+                roomId: result.roomId,
+              }),
+            );
+
+            // Update chat rooms for both users
+            updateChatRoomsForUsers([userId, receiverId]);
+            break;
+          }
+
+          case "group-message": {
+            const { groupId, content, fileUrl } = data;
+
+            // Save and process group message
+            const result = await handleGroupMessage(
+              userId,
+              groupId,
+              content,
+              fileUrl,
+            );
+
+            // Send to all online group members except sender
+            result.participants.forEach((memberId) => {
+              if (memberId !== userId) {
+                const memberWs = onlineUsers.get(memberId);
+                if (memberWs && memberWs.readyState === WebSocket.OPEN) {
+                  memberWs.send(
+                    JSON.stringify({
+                      type: "group-message",
+                      message: result.message,
+                      roomId: result.roomId,
+                      senderId: userId,
+                      groupId,
+                    }),
+                  );
+                }
+              }
+            });
+
+            // Send confirmation to sender
+            ws.send(
+              JSON.stringify({
+                type: "group-message-sent",
+                // messageId: result.message.id,
+                roomId: result.roomId,
+              }),
+            );
+
+            // Update chat rooms for all group members
+            updateChatRoomsForUsers(result.participants);
+            break;
+          }
+
+          case "typing": {
+            const { receiverId, roomId } = data;
+            const receiverWs = onlineUsers.get(receiverId);
+
+            if (receiverWs) {
+              receiverWs.send(
+                JSON.stringify({
+                  type: "typing",
+                  senderId: userId,
+                  roomId,
+                  isTyping: true,
+                }),
+              );
+            }
+            break;
+          }
+
+          case "typing-stop": {
+            const { receiverId, roomId } = data;
+            const receiverWs = onlineUsers.get(receiverId);
+
+            if (receiverWs) {
+              receiverWs.send(
+                JSON.stringify({
+                  type: "typing",
+                  senderId: userId,
+                  roomId,
+                  isTyping: false,
+                }),
+              );
+            }
+            break;
+          }
+
+          case "mark-read": {
+            const { roomId } = data;
+            await chatRedisService.markAsRead(roomId, userId);
+
+            // Notify others in the room that messages are read
+            const room = await prisma.chatRoom.findUnique({
+              where: { id: roomId },
+              select: { participants: true },
+            });
+
+            if (room) {
+              room.participants.forEach((participantId) => {
+                if (participantId !== userId) {
+                  const participantWs = onlineUsers.get(participantId);
+                  if (participantWs) {
+                    participantWs.send(
+                      JSON.stringify({
+                        type: "messages-read",
+                        roomId,
+                        userId,
+                      }),
+                    );
+                  }
+                }
+              });
+            }
+            break;
+          }
+
+          case "get-messages": {
+            const { roomId, limit = 50 } = data;
+            const result = await getRoomMessages(roomId, userId, limit);
+
+            ws.send(
+              JSON.stringify({
+                type: "room-messages",
+                roomId,
+                messages: result.messages,
+                hasMore: result.hasMore,
+              }),
+            );
+            break;
+          }
+
+          case "get-more-messages": {
+            const { roomId, before, limit = 20 } = data;
+            // This would fetch older messages from database
+            // Implement pagination based on before timestamp
+            ws.send(
+              JSON.stringify({
+                type: "more-messages",
+                roomId,
+                messages: [], // Implement pagination logic here
+                hasMore: false,
+              }),
+            );
+            break;
+          }
+
+          default:
+            ws.send(
+              JSON.stringify({
+                type: "error",
+                message: "Unknown message type",
+              }),
+            );
+        }
+      } catch (error: any) {
+        console.error("❌ Error handling message:", error);
+        ws.send(
+          JSON.stringify({
+            type: "error",
+            message: error.message || "Failed to process message",
+          }),
+        );
+      }
+    });
+
+    // 7. HANDLE DISCONNECTION
+    ws.on("close", async () => {
+      console.log(`❌ User ${userId} disconnected`);
+
+      // Remove from online users
+      onlineUsers.delete(userId);
+
+      // Mark as offline in Redis with delay
+      setTimeout(async () => {
+        // Check if user reconnected in the meantime
+        if (!onlineUsers.has(userId)) {
+          await chatRedisService.setUserOffline(userId);
+          broadcastToUserConnections(userId, "user-offline", { userId });
+        }
+      }, 5000); // 5 second delay to handle reconnections
+
+      // Clean up heartbeat
+      clearInterval(heartbeat);
+    });
+
+    // 8. HANDLE ERRORS
+    ws.on("error", (error) => {
+      console.error(`❌ WebSocket error for user ${userId}:`, error);
+    });
+  });
+
+  // Function to broadcast to all connections of a user
+  const broadcastToUserConnections = (
+    userId: string,
+    type: string,
+    payload: any,
+  ) => {
+    // This would get all users who have chat rooms with this user
+    // For simplicity, we'll implement this based on your requirements
+  };
+
+  // Function to update chat rooms for users
+  const updateChatRoomsForUsers = async (userIds: string[]) => {
+    for (const userId of userIds) {
+      const userWs = onlineUsers.get(userId);
+      if (userWs && userWs.readyState === WebSocket.OPEN) {
+        try {
+          const rooms = await getUserChatRooms(userId, 20);
+          userWs.send(
+            JSON.stringify({
+              type: "chatrooms-updated",
+              rooms,
+            }),
+          );
+        } catch (error) {
+          console.error(`❌ Failed to update rooms for ${userId}:`, error);
+        }
+      }
+    }
+  };
+
+  console.log("✅ WebSocket server is running");
+  return wss;
+};
+```

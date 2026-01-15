@@ -1,5 +1,9 @@
 {
-  "type": "get-messages",
-  "roomId": "6964c6a05df045293e96954a",
-  "limit": 1
+  "type": "group-message",
+  "groupId": "69688cf384544dd7cf4441a1",
+  "content": "Hello every one!!, are you ready for the mentoring session",
+  "fileUrl": [
+    "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png",
+    "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png"
+  ]
 }
