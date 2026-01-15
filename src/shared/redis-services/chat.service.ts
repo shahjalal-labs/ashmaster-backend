@@ -61,7 +61,7 @@ export class ChatRedisService {
 
     // Batch insert to database
     const dbMessages = parsedMessages.map((msg) => ({
-      id: msg.id,
+      // id: msg.id,
       roomId: msg.roomId,
       senderId: msg.senderId,
       content: msg.content,
@@ -75,7 +75,7 @@ export class ChatRedisService {
       await prisma.$transaction([
         prisma.message.createMany({
           data: dbMessages,
-          skipDuplicates: true,
+          // skipDuplicates: true,
         }),
       ]);
 

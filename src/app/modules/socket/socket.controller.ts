@@ -110,7 +110,7 @@ export const setupWebSocketServer = (server: Server) => {
             ws.send(
               JSON.stringify({
                 type: "message-sent",
-                messageId: result.message.id,
+                // messageId: result.message.id,
                 roomId: result.roomId,
               }),
             );
@@ -153,7 +153,7 @@ export const setupWebSocketServer = (server: Server) => {
             ws.send(
               JSON.stringify({
                 type: "group-message-sent",
-                messageId: result.message.id,
+                // messageId: result.message.id,
                 roomId: result.roomId,
               }),
             );

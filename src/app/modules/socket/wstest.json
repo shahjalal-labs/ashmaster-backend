@@ -1,6 +1,5 @@
 {
-  "type": "p2p-message",
-  "content": "hellow ramim",
-  "fileUrl": ["url1,", "url2"],
-  "receiverId": "694a254aad128cabeaf7412f"
+  "type": "get-messages",
+  "roomId": "6964c6a05df045293e96954a",
+  "limit": 1
 }
