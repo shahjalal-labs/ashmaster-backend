@@ -31,9 +31,16 @@ export type TUpdateGroupSchema = z.infer<typeof updateGroupSchema>;
 
 //w: (end)  ╰──────────── updateGroup ────────────╯
 
+const addMembersIntoGroupSchema = z
+  .object({
+    memberId: z.string().length(24),
+  })
+  .strict();
+
 export type TCreateGroupSchema = z.infer<typeof createGroupSchema>;
 
 export const GroupValidation = {
   createGroupSchema,
   updateGroupSchema,
+  addMembersIntoGroupSchema,
 };

@@ -42,3 +42,13 @@ GET {{port6011}}/group/6964e4e1656ea48b225e0eb4/find-members
 Authorization: {{ashRaisa}}
 #Authorization: {{ashsrahim}}
 
+
+
+# addMembersIntoGroup
+POST {{port6011}}/group//add-member
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+ "memberId":"694a39873340ac9b4e138239"
+}

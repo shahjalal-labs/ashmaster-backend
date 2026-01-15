@@ -37,4 +37,10 @@ router.delete("/:id/leave", GroupController.leaveGroup);
 // /groupId/find-members
 router.get("/:id/find-members", GroupController.findMembersToAdd);
 
+router.post(
+  "/add-member",
+  validateRequest(GroupValidation.addMembersIntoGroupSchema),
+  GroupController.addMembersIntoGroup,
+);
+
 export const GroupRoutes = router;
