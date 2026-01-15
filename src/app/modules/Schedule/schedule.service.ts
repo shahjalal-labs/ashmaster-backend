@@ -76,11 +76,12 @@ const mySchedule = async (userId: string, pagination: IPaginationOptions) => {
 //w: (end)  ╰──────────── mySchedule ────────────╯
 
 //w: (start)╭──────────── getCurrentMonthSchedules ────────────╮
+// front end will give a date then return that month full schedule for  marking the  month calendar
 const getSchedulesOfMonth = async (userId: string, date: any) => {
-  const now = new Date();
-  const start = startOfMonth(now);
+  // const now = new Date();
+  const start = startOfMonth(date);
 
-  const end = endOfMonth(now);
+  const end = endOfMonth(date);
 
   const whereClause: Prisma.ScheduleWhereInput = {
     OR: [

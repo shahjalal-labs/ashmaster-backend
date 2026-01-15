@@ -15,11 +15,10 @@ Content-Type: application/json
 }
 
 
-# get schedules
-
+# get my schedules
 GET {{port6011}}/schedule?page=1&limit=100
-#Authorization: {{ashRaisa}}
-Authorization: {{ashsrahim}}
+Authorization: {{ashRaisa}}
+# Authorization: {{ashsrahim}}
 
 
 # get schedules for a month

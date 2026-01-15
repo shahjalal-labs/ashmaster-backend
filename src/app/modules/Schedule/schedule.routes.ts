@@ -24,8 +24,8 @@ router.post(
 
 router.get("/", ScheduleController.mySchedule);
 
-router.get("/current-month-schedules", ScheduleController.getSchedulesOfMonth);
-// router.get("/schedules-of-month", ScheduleController.getSchedulesOfMonth);
+// router.get("/current-month-schedules", ScheduleController.getSchedulesOfMonth);
+router.get("/schedules-of-month", ScheduleController.getSchedulesOfMonth);
 
 router.get("/details/:id", ScheduleController.getScheduleDetails);
 
