@@ -2,6 +2,8 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { GroupService } from "./group.service";
+import { pick } from "../../../shared/pick";
+import { paginationOptions } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── createGroup ────────────╮
 const createGroup = catchAsync(async (req, res) => {
@@ -84,6 +86,18 @@ const findMembersToAdd = catchAsync(async (req, res) => {
   });
 });
 //w: (end)  ╰──────────── findMembersToAdd ────────────╯
+
+const addMembersIntoGroup = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const { id: groupId } = req.params;
+  const result = await GroupService.findMembersToAdd(userId, groupId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched connections to add into group",
+    data: result,
+  });
+});
 
 export const GroupController = {
   createGroup,

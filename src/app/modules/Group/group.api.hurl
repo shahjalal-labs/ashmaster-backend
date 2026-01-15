@@ -27,7 +27,8 @@ Content-Type: application/json
 
 
 # fetchAllMembers
-GET {{port6011}}/group/members/6964e4e1656ea48b225e0eb4
+#/ /members/groupId
+GET {{port6011}}/group/members/6964e4e1656ea48b225e0eb4?page=1&limit=20
 Authorization: {{ashRaisa}}
 
 
