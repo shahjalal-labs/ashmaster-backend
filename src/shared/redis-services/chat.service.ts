@@ -18,6 +18,7 @@ export interface IMessage {
 export class ChatRedisService {
   private readonly MESSAGE_LIMIT = 20;
   private readonly ROOM_CACHE_TTL = 300; // 5 minutes
+  private readonly ONLINE_USERS_KEY = "chat:online:users";
 
   // Store message in Redis
   async saveMessage(roomId: string, message: IMessage): Promise<void> {
@@ -61,7 +62,6 @@ export class ChatRedisService {
 
     // Batch insert to database
     const dbMessages = parsedMessages.map((msg) => ({
-      // id: msg.id,
       roomId: msg.roomId,
       senderId: msg.senderId,
       content: msg.content,
@@ -75,7 +75,6 @@ export class ChatRedisService {
       await prisma.$transaction([
         prisma.message.createMany({
           data: dbMessages,
-          // skipDuplicates: true,
         }),
       ]);
 
@@ -92,13 +91,19 @@ export class ChatRedisService {
 
   // Track online users
   async setUserOnline(userId: string): Promise<void> {
-    await redisClient.set(`chat:online:${userId}`, "true", "EX", 30); // 30 seconds TTL
-    await redisClient.sadd("chat:online:users", userId);
+    // Set user-specific online key with TTL (auto-cleanup)
+    await redisClient.setex(`chat:online:${userId}`, 300, "true"); // 5 minutes TTL
+
+    // Add to online users set (no TTL here, will be cleaned on server restart)
+    await redisClient.sadd(this.ONLINE_USERS_KEY, userId);
   }
 
   async setUserOffline(userId: string): Promise<void> {
+    // Remove user-specific key
     await redisClient.del(`chat:online:${userId}`);
-    await redisClient.srem("chat:online:users", userId);
+
+    // Remove from online users set
+    await redisClient.srem(this.ONLINE_USERS_KEY, userId);
   }
 
   async isUserOnline(userId: string): Promise<boolean> {
@@ -108,7 +113,7 @@ export class ChatRedisService {
 
   // Get all online users
   async getOnlineUsers(): Promise<string[]> {
-    return await redisClient.smembers("chat:online:users");
+    return await redisClient.smembers(this.ONLINE_USERS_KEY);
   }
 
   // Cache user's chat rooms for quick access
@@ -186,16 +191,61 @@ export class ChatRedisService {
     }
   }
 
-  // Cleanup for testing
+  // Clear the online users set (called on server start)
+  async clearOnlineSet(): Promise<void> {
+    // Delete the online users set
+    await redisClient.del(this.ONLINE_USERS_KEY);
+
+    // Also clean up any stale user-specific online keys
+    const pattern = "chat:online:*";
+    const keys = await redisClient.keys(pattern);
+
+    if (keys.length > 0) {
+      // Filter out the set key itself
+      const userKeys = keys.filter((key) => key !== this.ONLINE_USERS_KEY);
+      if (userKeys.length > 0) {
+        await redisClient.del(...userKeys);
+      }
+    }
+
+    console.log("🧹 Cleared online users set from Redis");
+  }
+
+  // Cleanup all chat data (for testing)
   async clearAllChatData(): Promise<void> {
     const keys = await redisClient.keys("chat:*");
     if (keys.length > 0) {
       await redisClient.del(...keys);
     }
   }
-  // In chatRedisService
-  async clearOnlineSet(): Promise<void> {
-    await this.redisClient.del(this.onlineUsersKey);
+
+  // Get Redis connection status
+  async ping(): Promise<string> {
+    return await redisClient.ping();
+  }
+
+  // Check if user is still marked as online (has valid TTL)
+  async isUserReallyOnline(userId: string): Promise<boolean> {
+    const ttl = await redisClient.ttl(`chat:online:${userId}`);
+    return ttl > 0;
+  }
+
+  // Remove stale online users (those with expired TTL from the set)
+  async cleanupStaleOnlineUsers(): Promise<void> {
+    const onlineUsers = await redisClient.smembers(this.ONLINE_USERS_KEY);
+
+    for (const userId of onlineUsers) {
+      const isOnline = await this.isUserReallyOnline(userId);
+      if (!isOnline) {
+        await redisClient.srem(this.ONLINE_USERS_KEY, userId);
+        console.log(`🧹 Removed stale user ${userId} from online set`);
+      }
+    }
+  }
+
+  // Update user's online status TTL (call periodically for connected users)
+  async refreshUserOnlineStatus(userId: string): Promise<void> {
+    await redisClient.expire(`chat:online:${userId}`, 300); // Reset to 5 minutes
   }
 }
 

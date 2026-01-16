@@ -588,6 +588,28 @@ export const setupWebSocketServer = (server: Server) => {
     });
   }, 60000);
 
+  // Clear Redis online status on server start and cleanup periodically
+  wss.on("listening", async () => {
+    console.log("🚀 WebSocket server started, clearing stale connections...");
+
+    // Clear online set on server start
+    await chatRedisService.clearOnlineSet();
+
+    // Cleanup stale online users every 30 seconds
+    setInterval(async () => {
+      await chatRedisService.cleanupStaleOnlineUsers();
+    }, 30000);
+
+    // Refresh online status for connected users every 2 minutes
+    setInterval(async () => {
+      userConnections.forEach(async (connections, userId) => {
+        if (connections.size > 0) {
+          await chatRedisService.refreshUserOnlineStatus(userId);
+        }
+      });
+    }, 120000);
+  });
+
   console.log(
     "✅ WebSocket server is running with improved connection management",
   );
