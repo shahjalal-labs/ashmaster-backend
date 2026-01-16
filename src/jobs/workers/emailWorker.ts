@@ -6,11 +6,6 @@ new Worker(
   "emails",
   async (job) => {
     const { email, fullname, otp } = job.data;
-    console.log(`mail data`, {
-      email,
-      fullname,
-      otp,
-    });
 
     let subject = "";
     let html = "";
