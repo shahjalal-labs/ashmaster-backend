@@ -193,6 +193,10 @@ export class ChatRedisService {
       await redisClient.del(...keys);
     }
   }
+  // In chatRedisService
+  async clearOnlineSet(): Promise<void> {
+    await this.redisClient.del(this.onlineUsersKey);
+  }
 }
 
 export const chatRedisService = new ChatRedisService();
