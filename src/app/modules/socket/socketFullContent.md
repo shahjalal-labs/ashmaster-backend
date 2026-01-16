@@ -510,7 +510,7 @@ type AgeRange {
 }
 
 
-  when user disconnected through network issue or sudden server close, and rerun but the user not still connected, still it's giving connected, again when member subscribe, or new message coming it's giving update conversation but not giving the updated rooms, and when  new message it's sending also sender new message come event, what's going not sure, 
+  when user disconnected through neatwork issue or sudden server close, and rerun but the user not still connected, still it's giving connected, again when member subscribe, or new message coming it's giving update conversation but not giving the updated rooms, and when  new message it's sending also sender new message come event, what's going not sure,
 ```
 
 ## 📄 handlers/chat.handler.ts
