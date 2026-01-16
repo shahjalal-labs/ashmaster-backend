@@ -12,3 +12,6 @@
   "type":"member-subscribe",
   "receiverId":"694a793d6f65b4f863400d6a"
 }
+
+
+  when user disconnected through network issue or sudden server close, and rerun but the user not still connected, still it's giving connected, again when member subscribe, or new message coming it's giving update conversation but not giving the updated rooms, and when  new message it's sending also sender new message come event, what's going not sure, 

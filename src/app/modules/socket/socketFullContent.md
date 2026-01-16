@@ -1,4 +1,4 @@
-e socketFullContent.md
+# socketFullContent.md
 
 ## 🌲 Full Project Structure
 
@@ -80,7 +80,6 @@ e socketFullContent.md
 │   │   │   │   ├── handlers
 │   │   │   │   │   └── chat.handler.ts
 │   │   │   │   ├── socket.controller.ts
-│   │   │   │   ├── socketFullContentPrev.md
 │   │   │   │   ├── socket.interface.ts
 │   │   │   │   ├── socket.note.md
 │   │   │   │   ├── socket.service.ts
@@ -151,7 +150,7 @@ e socketFullContent.md
 │   └── google.png
 └── vercel.json
 
-31 directories, 116 files
+31 directories, 115 files
 ```
 
 ## 📁 socket Module Tree
@@ -161,14 +160,13 @@ e socketFullContent.md
 ├── handlers
 │   └── chat.handler.ts
 ├── socket.controller.ts
-├── socketFullContentPrev.md
 ├── socket.interface.ts
 ├── socket.note.md
 ├── socket.service.ts
 ├── websocketSendResponse.ts
 └── wstest.json
 
-2 directories, 8 files
+2 directories, 7 files
 ```
 
 ## 📋 schema.prisma
@@ -340,14 +338,14 @@ model ChecklistEndGoal {
 
 //w: (start)╭────────────  Group ────────────╮
 model Group {
-  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
   title      String
   memberIds  String[]
   groupPhoto String?
-  creatorId  String    @db.ObjectId
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  chatRoom   ChatRoom?
+  creatorId  String     @db.ObjectId
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  chatRoom   ChatRoom[]
 }
 
 //w: (end)  ╰──────────── Group  ────────────╯
@@ -355,7 +353,7 @@ model Group {
 model ChatRoom {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
   type         RoomType
-  groupId      String?   @unique @db.ObjectId
+  groupId      String?   @db.ObjectId
   group        Group?    @relation(fields: [groupId], references: [id])
   participants String[]  @db.ObjectId // both P2P and group
   createdAt    DateTime  @default(now())
@@ -505,6 +503,14 @@ type AgeRange {
     "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png"
   ]
 }
+
+{
+  "type":"member-subscribe",
+  "receiverId":"694a793d6f65b4f863400d6a"
+}
+
+
+  when user disconnected through network issue or sudden server close, and rerun but the user not still connected, still it's giving connected, again when member subscribe, or new message coming it's giving update conversation but not giving the updated rooms, and when  new message it's sending also sender new message come event, what's going not sure, 
 ```
 
 ## 📄 handlers/chat.handler.ts
@@ -517,9 +523,10 @@ import {
   chatRedisService,
   IMessage,
 } from "../../../../shared/redis-services/chat.service";
+import { v4 as uuidv4 } from "uuid";
 
 // Get user details for message sender
-const getUserDetails = async (userId: string) => {
+export const getUserDetails = async (userId: string) => {
   return prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -534,113 +541,130 @@ const getUserDetails = async (userId: string) => {
   });
 };
 
-// Simple function to handle P2P messages
-export const handleP2PMessage = async (
-  senderId: string,
+// Find or create P2P room
+export const findOrCreateP2PRoom = async (
+  userId: string,
   receiverId: string,
-  content?: string,
-  fileUrl?: string[],
 ) => {
   try {
-    if (senderId === receiverId) {
+    if (userId === receiverId) {
       throw new ApiError(
         httpStatus.BAD_REQUEST,
-        "You can't send message to yourself",
+        "You can't chat with yourself",
       );
     }
 
     // Verify both users exist
-    const [sender, receiver] = await Promise.all([
-      getUserDetails(senderId),
+    const [user, receiver] = await Promise.all([
+      getUserDetails(userId),
       prisma.user.findUnique({ where: { id: receiverId } }),
     ]);
 
-    if (!sender || !receiver) {
+    if (!user || !receiver) {
       throw new ApiError(httpStatus.NOT_FOUND, "User not found");
     }
 
-    // Find or create a chat room
+    // Find existing P2P room
     let room = await prisma.chatRoom.findFirst({
       where: {
         type: "P2P",
-        participants: { hasEvery: [senderId, receiverId] },
+        participants: { hasEvery: [userId, receiverId] },
+      },
+      include: {
+        messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+                profile: {
+                  select: {
+                    profileImage: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
       },
     });
 
     let isNewRoom = false;
 
+    // Create room if doesn't exist
     if (!room) {
       room = await prisma.chatRoom.create({
         data: {
           type: "P2P",
-          participants: [senderId, receiverId],
-          // Set both createdAt and updatedAt to now for new room
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          participants: [userId, receiverId],
+        },
+        include: {
+          messages: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  profile: {
+                    select: {
+                      profileImage: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
         },
       });
       isNewRoom = true;
-    } else {
-      // Only update updatedAt if room already exists and we're adding a message
-      await prisma.chatRoom.update({
-        where: { id: room.id },
-        data: { updatedAt: new Date() },
-      });
     }
 
-    // Create message object
-    const message: IMessage = {
-      roomId: room.id,
-      senderId,
-      content,
-      fileUrl: fileUrl || [],
-      readBy: [senderId], // Sender has read their own message
-      createdAt: new Date(),
-      sender: {
-        id: sender.id,
-        fullname: sender.fullname,
-        profileImage: sender.profile?.profileImage || null,
-      },
-    };
+    // Get initial messages from Redis (latest 20)
+    const initialMessages = await chatRedisService.getMessages(room.id, 20);
 
-    // Save to Redis immediately for real-time delivery
-    await chatRedisService.saveMessage(room.id, message);
-
-    // Check if we should flush to database
-    if (await chatRedisService.shouldFlushToDB(room.id)) {
-      await chatRedisService.flushToDatabase(room.id);
-    }
+    // Get partner details
+    const partnerId = room.participants.find((id) => id !== userId);
+    const partner = partnerId ? await getUserDetails(partnerId) : null;
 
     return {
-      roomId: room.id,
-      message,
+      room,
       isNewRoom,
+      initialMessages: initialMessages.reverse(), // Oldest to newest
+      partner,
       roomType: "P2P" as const,
-      participants: [senderId, receiverId],
     };
   } catch (error) {
-    console.error("❌ Failed to save message:", error);
+    console.error("❌ Failed to find/create P2P room:", error);
     throw error;
   }
 };
 
-// Function to handle group messages
-export const handleGroupMessage = async (
-  senderId: string,
+// Find or create Group room
+export const findOrCreateGroupRoom = async (
+  userId: string,
   groupId: string,
-  content?: string,
-  fileUrl?: string[],
 ) => {
   try {
-    const sender = await getUserDetails(senderId);
-    if (!sender) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
-    }
-
     // Verify group exists and user is a member
     const group = await prisma.group.findUnique({
       where: { id: groupId },
-      select: { memberIds: true, creatorId: true },
+      select: {
+        id: true,
+        title: true,
+        groupPhoto: true,
+        memberIds: true,
+        creatorId: true,
+      },
     });
 
     if (!group) {
@@ -650,18 +674,54 @@ export const handleGroupMessage = async (
     const allMemberIds = Array.from(
       new Set([...group.memberIds, group.creatorId]),
     );
-    if (!allMemberIds.includes(senderId)) {
+
+    if (!allMemberIds.includes(userId)) {
       throw new ApiError(
         httpStatus.FORBIDDEN,
         "You are not a member of this group",
       );
     }
 
-    // Find or create group chat room
+    // Find existing group room
     let room = await prisma.chatRoom.findFirst({
-      where: { type: "GROUP", groupId },
+      where: {
+        type: "GROUP",
+        groupId,
+      },
+      include: {
+        messages: {
+          select: {
+            id: true,
+            content: true,
+            createdAt: true,
+            sender: {
+              select: {
+                id: true,
+                fullname: true,
+                profile: {
+                  select: {
+                    profileImage: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+          take: 1,
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            groupPhoto: true,
+          },
+        },
+      },
     });
 
+    let isNewRoom = false;
+
+    // Create room if doesn't exist
     if (!room) {
       room = await prisma.chatRoom.create({
         data: {
@@ -669,16 +729,89 @@ export const handleGroupMessage = async (
           groupId,
           participants: allMemberIds,
         },
+        include: {
+          messages: {
+            select: {
+              id: true,
+              content: true,
+              createdAt: true,
+              sender: {
+                select: {
+                  id: true,
+                  fullname: true,
+                  profile: {
+                    select: {
+                      profileImage: true,
+                    },
+                  },
+                },
+              },
+            },
+            orderBy: { createdAt: "desc" },
+            take: 1,
+          },
+          group: {
+            select: {
+              id: true,
+              title: true,
+              groupPhoto: true,
+            },
+          },
+        },
       });
+      isNewRoom = true;
+    }
+
+    // Get initial messages from Redis (latest 20)
+    const initialMessages = await chatRedisService.getMessages(room.id, 20);
+
+    return {
+      room,
+      isNewRoom,
+      initialMessages: initialMessages.reverse(), // Oldest to newest
+      group: room.group,
+      roomType: "GROUP" as const,
+    };
+  } catch (error) {
+    console.error("❌ Failed to find/create group room:", error);
+    throw error;
+  }
+};
+
+// Send P2P message (after room is created)
+export const sendP2PMessage = async (
+  roomId: string,
+  senderId: string,
+  content?: string,
+  fileUrl?: string[],
+) => {
+  try {
+    const room = await prisma.chatRoom.findUnique({
+      where: { id: roomId },
+    });
+
+    if (!room || room.type !== "P2P") {
+      throw new ApiError(httpStatus.NOT_FOUND, "P2P room not found");
+    }
+
+    const sender = await getUserDetails(senderId);
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
+    }
+
+    // Get receiver
+    const receiverId = room.participants.find((id) => id !== senderId);
+    if (!receiverId) {
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid P2P room");
     }
 
     // Create message object
     const message: IMessage = {
-      roomId: room.id,
+      roomId,
       senderId,
       content,
       fileUrl: fileUrl || [],
-      readBy: [senderId], // Sender has read their own message
+      readBy: [senderId],
       createdAt: new Date(),
       sender: {
         id: sender.id,
@@ -687,45 +820,118 @@ export const handleGroupMessage = async (
       },
     };
 
-    // Save to Redis immediately for real-time delivery
-    await chatRedisService.saveMessage(room.id, message);
+    // Save to Redis immediately
+    await chatRedisService.saveMessage(roomId, message);
 
     // Check if we should flush to database
-    if (await chatRedisService.shouldFlushToDB(room.id)) {
-      await chatRedisService.flushToDatabase(room.id);
+    if (await chatRedisService.shouldFlushToDB(roomId)) {
+      await chatRedisService.flushToDatabase(roomId);
     }
 
-    // Update room's updatedAt in database
+    // Update room's updatedAt
     await prisma.chatRoom.update({
-      where: { id: room.id },
+      where: { id: roomId },
       data: { updatedAt: new Date() },
     });
 
     return {
-      roomId: room.id,
+      roomId,
       message,
-      isNewRoom: false,
-      roomType: "GROUP" as const,
-      participants: allMemberIds,
-      groupId,
+      receiverId,
+      participants: room.participants,
     };
   } catch (error) {
-    console.error("❌ Failed to save group message:", error);
+    console.error("❌ Failed to send P2P message:", error);
     throw error;
   }
 };
 
-// Function to get chat rooms for a user with last message and online status
+// Send group message (after room is created)
+export const sendGroupMessage = async (
+  roomId: string,
+  senderId: string,
+  content?: string,
+  fileUrl?: string[],
+) => {
+  try {
+    const room = await prisma.chatRoom.findUnique({
+      where: { id: roomId },
+      include: {
+        group: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    if (!room || room.type !== "GROUP") {
+      throw new ApiError(httpStatus.NOT_FOUND, "Group room not found");
+    }
+
+    const sender = await getUserDetails(senderId);
+    if (!sender) {
+      throw new ApiError(httpStatus.NOT_FOUND, "Sender not found");
+    }
+
+    // Create message object
+    const message: IMessage = {
+      roomId,
+      senderId,
+      content,
+      fileUrl: fileUrl || [],
+      readBy: [senderId],
+      createdAt: new Date(),
+      sender: {
+        id: sender.id,
+        fullname: sender.fullname,
+        profileImage: sender.profile?.profileImage || null,
+      },
+    };
+
+    // Save to Redis immediately
+    await chatRedisService.saveMessage(roomId, message);
+
+    // Check if we should flush to database
+    if (await chatRedisService.shouldFlushToDB(roomId)) {
+      await chatRedisService.flushToDatabase(roomId);
+    }
+
+    // Update room's updatedAt
+    await prisma.chatRoom.update({
+      where: { id: roomId },
+      data: { updatedAt: new Date() },
+    });
+
+    return {
+      roomId,
+      message,
+      participants: room.participants,
+      groupId: room.groupId,
+      group: room.group,
+    };
+  } catch (error) {
+    console.error("❌ Failed to send group message:", error);
+    throw error;
+  }
+};
+
+// Get user chat rooms (conversations list)
 export const getUserChatRooms = async (userId: string, limit: number = 20) => {
   try {
-    // Get rooms from database
     const rooms = await prisma.chatRoom.findMany({
       where: {
         participants: { has: userId },
+        // Only show rooms that have at least one message
+        messages: {
+          some: {},
+        },
       },
       include: {
         messages: {
           select: {
+            id: true,
             content: true,
             createdAt: true,
             sender: {
@@ -753,7 +959,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
     // Get online users
     const onlineUsers = await chatRedisService.getOnlineUsers();
 
-    // Enhance rooms with partner info and online status
     const enhancedRooms = await Promise.all(
       rooms.map(async (room) => {
         let partner = null;
@@ -762,7 +967,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
         let groupInfo = null;
 
         if (room.type === "P2P") {
-          // Find the other user in P2P chat
           const partnerId = room.participants.find((id) => id !== userId);
           if (partnerId) {
             const partnerUser = await getUserDetails(partnerId);
@@ -778,7 +982,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
             }
           }
         } else if (room.type === "GROUP") {
-          // For group chats, get group info
           if (room.group) {
             roomName = room.group.title;
             roomImage = room.group.groupPhoto;
@@ -790,7 +993,7 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           }
         }
 
-        // Get last message from Redis (more up-to-date)
+        // Get latest message from Redis (more up-to-date)
         const redisMessages = await chatRedisService.getMessages(room.id, 1);
         const lastMessage = redisMessages[0] || room.messages[0];
 
@@ -806,9 +1009,10 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
           name: roomName,
           image: roomImage,
           partner,
-          group: groupInfo, // Add group info for GROUP rooms
+          group: groupInfo,
           lastMessage: lastMessage?.content || null,
-          lastMessageTime: lastMessage ? lastMessage.createdAt : null, // Only set if there's a message
+          lastMessageTime: lastMessage ? lastMessage.createdAt : null,
+          lastMessageSender: lastMessage?.sender,
           unreadCount,
           participants: room.participants,
           updatedAt: room.updatedAt,
@@ -817,90 +1021,9 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
       }),
     );
 
-    // Cache the rooms
-    await chatRedisService.cacheUserRooms(userId, enhancedRooms);
-
     return enhancedRooms;
   } catch (error) {
     console.error("❌ Failed to get user chat rooms:", error);
-    throw error;
-  }
-};
-
-// Function to get message history for a room
-export const getRoomMessages = async (
-  roomId: string,
-  userId: string,
-  limit: number = 50,
-) => {
-  try {
-    // Verify user has access to this room
-    const room = await prisma.chatRoom.findFirst({
-      where: {
-        id: roomId,
-        participants: { has: userId },
-      },
-    });
-
-    if (!room) {
-      throw new ApiError(
-        httpStatus.FORBIDDEN,
-        "You don't have access to this room",
-      );
-    }
-
-    // Get messages from Redis (most recent)
-    const redisMessages = await chatRedisService.getMessages(roomId, limit);
-
-    // If we need more messages, fetch from database
-    let dbMessages: any[] = [];
-    if (redisMessages.length < limit) {
-      const needed = limit - redisMessages.length;
-      dbMessages = await prisma.message.findMany({
-        where: { roomId },
-        select: {
-          id: true,
-          content: true,
-          fileUrl: true,
-          senderId: true,
-          readBy: true,
-          createdAt: true,
-          sender: {
-            select: {
-              id: true,
-              fullname: true,
-              profile: {
-                select: {
-                  profileImage: true,
-                },
-              },
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: needed,
-        skip: 0,
-      });
-    }
-
-    // Combine and sort messages (newest first)
-    const allMessages = [...redisMessages, ...dbMessages]
-      .sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-      )
-      .slice(0, limit);
-
-    // Mark messages as read for this user
-    await chatRedisService.markAsRead(roomId, userId);
-
-    return {
-      roomId,
-      messages: allMessages,
-      hasMore: allMessages.length >= limit,
-    };
-  } catch (error) {
-    console.error("❌ Failed to get room messages:", error);
     throw error;
   }
 };
@@ -915,595 +1038,6 @@ export interface CustomWebSocket extends WebSocket {
   userId?: string;
 }
 ```
-
-## 📖 socketFullContentPrev.md
-
-````markdown
-## another model for better clarity rest api pattern,
-
-## 🎮 group.controller.ts
-
-```ts
-import httpStatus from "http-status";
-import catchAsync from "../../../shared/catchAsync";
-import sendResponse from "../../../shared/sendResponse";
-import { GroupService } from "./group.service";
-import { pick } from "../../../shared/pick";
-import { paginationOptions } from "../../../shared/paginationHelper";
-
-//w: (start)╭──────────── createGroup ────────────╮
-const createGroup = catchAsync(async (req, res) => {
-  await GroupService.createGroup(req.user.id, req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.CREATED,
-    success: true,
-    message: "Group successfully created.",
-    data: null,
-  });
-});
-//w: (end)  ╰──────────── createGroup ────────────╯
-
-//w: (start)╭──────────── getGroupDetails ────────────╮
-const getGroupDetails = catchAsync(async (req, res) => {
-  const { id: groupId } = req.params;
-  const group = await GroupService.getGroupDetails(groupId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Group details fetched successfully.",
-    data: group,
-  });
-});
-//w: (end)  ╰──────────── getGroupDetails ────────────╯
-
-//w: (start)╭──────────── updateGroup ────────────╮
-const updateGroup = catchAsync(async (req, res) => {
-  const { id: userId } = req.user;
-  const { id: groupId } = req.params;
-  await GroupService.updateGroup(userId, groupId, req.body);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Group updated successfully",
-    data: null,
-  });
-});
-//w: (end)  ╰──────────── updateGroup ────────────╯
-
-//w: (start)╭──────────── fetchAllMembers ────────────╮
-const fetchAllMembers = catchAsync(async (req, res) => {
-  const { id: groupId } = req.params;
-  const pickedPagination = pick(req.query, paginationOptions);
-
-  const result = await GroupService.fetchAllMembers(groupId, pickedPagination);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Fetched all members successfully",
-    data: result,
-  });
-});
-//w: (end)  ╰──────────── fetchAllMembers ────────────╯
-
-//w: (start)╭──────────── leaveGroup ────────────╮
-const leaveGroup = catchAsync(async (req, res) => {
-  const { id: userId } = req.user;
-  const { id: groupId } = req.params;
-  const result = await GroupService.leaveGroup(userId, groupId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Left group successfully.",
-    data: result,
-  });
-});
-//w: (end)  ╰──────────── leaveGroup ────────────╯
-
-//w: (start)╭──────────── findMembersToAdd ────────────╮
-const findMembersToAdd = catchAsync(async (req, res) => {
-  const { id: userId } = req.user;
-  const { id: groupId } = req.params;
-  const result = await GroupService.findMembersToAdd(userId, groupId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Fetched connections to add into group",
-    data: result,
-  });
-});
-//w: (end)  ╰──────────── findMembersToAdd ────────────╯
-
-//w: (start)╭──────────── addMembersIntoGroup ────────────╮
-const addMembersIntoGroup = catchAsync(async (req, res) => {
-  // const { id: userId } = req.user;
-  const { memberId } = req.body;
-  const { id: groupId } = req.params;
-  const result = await GroupService.addMembersIntoGroup(memberId, groupId);
-  sendResponse(res, {
-    statusCode: httpStatus.OK,
-    success: true,
-    message: "Memeber added into group successfully",
-    data: result,
-  });
-});
-//w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
-
-export const GroupController = {
-  createGroup,
-  getGroupDetails,
-  updateGroup,
-  fetchAllMembers,
-  leaveGroup,
-  findMembersToAdd,
-  addMembersIntoGroup,
-};
-```
-````
-
-## 🧪 group.api.hurl
-
-```bash
-# create group
-POST {{port6011}}/group/create
-Authorization: {{ashRaisa}}
-Content-Type: application/json
-
-{
- "title":"Data Science Mentoring",
- "groupPhoto": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png",
- "memberIds": ["694a39873340ac9b4e13823d"]
-}
-
-# fetch group details
-GET {{port6011}}/group/6964e4e1656ea48b225e0eb4
-Authorization: {{ashRaisa}}
-
-
-# update group (creator only)
-PATCH {{port6011}}/group/6964e4e1656ea48b225e0eb4
-Authorization: {{ashRaisa}}
-#Authorization: {{ashsrahim}}
-
-Content-Type: application/json
-
-{
- "title":"Data Science Mentoring"
-}
-
-
-# fetchAllMembers
-#/ /members/groupId
-GET {{port6011}}/group/members/6964e4e1656ea48b225e0eb4?page=1&limit=20
-Authorization: {{ashRaisa}}
-
-
-#  leave group (member only)
-DELETE {{port6011}}/group/6964e4e1656ea48b225e0eb4/leave
-#Authorization: {{ashRaisa}}
-Authorization: {{ashsrahim}}
-
-#  find members to add
-GET {{port6011}}/group/6964e4e1656ea48b225e0eb4/find-members
-Authorization: {{ashRaisa}}
-#Authorization: {{ashsrahim}}
-
-
-
-# addMembersIntoGroup
-#/ /group/groupId
-POST {{port6011}}/group/6964e4e1656ea48b225e0eb4/add-member
-Authorization: {{ashRaisa}}
-Content-Type: application/json
-
-{
- "memberId":"694a39873340ac9b4e138239"
-}
-```
-
-## 🛠️ group.service.ts
-
-```ts
-import httpStatus from "http-status";
-import ApiError from "../../../errors/ApiErrors";
-import prisma from "../../../shared/prisma";
-import { TCreateGroupSchema, TUpdateGroupSchema } from "./group.validation";
-import { IPaginationOptions } from "../../../interfaces/paginations";
-import { paginationHelper } from "../../../shared/paginationHelper";
-
-//w: (start)╭──────────── createGroup ────────────╮
-const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
-  const uniqueMemberIds = [...new Set(payload.memberIds)];
-
-  const users = await prisma.user.findMany({
-    where: {
-      id: {
-        in: uniqueMemberIds,
-      },
-    },
-  });
-  if (users.length !== uniqueMemberIds.length)
-    throw new ApiError(httpStatus.NOT_FOUND, "some of  member is not found");
-
-  await prisma.group.create({
-    data: {
-      ...payload,
-      creatorId: userId,
-    },
-  });
-};
-//w: (end)  ╰──────────── createGroup ────────────╯
-
-//w: (start)╭──────────── getGroupDetails ────────────╮
-const getGroupDetails = async (groupId: string) => {
-  const group = await prisma.group.findUnique({
-    where: {
-      id: groupId,
-    },
-  });
-
-  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found!");
-  return group;
-};
-//w: (end)  ╰──────────── getGroupDetails ────────────╯
-
-//w: (start)╭──────────── updateGroup ────────────╮
-const updateGroup = async (
-  userId: string,
-  groupId: string,
-  payload: TUpdateGroupSchema,
-) => {
-  const [group, user] = await Promise.all([
-    prisma.group.findUnique({
-      where: {
-        id: groupId,
-      },
-    }),
-
-    prisma.user.findUnique({
-      where: {
-        id: userId,
-      },
-    }),
-  ]);
-
-  if (!user) throw new ApiError(httpStatus.NOT_FOUND, "User not found");
-  if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-
-  if (group.creatorId !== userId)
-    throw new ApiError(
-      httpStatus.UNAUTHORIZED,
-      "Only the creator can update the group",
-    );
-
-  await prisma.group.update({
-    where: {
-      id: groupId,
-    },
-    data: payload,
-  });
-
-  return;
-};
-//w: (end)  ╰──────────── updateGroup ────────────╯
-
-//w: (start)╭──────────── fetchAllMembers ────────────╮
-const fetchAllMembers = async (
-  groupId: string,
-  paginations: IPaginationOptions,
-) => {
-  const { page, limit, skip } =
-    paginationHelper.calcalutePagination(paginations);
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    select: {
-      memberIds: true,
-      creatorId: true,
-    },
-  });
-
-  if (!group) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-  }
-
-  //merge + convert into unique ids
-  const userIds = Array.from(new Set([...group.memberIds, group.creatorId]));
-
-  const [total, members] = await Promise.all([
-    // total count
-    prisma.user.count({
-      where: {
-        id: { in: userIds },
-      },
-    }),
-    // members
-    prisma.user.findMany({
-      where: {
-        id: { in: userIds },
-      },
-      select: {
-        id: true,
-        fullname: true,
-        profile: {
-          select: {
-            profileImage: true,
-            profession: true,
-          },
-        },
-      },
-      skip,
-      take: limit,
-      // sort with createdAt:desc same  as id desc
-      orderBy: { id: "desc" },
-    }),
-  ]);
-
-  //Single, clean query
-
-  return {
-    meta: {
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
-    },
-    data: members,
-  };
-};
-
-//w: (end)  ╰──────────── fetchAllMembers ────────────╯
-
-//w: (start)╭──────────── leaveGroup ────────────╮
-const leaveGroup = async (userId: string, groupId: string) => {
-  // transaction to solve race conditions
-  const result = await prisma.$transaction(async (tx) => {
-    const group = await tx.group.findUnique({
-      where: {
-        id: groupId,
-      },
-      select: {
-        id: true,
-        creatorId: true,
-        memberIds: true,
-      },
-    });
-
-    if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-    if (userId === group.creatorId)
-      throw new ApiError(httpStatus.BAD_REQUEST, "Creator cannot leave group");
-
-    if (!group.memberIds.includes(userId)) {
-      return group;
-    }
-    const remainMemberIds = group.memberIds.filter((id) => id !== userId);
-
-    const result = await tx.group.update({
-      where: {
-        id: groupId,
-      },
-      data: {
-        memberIds: remainMemberIds,
-      },
-    });
-    return result;
-  });
-  return {
-    id: result.id,
-    memberIds: result.memberIds,
-    creatorId: result.creatorId,
-  };
-};
-//w: (end)  ╰──────────── leaveGroup ────────────╯
-
-//w: (start)╭──────────── findMembersToAdd ────────────╮
-// connected by connections and not a member in the particular group
-const findMembersToAdd = async (userId: string, groupId: string) => {
-  const connections = await prisma.connections.findMany({
-    where: {
-      status: "ACCEPTED",
-      OR: [{ receiverId: userId }, { senderId: userId }],
-    },
-    select: {
-      senderId: true,
-      sender: {
-        select: {
-          id: true,
-          fullname: true,
-          profile: {
-            select: {
-              profession: true,
-              profileImage: true,
-            },
-          },
-        },
-      },
-      receiverId: true,
-      receiver: {
-        select: {
-          id: true,
-          fullname: true,
-          profile: {
-            select: {
-              profession: true,
-              profileImage: true,
-            },
-          },
-        },
-      },
-    },
-  });
-
-  // normalize connections → always "the other user"
-  const connectedWithMe = connections.map((c) =>
-    c.senderId === userId ? c.receiver : c.sender,
-  );
-
-  const group = await prisma.group.findUnique({
-    where: { id: groupId },
-    select: { memberIds: true },
-  });
-
-  if (!group) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-  }
-
-  const groupMemberSet = new Set(group.memberIds);
-
-  const connectedButNotInGroup = connectedWithMe.filter(
-    (user) => !groupMemberSet.has(user.id),
-  );
-
-  return connectedButNotInGroup;
-};
-
-//w: (end)  ╰──────────── findMembersToAdd ────────────╯
-
-//w: (start)╭──────────── addMembersIntoGroup ────────────╮
-const addMembersIntoGroup = async (memberId: string, groupId: string) => {
-  return prisma.$transaction(async (tx) => {
-    const group = await tx.group.findUnique({
-      where: { id: groupId },
-      select: { memberIds: true },
-    });
-
-    if (!group) {
-      throw new ApiError(httpStatus.NOT_FOUND, "Group not found");
-    }
-
-    // already a member → no-op (idempotent)
-    if (group.memberIds.includes(memberId)) {
-      return group;
-    }
-
-    const updatedMembers = [...group.memberIds, memberId];
-
-    return tx.group.update({
-      where: { id: groupId },
-      data: {
-        memberIds: updatedMembers,
-      },
-      select: {
-        memberIds: true,
-      },
-    });
-  });
-};
-
-//w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
-
-export const GroupService = {
-  createGroup,
-  getGroupDetails,
-  updateGroup,
-  fetchAllMembers,
-  leaveGroup,
-  findMembersToAdd,
-  addMembersIntoGroup,
-};
-```
-
-## 📝 group.validation.ts
-
-```ts
-import { z } from "zod";
-
-//w: (start)╭──────────── createGroup ────────────╮
-
-const objectIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid ObjectId");
-const createGroupSchema = z
-  .object({
-    title: z.string().min(4),
-    groupPhoto: z.string().url().optional(),
-    memberIds: z
-      .array(objectIdSchema)
-      .min(1, "At least one member is required")
-      .refine(
-        (ids) => new Set(ids).size === ids.length,
-        "Duplicate member IDs are not allowed",
-      ),
-  })
-  .strict();
-
-//w: (end)  ╰──────────── createGroup ────────────╯
-
-//w: (start)╭──────────── updateGroup ────────────╮
-const updateGroupSchema = z
-  .object({
-    title: z.string().min(4),
-    groupPhoto: z.string().url().optional(),
-  })
-  .strict();
-
-export type TUpdateGroupSchema = z.infer<typeof updateGroupSchema>;
-
-//w: (end)  ╰──────────── updateGroup ────────────╯
-
-const addMembersIntoGroupSchema = z
-  .object({
-    memberId: z.string().length(24),
-  })
-  .strict();
-
-export type TCreateGroupSchema = z.infer<typeof createGroupSchema>;
-
-export const GroupValidation = {
-  createGroupSchema,
-  updateGroupSchema,
-  addMembersIntoGroupSchema,
-};
-```
-
-## 🔧 group.routes.ts
-
-```ts
-import { Router } from "express";
-import auth from "../../middlewares/auth";
-import config, { ENV } from "../../../config";
-import { profileGuard } from "../../middlewares/profile";
-import { GroupController } from "./group.controller";
-import validateRequest from "../../middlewares/validateRequest";
-import { GroupValidation } from "./group.validation";
-
-const router = Router();
-
-router.use(auth());
-
-if (config.env === ENV.DEVELOPMENT) {
-  router.use(profileGuard());
-}
-
-router.post(
-  "/create",
-  validateRequest(GroupValidation.createGroupSchema),
-  GroupController.createGroup,
-);
-
-router.get("/:id", GroupController.getGroupDetails);
-
-router.patch(
-  "/:id",
-  validateRequest(GroupValidation.updateGroupSchema),
-  GroupController.updateGroup,
-);
-
-//  /members/groupId
-router.get("/members/:id", GroupController.fetchAllMembers);
-
-// /groupId/leave
-router.delete("/:id/leave", GroupController.leaveGroup);
-
-// /groupId/find-members
-router.get("/:id/find-members", GroupController.findMembersToAdd);
-
-router.post(
-  "/:id/add-member",
-  validateRequest(GroupValidation.addMembersIntoGroupSchema),
-  GroupController.addMembersIntoGroup,
-);
-
-export const GroupRoutes = router;
-```
-
-````
 
 ## 📄 websocketSendResponse.ts
 
@@ -1523,7 +1057,7 @@ export const wsSendResponse = (
     }),
   );
 }; */
-````
+```
 
 ## 🛠️ socket.service.ts
 
@@ -1589,10 +1123,12 @@ import { Server } from "http";
 import { WebSocket, WebSocketServer } from "ws";
 import { verifyWsToken } from "./socket.service";
 import {
-  handleP2PMessage,
-  handleGroupMessage,
+  findOrCreateP2PRoom,
+  findOrCreateGroupRoom,
+  sendP2PMessage,
+  sendGroupMessage,
   getUserChatRooms,
-  getRoomMessages,
+  getUserDetails,
 } from "./handlers/chat.handler";
 import { chatRedisService } from "../../../shared/redis-services/chat.service";
 import prisma from "../../../shared/prisma";
@@ -1601,10 +1137,15 @@ import prisma from "../../../shared/prisma";
 interface UserSocket extends WebSocket {
   userId?: string;
   isAlive: boolean;
+  subscribedRooms?: Set<string>;
+  activeRoomId?: string;
 }
 
 // Store connected users: userId -> WebSocket
 const onlineUsers = new Map<string, UserSocket>();
+
+// Store room subscribers: roomId -> Set<userId>
+const roomSubscribers = new Map<string, Set<string>>();
 
 export const setupWebSocketServer = (server: Server) => {
   const wss = new WebSocketServer({ server });
@@ -1622,6 +1163,7 @@ export const setupWebSocketServer = (server: Server) => {
     const userId = decoded.id;
     ws.userId = userId;
     ws.isAlive = true;
+    ws.subscribedRooms = new Set();
 
     // 2. ADD USER TO ONLINE LIST & REDIS
     onlineUsers.set(userId, ws);
@@ -1631,23 +1173,20 @@ export const setupWebSocketServer = (server: Server) => {
       `✅ User ${userId} connected. Online users: ${onlineUsers.size}`,
     );
 
-    // 3. BROADCAST ONLINE STATUS TO USER'S CONNECTIONS
-    broadcastToUserConnections(userId, "user-online", { userId });
-
-    // 4. SEND USER'S CHAT ROOMS
+    // 3. SEND USER'S EXISTING CONVERSATIONS (rooms with messages)
     try {
-      const rooms = await getUserChatRooms(userId, 20);
+      const conversations = await getUserChatRooms(userId, 20);
       ws.send(
         JSON.stringify({
-          type: "chatrooms",
-          rooms,
+          type: "conversations",
+          conversations,
         }),
       );
     } catch (error) {
-      console.error("❌ Failed to fetch chat rooms:", error);
+      console.error("❌ Failed to fetch conversations:", error);
     }
 
-    // 5. SET UP HEARTBEAT (keep connection alive)
+    // 4. SET UP HEARTBEAT
     const heartbeat = setInterval(() => {
       if (!ws.isAlive) {
         ws.terminate();
@@ -1661,126 +1200,308 @@ export const setupWebSocketServer = (server: Server) => {
       ws.isAlive = true;
     });
 
-    // 6. HANDLE INCOMING MESSAGES
+    // 5. HANDLE INCOMING MESSAGES
     ws.on("message", async (rawData) => {
       try {
         const data = JSON.parse(rawData.toString());
         console.log(`📨 Message from ${userId}:`, data.type);
 
         switch (data.type) {
-          case "p2p-message": {
-            const { receiverId, content, fileUrl } = data;
+          case "member-subscribe": {
+            // Subscribe to P2P chat with a user (create room if doesn't exist)
+            const { receiverId } = data;
 
-            // Save and process message
-            const result = await handleP2PMessage(
-              userId,
-              receiverId,
-              content,
-              fileUrl,
-            );
+            const result = await findOrCreateP2PRoom(userId, receiverId);
 
-            // Send to receiver if online
-            const receiverWs = onlineUsers.get(receiverId);
-            if (receiverWs && receiverWs.readyState === WebSocket.OPEN) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "p2p-message",
-                  message: result.message,
-                  roomId: result.roomId,
-                  senderId: userId,
-                  isNewRoom: result.isNewRoom,
-                }),
-              );
-            }
+            // Subscribe to room
+            subscribeToRoom(userId, result.room.id, ws);
+            ws.activeRoomId = result.room.id;
 
-            // Send confirmation to sender
+            // Mark messages as read
+            await chatRedisService.markAsRead(result.room.id, userId);
+
+            // Send room details to user
             ws.send(
               JSON.stringify({
-                type: "message-sent",
-                // messageId: result.message.id,
-                roomId: result.roomId,
+                type: "room-subscribed",
+                roomId: result.room.id,
+                roomType: "P2P",
+                isNewRoom: result.isNewRoom,
+                initialMessages: result.initialMessages,
+                partner: result.partner,
               }),
             );
 
-            // Update chat rooms for both users
-            updateChatRoomsForUsers([userId, receiverId]);
+            // Update conversation list for both users
+            updateConversationsForUsers([userId, receiverId]);
             break;
           }
 
-          case "group-message": {
-            const { groupId, content, fileUrl } = data;
+          // Add this to the switch case in the message handler:
+          case "subscribe-room": {
+            const { roomId } = data;
 
-            // Save and process group message
-            const result = await handleGroupMessage(
+            // 1. Verify user has access to this room
+            const room = await prisma.chatRoom.findFirst({
+              where: {
+                id: roomId,
+                participants: { has: userId },
+              },
+              include: {
+                messages: {
+                  select: {
+                    id: true,
+                    content: true,
+                    createdAt: true,
+                    sender: {
+                      select: {
+                        id: true,
+                        fullname: true,
+                        profile: {
+                          select: {
+                            profileImage: true,
+                          },
+                        },
+                      },
+                    },
+                  },
+                  orderBy: { createdAt: "desc" },
+                  take: 1,
+                },
+                group: {
+                  select: {
+                    id: true,
+                    title: true,
+                    groupPhoto: true,
+                  },
+                },
+              },
+            });
+
+            if (!room) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You don't have access to this room",
+                }),
+              );
+              break;
+            }
+
+            // 2. Subscribe to the room
+            subscribeToRoom(userId, roomId, ws);
+            ws.activeRoomId = roomId;
+
+            // 3. Get initial messages from Redis (latest 20)
+            const initialMessages = await chatRedisService.getMessages(
+              roomId,
+              20,
+            );
+
+            // 4. Mark messages as read
+            await chatRedisService.markAsRead(roomId, userId);
+
+            // 5. Get partner/group details
+            let partner = null;
+            let roomName = "";
+            let roomImage = null;
+            let groupInfo = null;
+
+            if (room.type === "P2P") {
+              const partnerId = room.participants.find((id) => id !== userId);
+              if (partnerId) {
+                const partnerUser = await getUserDetails(partnerId);
+                if (partnerUser) {
+                  partner = {
+                    id: partnerUser.id,
+                    name: partnerUser.fullname,
+                    image: partnerUser.profile?.profileImage,
+                    online: await chatRedisService.isUserOnline(partnerId),
+                  };
+                  roomName = partnerUser.fullname;
+                  roomImage = partnerUser.profile?.profileImage;
+                }
+              }
+            } else if (room.type === "GROUP") {
+              if (room.group) {
+                roomName = room.group.title;
+                roomImage = room.group.groupPhoto;
+                groupInfo = {
+                  id: room.group.id,
+                  title: room.group.title,
+                  photo: room.group.groupPhoto,
+                };
+              }
+            }
+
+            // 6. Send room details to user
+            ws.send(
+              JSON.stringify({
+                type: "room-subscribed",
+                roomId: room.id,
+                roomType: room.type,
+                isNewRoom: false,
+                initialMessages: initialMessages.reverse(), // Oldest to newest
+                partner,
+                group: groupInfo,
+                hasMoreMessages: initialMessages.length >= 20,
+              }),
+            );
+
+            console.log(
+              `👥 User ${userId} subscribed to existing room ${roomId}`,
+            );
+            break;
+          }
+
+          case "group-subscribe": {
+            // Subscribe to group chat
+            const { groupId } = data;
+
+            const result = await findOrCreateGroupRoom(userId, groupId);
+
+            // Subscribe to room
+            subscribeToRoom(userId, result.room.id, ws);
+            ws.activeRoomId = result.room.id;
+
+            // Mark messages as read
+            await chatRedisService.markAsRead(result.room.id, userId);
+
+            // Send room details to user
+            ws.send(
+              JSON.stringify({
+                type: "room-subscribed",
+                roomId: result.room.id,
+                roomType: "GROUP",
+                isNewRoom: result.isNewRoom,
+                initialMessages: result.initialMessages,
+                group: result.group,
+              }),
+            );
+
+            // Update conversation list for all group members
+            updateConversationsForUsers(result.room.participants);
+            break;
+          }
+
+          case "member-send-message": {
+            // Send message in P2P room
+            const { roomId, content, fileUrl } = data;
+
+            // Verify user is subscribed to this room
+            if (!ws.subscribedRooms?.has(roomId)) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You are not subscribed to this room",
+                }),
+              );
+              break;
+            }
+
+            const result = await sendP2PMessage(
+              roomId,
               userId,
-              groupId,
               content,
               fileUrl,
             );
 
-            // Send to all online group members except sender
-            result.participants.forEach((memberId) => {
-              if (memberId !== userId) {
-                const memberWs = onlineUsers.get(memberId);
-                if (memberWs && memberWs.readyState === WebSocket.OPEN) {
-                  memberWs.send(
-                    JSON.stringify({
-                      type: "group-message",
-                      message: result.message,
-                      roomId: result.roomId,
-                      senderId: userId,
-                      groupId,
-                    }),
-                  );
-                }
-              }
-            });
-
-            // Send confirmation to sender
+            // Send to sender
             ws.send(
               JSON.stringify({
-                type: "group-message-sent",
-                // messageId: result.message.id,
-                roomId: result.roomId,
+                type: "new-message",
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "P2P",
               }),
             );
 
-            // Update chat rooms for all group members
-            updateChatRoomsForUsers(result.participants);
+            // Broadcast to other room subscribers (including receiver)
+            broadcastToRoomSubscribers(
+              roomId,
+              "new-message",
+              {
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "P2P",
+              },
+              userId, // Exclude sender
+            );
+
+            // Update conversation list for both users
+            updateConversationsForUsers(result.participants);
+            break;
+          }
+
+          case "group-send-message": {
+            // Send message in group room
+            const { roomId, content, fileUrl } = data;
+
+            // Verify user is subscribed to this room
+            if (!ws.subscribedRooms?.has(roomId)) {
+              ws.send(
+                JSON.stringify({
+                  type: "error",
+                  message: "You are not subscribed to this room",
+                }),
+              );
+              break;
+            }
+
+            const result = await sendGroupMessage(
+              roomId,
+              userId,
+              content,
+              fileUrl,
+            );
+
+            // Send to sender
+            ws.send(
+              JSON.stringify({
+                type: "new-message",
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "GROUP",
+                groupId: result.groupId,
+              }),
+            );
+
+            // Broadcast to all room subscribers
+            broadcastToRoomSubscribers(
+              roomId,
+              "new-message",
+              {
+                roomId,
+                message: result.message,
+                senderId: userId,
+                roomType: "GROUP",
+                groupId: result.groupId,
+              },
+              userId, // Exclude sender
+            );
+
+            // Update conversation list for all group members
+            updateConversationsForUsers(result.participants);
             break;
           }
 
           case "typing": {
-            const { receiverId, roomId } = data;
-            const receiverWs = onlineUsers.get(receiverId);
+            const { roomId, isTyping = true } = data;
 
-            if (receiverWs) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "typing",
-                  senderId: userId,
-                  roomId,
-                  isTyping: true,
-                }),
-              );
-            }
-            break;
-          }
-
-          case "typing-stop": {
-            const { receiverId, roomId } = data;
-            const receiverWs = onlineUsers.get(receiverId);
-
-            if (receiverWs) {
-              receiverWs.send(
-                JSON.stringify({
-                  type: "typing",
-                  senderId: userId,
-                  roomId,
-                  isTyping: false,
-                }),
-              );
-            }
+            // Broadcast typing indicator to room subscribers
+            broadcastToRoomSubscribers(
+              roomId,
+              "typing",
+              {
+                roomId,
+                senderId: userId,
+                isTyping,
+              },
+              userId,
+            );
             break;
           }
 
@@ -1788,56 +1509,65 @@ export const setupWebSocketServer = (server: Server) => {
             const { roomId } = data;
             await chatRedisService.markAsRead(roomId, userId);
 
-            // Notify others in the room that messages are read
-            const room = await prisma.chatRoom.findUnique({
-              where: { id: roomId },
-              select: { participants: true },
-            });
-
-            if (room) {
-              room.participants.forEach((participantId) => {
-                if (participantId !== userId) {
-                  const participantWs = onlineUsers.get(participantId);
-                  if (participantWs) {
-                    participantWs.send(
-                      JSON.stringify({
-                        type: "messages-read",
-                        roomId,
-                        userId,
-                      }),
-                    );
-                  }
-                }
-              });
-            }
-            break;
-          }
-
-          case "get-messages": {
-            const { roomId, limit = 50 } = data;
-            const result = await getRoomMessages(roomId, userId, limit);
-
-            ws.send(
-              JSON.stringify({
-                type: "room-messages",
+            // Notify room subscribers that messages are read
+            broadcastToRoomSubscribers(
+              roomId,
+              "messages-read",
+              {
                 roomId,
-                messages: result.messages,
-                hasMore: result.hasMore,
-              }),
+                userId,
+              },
+              userId,
             );
+
+            // Update conversation list for user
+            updateConversationsForUsers([userId]);
             break;
           }
 
           case "get-more-messages": {
             const { roomId, before, limit = 20 } = data;
-            // This would fetch older messages from database
-            // Implement pagination based on before timestamp
+
+            // Get older messages from database
+            const olderMessages = await getOlderMessagesFromDB(
+              roomId,
+              before,
+              limit,
+              userId,
+            );
+
             ws.send(
               JSON.stringify({
                 type: "more-messages",
                 roomId,
-                messages: [], // Implement pagination logic here
-                hasMore: false,
+                messages: olderMessages.messages,
+                hasMore: olderMessages.hasMore,
+                before: olderMessages.newBefore,
+              }),
+            );
+            break;
+          }
+
+          case "unsubscribe-room": {
+            const { roomId } = data;
+            unsubscribeFromRoom(userId, roomId, ws);
+            ws.activeRoomId = undefined;
+
+            ws.send(
+              JSON.stringify({
+                type: "room-unsubscribed",
+                roomId,
+              }),
+            );
+            break;
+          }
+
+          case "get-conversations": {
+            const conversations = await getUserChatRooms(userId, 20);
+            ws.send(
+              JSON.stringify({
+                type: "conversations",
+                conversations,
               }),
             );
             break;
@@ -1862,67 +1592,187 @@ export const setupWebSocketServer = (server: Server) => {
       }
     });
 
-    // 7. HANDLE DISCONNECTION
+    // 6. HANDLE DISCONNECTION
     ws.on("close", async () => {
       console.log(`❌ User ${userId} disconnected`);
+
+      // Unsubscribe from all rooms
+      if (ws.subscribedRooms) {
+        ws.subscribedRooms.forEach((roomId) => {
+          unsubscribeFromRoom(userId, roomId, ws);
+        });
+      }
 
       // Remove from online users
       onlineUsers.delete(userId);
 
-      // Mark as offline in Redis with delay
+      // Mark as offline in Redis
       setTimeout(async () => {
-        // Check if user reconnected in the meantime
         if (!onlineUsers.has(userId)) {
           await chatRedisService.setUserOffline(userId);
           broadcastToUserConnections(userId, "user-offline", { userId });
         }
-      }, 5000); // 5 second delay to handle reconnections
+      }, 5000);
 
       // Clean up heartbeat
       clearInterval(heartbeat);
     });
 
-    // 8. HANDLE ERRORS
+    // 7. HANDLE ERRORS
     ws.on("error", (error) => {
       console.error(`❌ WebSocket error for user ${userId}:`, error);
     });
   });
 
-  // Function to broadcast to all connections of a user
-  const broadcastToUserConnections = (
-    userId: string,
-    type: string,
-    payload: any,
-  ) => {
-    // This would get all users who have chat rooms with this user
-    // For simplicity, we'll implement this based on your requirements
+  // Helper functions
+  const subscribeToRoom = (userId: string, roomId: string, ws: UserSocket) => {
+    if (!roomSubscribers.has(roomId)) {
+      roomSubscribers.set(roomId, new Set());
+    }
+    roomSubscribers.get(roomId)!.add(userId);
+
+    if (ws.subscribedRooms) {
+      ws.subscribedRooms.add(roomId);
+    }
   };
 
-  // Function to update chat rooms for users
-  const updateChatRoomsForUsers = async (userIds: string[]) => {
+  const unsubscribeFromRoom = (
+    userId: string,
+    roomId: string,
+    ws: UserSocket,
+  ) => {
+    if (roomSubscribers.has(roomId)) {
+      roomSubscribers.get(roomId)!.delete(userId);
+      if (roomSubscribers.get(roomId)!.size === 0) {
+        roomSubscribers.delete(roomId);
+      }
+    }
+
+    if (ws.subscribedRooms) {
+      ws.subscribedRooms.delete(roomId);
+    }
+  };
+
+  const broadcastToRoomSubscribers = (
+    roomId: string,
+    type: string,
+    payload: any,
+    excludeUserId?: string,
+  ) => {
+    const subscribers = roomSubscribers.get(roomId);
+    if (!subscribers) return;
+
+    subscribers.forEach((subscriberId) => {
+      if (subscriberId === excludeUserId) return;
+
+      const subscriberWs = onlineUsers.get(subscriberId);
+      if (subscriberWs && subscriberWs.readyState === WebSocket.OPEN) {
+        subscriberWs.send(
+          JSON.stringify({
+            type,
+            ...payload,
+          }),
+        );
+      }
+    });
+  };
+
+  const updateConversationsForUsers = async (userIds: string[]) => {
     for (const userId of userIds) {
       const userWs = onlineUsers.get(userId);
       if (userWs && userWs.readyState === WebSocket.OPEN) {
         try {
-          const rooms = await getUserChatRooms(userId, 20);
+          const conversations = await getUserChatRooms(userId, 20);
           userWs.send(
             JSON.stringify({
-              type: "chatrooms-updated",
-              rooms,
+              type: "conversations-updated",
+              conversations,
             }),
           );
         } catch (error) {
-          console.error(`❌ Failed to update rooms for ${userId}:`, error);
+          console.error(
+            `❌ Failed to update conversations for ${userId}:`,
+            error,
+          );
         }
       }
     }
   };
 
-  console.log("✅ WebSocket server is running");
+  const getOlderMessagesFromDB = async (
+    roomId: string,
+    before: string,
+    limit: number,
+    userId: string,
+  ) => {
+    try {
+      const beforeDate = new Date(before);
+
+      const messages = await prisma.message.findMany({
+        where: {
+          roomId,
+          createdAt: { lt: beforeDate },
+        },
+        select: {
+          id: true,
+          content: true,
+          fileUrl: true,
+          senderId: true,
+          readBy: true,
+          createdAt: true,
+          sender: {
+            select: {
+              id: true,
+              fullname: true,
+              profile: {
+                select: {
+                  profileImage: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+        take: limit,
+      });
+
+      const hasMore = messages.length >= limit;
+      const newBefore =
+        messages.length > 0
+          ? messages[messages.length - 1].createdAt.toISOString()
+          : before;
+
+      return {
+        messages,
+        hasMore,
+        newBefore,
+      };
+    } catch (error) {
+      console.error("❌ Error getting older messages:", error);
+      throw error;
+    }
+  };
+
+  const broadcastToUserConnections = (
+    userId: string,
+    type: string,
+    payload: any,
+  ) => {
+    onlineUsers.forEach((userWs, wsUserId) => {
+      if (wsUserId === userId) return;
+
+      if (userWs && userWs.readyState === WebSocket.OPEN) {
+        userWs.send(
+          JSON.stringify({
+            type,
+            ...payload,
+          }),
+        );
+      }
+    });
+  };
+
+  console.log("✅ WebSocket server is running with proper room flow");
   return wss;
 };
 ```
-
-give me another 2 event which task is: think i have userId now i need to show user's messages, right? think that user messages will come by websocket redis the latest 20 and other message will come from db and it will be sorted with updatedAt desc. Here will have the pagination for rest api. My main purpose whenever new message come it will udate with latest message so ui can render instantly it's for last 20 messages as it will store in redis other message will fetch with rest api pagination. I am not sure about the flow, i think you are understanding, better, i mean i need a event from where front end can real time render message. and past message through rest api pagination.
-
-similarly for with groupId. whenever new message come it will updates the list so that frontend can simultaneously update the ui,
