@@ -9,7 +9,6 @@ import { entryMessage } from "./app/middlewares/entry";
 import { notFound } from "./app/middlewares/notFound";
 import helmet from "helmet";
 import config, { ENV } from "./config";
-import { notificationQueue } from "./jobs/queues/notificationQueue";
 
 const app: Application = express();
 
@@ -35,18 +34,6 @@ app.use(
     challenge: true,
   }),
   bullBoardRouter,
-);
-
-notificationQueue.add(
-  "notify",
-  {
-    title: "Chat notification",
-    body: "Hello! you have a new message from sara jensen",
-  },
-  {
-    attempts: 3,
-    timestamp: Date.now(),
-  },
 );
 
 // Global Error Handler

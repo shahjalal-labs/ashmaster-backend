@@ -4,11 +4,8 @@ import redisClient from "../../shared/redis";
 new Worker(
   "notifications_bridge_connections",
   async (job) => {
-    console.log(`job`, job);
     if (job.name === "notify") {
-      console.log({
-        [job.data]: "jobdata",
-      });
+      console.log("notification worker processing");
     }
   },
   {

@@ -12,6 +12,7 @@ import httpStatus from "http-status";
 import { TCompleteProfileInput, UpdateProfileInput } from "./auth.validation";
 import redisClient from "../../../shared/redis";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
+import { notificationQueue } from "../../../jobs/queues/notificationQueue";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
@@ -294,6 +295,10 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
 
+  await notificationQueue.add("notify", {
+    title: "hellow",
+  });
+
   return {
     ...sanitizedUser,
     ...(otherUserId && {
@@ -301,6 +306,7 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
     }),
   };
 };
+
 //w: (end)  ╰──────────── getProfile ────────────╯
 
 //w: (start)╭──────────── updateProfile ────────────╮
