@@ -33,6 +33,11 @@
 │   │   │   │   ├── auth.service.ts
 │   │   │   │   ├── auth.validation.ts
 │   │   │   │   └── profiledata.md
+│   │   │   ├── chat
+│   │   │   │   ├── chat.api.hurl
+│   │   │   │   ├── chat.controller.ts
+│   │   │   │   ├── chat.routes.ts
+│   │   │   │   └── chat.service.ts
 │   │   │   ├── ChecklistEndGoal
 │   │   │   │   ├── checklistEndGoal.api.hurl
 │   │   │   │   ├── checklistEndGoal.controller.ts
@@ -41,6 +46,13 @@
 │   │   │   │   ├── checklistEndGoal.service.ts
 │   │   │   │   ├── checklistEndGoal.validation.ts
 │   │   │   │   └── mentoProgress.ts
+│   │   │   ├── Group
+│   │   │   │   ├── group.api.hurl
+│   │   │   │   ├── group.controller.ts
+│   │   │   │   ├── GroupFullContent.md
+│   │   │   │   ├── group.routes.ts
+│   │   │   │   ├── group.service.ts
+│   │   │   │   └── group.validation.ts
 │   │   │   ├── mentorProgress
 │   │   │   │   ├── mentorProgress.api.hurl
 │   │   │   │   ├── mentorProgress.controller.ts
@@ -62,6 +74,16 @@
 │   │   │   │   ├── schedule.routes.ts
 │   │   │   │   ├── schedule.service.ts
 │   │   │   │   └── schedule.validation.ts
+│   │   │   ├── socket
+│   │   │   │   ├── handlers
+│   │   │   │   │   └── chat.handler.ts
+│   │   │   │   ├── socket.controller.ts
+│   │   │   │   ├── socketFullContent.md
+│   │   │   │   ├── socket.interface.ts
+│   │   │   │   ├── socket.note.md
+│   │   │   │   ├── socket.service.ts
+│   │   │   │   ├── websocketSendResponse.ts
+│   │   │   │   └── wstest.json
 │   │   │   └── user
 │   │   │       ├── user.api.hurl
 │   │   │       ├── user.controller.ts
@@ -90,8 +112,7 @@
 │   │   ├── generateOtp.ts
 │   │   ├── jwtHelpers.ts
 │   │   ├── onboardingHtml.ts
-│   │   ├── sendEmail.ts
-│   │   └── socket.service.ts
+│   │   └── sendEmail.ts
 │   ├── interfaces
 │   │   ├── common.ts
 │   │   ├── error.ts
@@ -105,8 +126,6 @@
 │   │   └── workers
 │   │       └── emailWorker.ts
 │   ├── resource
-│   │   ├── prompts
-│   │   │   └── prompt.md
 │   │   └── requirements.md
 │   ├── server.ts
 │   ├── shared
@@ -115,6 +134,7 @@
 │   │   ├── pick.ts
 │   │   ├── prisma.ts
 │   │   ├── redis-services
+│   │   │   ├── chat.service.ts
 │   │   │   └── otp.service.ts
 │   │   ├── redis.ts
 │   │   ├── searchFilter.ts
@@ -129,6 +149,6 @@
 │   └── google.png
 └── vercel.json
 
-28 directories, 99 files
+31 directories, 116 files
 
 ```
