@@ -1139,19 +1139,42 @@ interface UserSocket extends WebSocket {
   isAlive: boolean;
   subscribedRooms?: Set<string>;
   activeRoomId?: string;
+  connectionId: string; // Unique connection identifier
+  lastActivity: number;
 }
 
-// Store connected users: userId -> WebSocket
-const onlineUsers = new Map<string, UserSocket>();
+// Store connected users: userId -> Map<connectionId, WebSocket>
+const userConnections = new Map<string, Map<string, UserSocket>>();
 
-// Store room subscribers: roomId -> Set<userId>
+// Store connection ID to user ID mapping
+const connectionToUser = new Map<string, string>();
+
+// Store room subscribers: roomId -> Set<connectionId>
 const roomSubscribers = new Map<string, Set<string>>();
+
+// Generate unique connection ID
+const generateConnectionId = (): string => {
+  return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export const setupWebSocketServer = (server: Server) => {
   const wss = new WebSocketServer({ server });
 
+  // Clear Redis online status on server start
+  wss.on("listening", async () => {
+    console.log("🚀 WebSocket server started, clearing stale connections...");
+    await chatRedisService.clearOnlineSet();
+  });
+
   wss.on("connection", async (ws: UserSocket, req) => {
-    // 1. AUTHENTICATE USER
+    // 1. GENERATE UNIQUE CONNECTION ID
+    const connectionId = generateConnectionId();
+    ws.connectionId = connectionId;
+    ws.isAlive = true;
+    ws.subscribedRooms = new Set();
+    ws.lastActivity = Date.now();
+
+    // 2. AUTHENTICATE USER
     const token = req.headers.token as string;
     const decoded = verifyWsToken(ws, token);
 
@@ -1162,33 +1185,63 @@ export const setupWebSocketServer = (server: Server) => {
 
     const userId = decoded.id;
     ws.userId = userId;
-    ws.isAlive = true;
-    ws.subscribedRooms = new Set();
 
-    // 2. ADD USER TO ONLINE LIST & REDIS
-    onlineUsers.set(userId, ws);
+    // 3. CLEANUP PREVIOUS CONNECTIONS FOR SAME USER
+    cleanupUserConnections(userId);
+
+    // 4. ADD USER TO CONNECTION MAPS
+    if (!userConnections.has(userId)) {
+      userConnections.set(userId, new Map());
+    }
+    userConnections.get(userId)!.set(connectionId, ws);
+    connectionToUser.set(connectionId, userId);
+
+    // 5. SET USER ONLINE IN REDIS
     await chatRedisService.setUserOnline(userId);
 
     console.log(
-      `✅ User ${userId} connected. Online users: ${onlineUsers.size}`,
+      `✅ User ${userId} connected (${connectionId}). Total connections: ${connectionToUser.size}`,
     );
 
-    // 3. SEND USER'S EXISTING CONVERSATIONS (rooms with messages)
+    // 6. SEND USER'S EXISTING CONVERSATIONS
     try {
       const conversations = await getUserChatRooms(userId, 20);
+
+      // Also get online status for users in conversations
+      const onlineUsers = await chatRedisService.getOnlineUsers();
+
+      // Enhance conversations with online status
+      const enhancedConversations = conversations.map((conv) => {
+        if (conv.partner) {
+          return {
+            ...conv,
+            partner: {
+              ...conv.partner,
+              online: onlineUsers.includes(conv.partner.id),
+            },
+          };
+        }
+        return conv;
+      });
+
       ws.send(
         JSON.stringify({
           type: "conversations",
-          conversations,
+          conversations: enhancedConversations,
         }),
       );
+
+      // Send online status update to others
+      broadcastUserStatus(userId, true);
     } catch (error) {
       console.error("❌ Failed to fetch conversations:", error);
     }
 
-    // 4. SET UP HEARTBEAT
+    // 7. SET UP HEARTBEAT
     const heartbeat = setInterval(() => {
       if (!ws.isAlive) {
+        console.log(`💔 Heartbeat failed for ${userId} (${connectionId})`);
+        cleanupConnection(connectionId);
         ws.terminate();
         return;
       }
@@ -1198,27 +1251,31 @@ export const setupWebSocketServer = (server: Server) => {
 
     ws.on("pong", () => {
       ws.isAlive = true;
+      ws.lastActivity = Date.now();
     });
 
-    // 5. HANDLE INCOMING MESSAGES
+    // 8. HANDLE INCOMING MESSAGES
     ws.on("message", async (rawData) => {
       try {
+        ws.lastActivity = Date.now();
         const data = JSON.parse(rawData.toString());
-        console.log(`📨 Message from ${userId}:`, data.type);
+        console.log(`📨 Message from ${userId} (${connectionId}):`, data.type);
 
         switch (data.type) {
           case "member-subscribe": {
-            // Subscribe to P2P chat with a user (create room if doesn't exist)
             const { receiverId } = data;
-
             const result = await findOrCreateP2PRoom(userId, receiverId);
 
             // Subscribe to room
-            subscribeToRoom(userId, result.room.id, ws);
+            subscribeToRoom(connectionId, result.room.id, ws);
             ws.activeRoomId = result.room.id;
 
             // Mark messages as read
             await chatRedisService.markAsRead(result.room.id, userId);
+
+            // Get partner's online status
+            const partnerOnline =
+              await chatRedisService.isUserOnline(receiverId);
 
             // Send room details to user
             ws.send(
@@ -1228,7 +1285,10 @@ export const setupWebSocketServer = (server: Server) => {
                 roomType: "P2P",
                 isNewRoom: result.isNewRoom,
                 initialMessages: result.initialMessages,
-                partner: result.partner,
+                partner: {
+                  ...result.partner,
+                  online: partnerOnline,
+                },
               }),
             );
 
@@ -1237,11 +1297,10 @@ export const setupWebSocketServer = (server: Server) => {
             break;
           }
 
-          // Add this to the switch case in the message handler:
           case "subscribe-room": {
             const { roomId } = data;
 
-            // 1. Verify user has access to this room
+            // Verify user has access to this room
             const room = await prisma.chatRoom.findFirst({
               where: {
                 id: roomId,
@@ -1268,13 +1327,13 @@ export const setupWebSocketServer = (server: Server) => {
                   orderBy: { createdAt: "desc" },
                   take: 1,
                 },
-                group: {
+                group: (room) => ({
                   select: {
                     id: true,
                     title: true,
                     groupPhoto: true,
                   },
-                },
+                }),
               },
             });
 
@@ -1288,20 +1347,20 @@ export const setupWebSocketServer = (server: Server) => {
               break;
             }
 
-            // 2. Subscribe to the room
-            subscribeToRoom(userId, roomId, ws);
+            // Subscribe to the room
+            subscribeToRoom(connectionId, roomId, ws);
             ws.activeRoomId = roomId;
 
-            // 3. Get initial messages from Redis (latest 20)
+            // Get initial messages from Redis
             const initialMessages = await chatRedisService.getMessages(
               roomId,
               20,
             );
 
-            // 4. Mark messages as read
+            // Mark messages as read
             await chatRedisService.markAsRead(roomId, userId);
 
-            // 5. Get partner/group details
+            // Get partner/group details
             let partner = null;
             let roomName = "";
             let roomImage = null;
@@ -1312,11 +1371,13 @@ export const setupWebSocketServer = (server: Server) => {
               if (partnerId) {
                 const partnerUser = await getUserDetails(partnerId);
                 if (partnerUser) {
+                  const isPartnerOnline =
+                    await chatRedisService.isUserOnline(partnerId);
                   partner = {
                     id: partnerUser.id,
                     name: partnerUser.fullname,
                     image: partnerUser.profile?.profileImage,
-                    online: await chatRedisService.isUserOnline(partnerId),
+                    online: isPartnerOnline,
                   };
                   roomName = partnerUser.fullname;
                   roomImage = partnerUser.profile?.profileImage;
@@ -1334,14 +1395,14 @@ export const setupWebSocketServer = (server: Server) => {
               }
             }
 
-            // 6. Send room details to user
+            // Send room details to user
             ws.send(
               JSON.stringify({
                 type: "room-subscribed",
                 roomId: room.id,
                 roomType: room.type,
                 isNewRoom: false,
-                initialMessages: initialMessages.reverse(), // Oldest to newest
+                initialMessages: initialMessages.reverse(),
                 partner,
                 group: groupInfo,
                 hasMoreMessages: initialMessages.length >= 20,
@@ -1355,13 +1416,11 @@ export const setupWebSocketServer = (server: Server) => {
           }
 
           case "group-subscribe": {
-            // Subscribe to group chat
             const { groupId } = data;
-
             const result = await findOrCreateGroupRoom(userId, groupId);
 
             // Subscribe to room
-            subscribeToRoom(userId, result.room.id, ws);
+            subscribeToRoom(connectionId, result.room.id, ws);
             ws.activeRoomId = result.room.id;
 
             // Mark messages as read
@@ -1385,7 +1444,6 @@ export const setupWebSocketServer = (server: Server) => {
           }
 
           case "member-send-message": {
-            // Send message in P2P room
             const { roomId, content, fileUrl } = data;
 
             // Verify user is subscribed to this room
@@ -1406,18 +1464,19 @@ export const setupWebSocketServer = (server: Server) => {
               fileUrl,
             );
 
-            // Send to sender
+            // Send only to sender (excluding sender from broadcast)
             ws.send(
               JSON.stringify({
-                type: "new-message",
+                type: "message-sent",
                 roomId,
                 message: result.message,
                 senderId: userId,
                 roomType: "P2P",
+                timestamp: new Date().toISOString(),
               }),
             );
 
-            // Broadcast to other room subscribers (including receiver)
+            // Broadcast to other room subscribers
             broadcastToRoomSubscribers(
               roomId,
               "new-message",
@@ -1426,8 +1485,9 @@ export const setupWebSocketServer = (server: Server) => {
                 message: result.message,
                 senderId: userId,
                 roomType: "P2P",
+                timestamp: new Date().toISOString(),
               },
-              userId, // Exclude sender
+              connectionId, // Exclude sender's connection
             );
 
             // Update conversation list for both users
@@ -1436,7 +1496,6 @@ export const setupWebSocketServer = (server: Server) => {
           }
 
           case "group-send-message": {
-            // Send message in group room
             const { roomId, content, fileUrl } = data;
 
             // Verify user is subscribed to this room
@@ -1457,19 +1516,20 @@ export const setupWebSocketServer = (server: Server) => {
               fileUrl,
             );
 
-            // Send to sender
+            // Send confirmation to sender only
             ws.send(
               JSON.stringify({
-                type: "new-message",
+                type: "message-sent",
                 roomId,
                 message: result.message,
                 senderId: userId,
                 roomType: "GROUP",
                 groupId: result.groupId,
+                timestamp: new Date().toISOString(),
               }),
             );
 
-            // Broadcast to all room subscribers
+            // Broadcast to all room subscribers except sender
             broadcastToRoomSubscribers(
               roomId,
               "new-message",
@@ -1479,8 +1539,9 @@ export const setupWebSocketServer = (server: Server) => {
                 senderId: userId,
                 roomType: "GROUP",
                 groupId: result.groupId,
+                timestamp: new Date().toISOString(),
               },
-              userId, // Exclude sender
+              connectionId, // Exclude sender's connection
             );
 
             // Update conversation list for all group members
@@ -1491,7 +1552,7 @@ export const setupWebSocketServer = (server: Server) => {
           case "typing": {
             const { roomId, isTyping = true } = data;
 
-            // Broadcast typing indicator to room subscribers
+            // Broadcast typing indicator to room subscribers except sender
             broadcastToRoomSubscribers(
               roomId,
               "typing",
@@ -1500,7 +1561,7 @@ export const setupWebSocketServer = (server: Server) => {
                 senderId: userId,
                 isTyping,
               },
-              userId,
+              connectionId,
             );
             break;
           }
@@ -1517,7 +1578,7 @@ export const setupWebSocketServer = (server: Server) => {
                 roomId,
                 userId,
               },
-              userId,
+              connectionId,
             );
 
             // Update conversation list for user
@@ -1550,7 +1611,7 @@ export const setupWebSocketServer = (server: Server) => {
 
           case "unsubscribe-room": {
             const { roomId } = data;
-            unsubscribeFromRoom(userId, roomId, ws);
+            unsubscribeFromRoom(connectionId, roomId, ws);
             ws.activeRoomId = undefined;
 
             ws.send(
@@ -1564,12 +1625,32 @@ export const setupWebSocketServer = (server: Server) => {
 
           case "get-conversations": {
             const conversations = await getUserChatRooms(userId, 20);
+            const onlineUsersList = await chatRedisService.getOnlineUsers();
+
+            const enhancedConversations = conversations.map((conv) => {
+              if (conv.partner) {
+                return {
+                  ...conv,
+                  partner: {
+                    ...conv.partner,
+                    online: onlineUsersList.includes(conv.partner.id),
+                  },
+                };
+              }
+              return conv;
+            });
+
             ws.send(
               JSON.stringify({
                 type: "conversations",
-                conversations,
+                conversations: enhancedConversations,
               }),
             );
+            break;
+          }
+
+          case "ping": {
+            ws.send(JSON.stringify({ type: "pong", timestamp: Date.now() }));
             break;
           }
 
@@ -1592,187 +1673,295 @@ export const setupWebSocketServer = (server: Server) => {
       }
     });
 
-    // 6. HANDLE DISCONNECTION
+    // 9. HANDLE DISCONNECTION
     ws.on("close", async () => {
-      console.log(`❌ User ${userId} disconnected`);
-
-      // Unsubscribe from all rooms
-      if (ws.subscribedRooms) {
-        ws.subscribedRooms.forEach((roomId) => {
-          unsubscribeFromRoom(userId, roomId, ws);
-        });
-      }
-
-      // Remove from online users
-      onlineUsers.delete(userId);
-
-      // Mark as offline in Redis
-      setTimeout(async () => {
-        if (!onlineUsers.has(userId)) {
-          await chatRedisService.setUserOffline(userId);
-          broadcastToUserConnections(userId, "user-offline", { userId });
-        }
-      }, 5000);
-
-      // Clean up heartbeat
+      console.log(`❌ User ${userId} (${connectionId}) disconnected`);
+      cleanupConnection(connectionId);
       clearInterval(heartbeat);
     });
 
-    // 7. HANDLE ERRORS
+    // 10. HANDLE ERRORS
     ws.on("error", (error) => {
-      console.error(`❌ WebSocket error for user ${userId}:`, error);
+      console.error(
+        `❌ WebSocket error for user ${userId} (${connectionId}):`,
+        error,
+      );
+      cleanupConnection(connectionId);
     });
   });
 
-  // Helper functions
-  const subscribeToRoom = (userId: string, roomId: string, ws: UserSocket) => {
-    if (!roomSubscribers.has(roomId)) {
-      roomSubscribers.set(roomId, new Set());
-    }
-    roomSubscribers.get(roomId)!.add(userId);
-
-    if (ws.subscribedRooms) {
-      ws.subscribedRooms.add(roomId);
-    }
-  };
-
-  const unsubscribeFromRoom = (
-    userId: string,
-    roomId: string,
-    ws: UserSocket,
-  ) => {
-    if (roomSubscribers.has(roomId)) {
-      roomSubscribers.get(roomId)!.delete(userId);
-      if (roomSubscribers.get(roomId)!.size === 0) {
-        roomSubscribers.delete(roomId);
-      }
-    }
-
-    if (ws.subscribedRooms) {
-      ws.subscribedRooms.delete(roomId);
-    }
-  };
-
-  const broadcastToRoomSubscribers = (
-    roomId: string,
-    type: string,
-    payload: any,
-    excludeUserId?: string,
-  ) => {
-    const subscribers = roomSubscribers.get(roomId);
-    if (!subscribers) return;
-
-    subscribers.forEach((subscriberId) => {
-      if (subscriberId === excludeUserId) return;
-
-      const subscriberWs = onlineUsers.get(subscriberId);
-      if (subscriberWs && subscriberWs.readyState === WebSocket.OPEN) {
-        subscriberWs.send(
-          JSON.stringify({
-            type,
-            ...payload,
-          }),
-        );
-      }
-    });
-  };
-
-  const updateConversationsForUsers = async (userIds: string[]) => {
-    for (const userId of userIds) {
-      const userWs = onlineUsers.get(userId);
-      if (userWs && userWs.readyState === WebSocket.OPEN) {
-        try {
-          const conversations = await getUserChatRooms(userId, 20);
-          userWs.send(
-            JSON.stringify({
-              type: "conversations-updated",
-              conversations,
-            }),
+  // Clean up inactive connections periodically (every 5 minutes)
+  setInterval(() => {
+    const now = Date.now();
+    connectionToUser.forEach((userId, connId) => {
+      const connections = userConnections.get(userId);
+      if (connections) {
+        const ws = connections.get(connId);
+        if (ws && now - ws.lastActivity > 300000) {
+          // 5 minutes inactivity
+          console.log(
+            `🕒 Cleaning up inactive connection: ${connId} for user ${userId}`,
           );
-        } catch (error) {
-          console.error(
-            `❌ Failed to update conversations for ${userId}:`,
-            error,
-          );
+          cleanupConnection(connId);
+          ws.terminate();
         }
       }
+    });
+  }, 60000);
+
+  // Clear Redis online status on server start and cleanup periodically
+  wss.on("listening", async () => {
+    console.log("🚀 WebSocket server started, clearing stale connections...");
+
+    // Clear online set on server start
+    await chatRedisService.clearOnlineSet();
+
+    // Cleanup stale online users every 30 seconds
+    setInterval(async () => {
+      await chatRedisService.cleanupStaleOnlineUsers();
+    }, 30000);
+
+    // Refresh online status for connected users every 2 minutes
+    setInterval(async () => {
+      userConnections.forEach(async (connections, userId) => {
+        if (connections.size > 0) {
+          await chatRedisService.refreshUserOnlineStatus(userId);
+        }
+      });
+    }, 120000);
+  });
+
+  console.log(
+    "✅ WebSocket server is running with improved connection management",
+  );
+  return wss;
+};
+
+// Helper functions
+const cleanupUserConnections = (userId: string) => {
+  const connections = userConnections.get(userId);
+  if (connections) {
+    connections.forEach((ws, connId) => {
+      // Don't close if already closed
+      if (
+        ws.readyState !== WebSocket.CLOSED &&
+        ws.readyState !== WebSocket.CLOSING
+      ) {
+        ws.close(1000, "New connection established");
+      }
+      cleanupConnection(connId);
+    });
+    connections.clear();
+  }
+};
+
+const cleanupConnection = (connectionId: string) => {
+  const userId = connectionToUser.get(connectionId);
+  if (userId) {
+    const connections = userConnections.get(userId);
+    if (connections) {
+      connections.delete(connectionId);
+      if (connections.size === 0) {
+        userConnections.delete(userId);
+        // Set user offline in Redis after a delay
+        setTimeout(async () => {
+          const hasConnections = userConnections.has(userId);
+          if (!hasConnections) {
+            await chatRedisService.setUserOffline(userId);
+            broadcastUserStatus(userId, false);
+          }
+        }, 5000);
+      }
     }
-  };
+    connectionToUser.delete(connectionId);
 
-  const getOlderMessagesFromDB = async (
-    roomId: string,
-    before: string,
-    limit: number,
-    userId: string,
-  ) => {
-    try {
-      const beforeDate = new Date(before);
+    // Unsubscribe from all rooms
+    roomSubscribers.forEach((subscribers, roomId) => {
+      if (subscribers.has(connectionId)) {
+        subscribers.delete(connectionId);
+        if (subscribers.size === 0) {
+          roomSubscribers.delete(roomId);
+        }
+      }
+    });
+  }
+};
 
-      const messages = await prisma.message.findMany({
-        where: {
-          roomId,
-          createdAt: { lt: beforeDate },
-        },
-        select: {
-          id: true,
-          content: true,
-          fileUrl: true,
-          senderId: true,
-          readBy: true,
-          createdAt: true,
-          sender: {
-            select: {
-              id: true,
-              fullname: true,
-              profile: {
-                select: {
-                  profileImage: true,
-                },
+const subscribeToRoom = (
+  connectionId: string,
+  roomId: string,
+  ws: UserSocket,
+) => {
+  if (!roomSubscribers.has(roomId)) {
+    roomSubscribers.set(roomId, new Set());
+  }
+  roomSubscribers.get(roomId)!.add(connectionId);
+
+  if (ws.subscribedRooms) {
+    ws.subscribedRooms.add(roomId);
+  }
+};
+
+const unsubscribeFromRoom = (
+  connectionId: string,
+  roomId: string,
+  ws: UserSocket,
+) => {
+  if (roomSubscribers.has(roomId)) {
+    roomSubscribers.get(roomId)!.delete(connectionId);
+    if (roomSubscribers.get(roomId)!.size === 0) {
+      roomSubscribers.delete(roomId);
+    }
+  }
+
+  if (ws.subscribedRooms) {
+    ws.subscribedRooms.delete(roomId);
+  }
+};
+
+const broadcastToRoomSubscribers = (
+  roomId: string,
+  type: string,
+  payload: any,
+  excludeConnectionId?: string,
+) => {
+  const subscribers = roomSubscribers.get(roomId);
+  if (!subscribers) return;
+
+  subscribers.forEach((connId) => {
+    if (connId === excludeConnectionId) return;
+
+    const userId = connectionToUser.get(connId);
+    if (!userId) return;
+
+    const connections = userConnections.get(userId);
+    if (!connections) return;
+
+    const subscriberWs = connections.get(connId);
+    if (subscriberWs && subscriberWs.readyState === WebSocket.OPEN) {
+      subscriberWs.send(
+        JSON.stringify({
+          type,
+          ...payload,
+        }),
+      );
+    }
+  });
+};
+
+const updateConversationsForUsers = async (userIds: string[]) => {
+  const onlineUsersList = await chatRedisService.getOnlineUsers();
+
+  for (const userId of userIds) {
+    const connections = userConnections.get(userId);
+    if (connections) {
+      connections.forEach(async (userWs) => {
+        if (userWs.readyState === WebSocket.OPEN) {
+          try {
+            const conversations = await getUserChatRooms(userId, 20);
+
+            // Enhance with online status
+            const enhancedConversations = conversations.map((conv) => {
+              if (conv.partner) {
+                return {
+                  ...conv,
+                  partner: {
+                    ...conv.partner,
+                    online: onlineUsersList.includes(conv.partner.id),
+                  },
+                };
+              }
+              return conv;
+            });
+
+            userWs.send(
+              JSON.stringify({
+                type: "conversations-updated",
+                conversations: enhancedConversations,
+              }),
+            );
+          } catch (error) {
+            console.error(
+              `❌ Failed to update conversations for ${userId}:`,
+              error,
+            );
+          }
+        }
+      });
+    }
+  }
+};
+
+const getOlderMessagesFromDB = async (
+  roomId: string,
+  before: string,
+  limit: number,
+  userId: string,
+) => {
+  try {
+    const beforeDate = new Date(before);
+
+    const messages = await prisma.message.findMany({
+      where: {
+        roomId,
+        createdAt: { lt: beforeDate },
+      },
+      select: {
+        id: true,
+        content: true,
+        fileUrl: true,
+        senderId: true,
+        readBy: true,
+        createdAt: true,
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
               },
             },
           },
         },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-      });
+      },
+      orderBy: { createdAt: "desc" },
+      take: limit,
+    });
 
-      const hasMore = messages.length >= limit;
-      const newBefore =
-        messages.length > 0
-          ? messages[messages.length - 1].createdAt.toISOString()
-          : before;
+    const hasMore = messages.length >= limit;
+    const newBefore =
+      messages.length > 0
+        ? messages[messages.length - 1].createdAt.toISOString()
+        : before;
 
-      return {
-        messages,
-        hasMore,
-        newBefore,
-      };
-    } catch (error) {
-      console.error("❌ Error getting older messages:", error);
-      throw error;
-    }
-  };
+    return {
+      messages,
+      hasMore,
+      newBefore,
+    };
+  } catch (error) {
+    console.error("❌ Error getting older messages:", error);
+    throw error;
+  }
+};
 
-  const broadcastToUserConnections = (
-    userId: string,
-    type: string,
-    payload: any,
-  ) => {
-    onlineUsers.forEach((userWs, wsUserId) => {
-      if (wsUserId === userId) return;
+const broadcastUserStatus = (userId: string, isOnline: boolean) => {
+  userConnections.forEach((connections, targetUserId) => {
+    if (targetUserId === userId) return; // Don't send to self
 
-      if (userWs && userWs.readyState === WebSocket.OPEN) {
-        userWs.send(
+    connections.forEach((targetWs) => {
+      if (targetWs.readyState === WebSocket.OPEN) {
+        targetWs.send(
           JSON.stringify({
-            type,
-            ...payload,
+            type: "user-status-changed",
+            userId,
+            isOnline,
+            timestamp: new Date().toISOString(),
           }),
         );
       }
     });
-  };
-
-  console.log("✅ WebSocket server is running with proper room flow");
-  return wss;
+  });
 };
 ```
