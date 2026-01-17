@@ -3,6 +3,7 @@ import catchAsync from "../../../shared/catchAsync";
 import { authService } from "./auth.service";
 import sendResponse from "../../../shared/sendResponse";
 import httpStatus from "http-status";
+import ApiError from "../../../errors/ApiErrors";
 
 //login user
 const loginUser = catchAsync(async (req: Request, res: Response) => {
@@ -142,16 +143,24 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
 
 //w: (start)╭──────────── uploadFiles ────────────╮
+
 const uploadFiles = catchAsync(async (req: any, res: Response) => {
-  const fileUrl = await authService.uploadFiles(req.file);
+  const files = req.files?.fileUrl;
+
+  if (!files || files.length === 0) {
+    throw new ApiError(400, "No files provided in fileUrl");
+  }
+
+  const uploadedUrls = await authService.uploadFiles(files);
 
   sendResponse(res, {
     statusCode: 200,
     success: true,
-    message: "User profile image uploaded successfully",
-    data: fileUrl,
+    message: "Files uploaded successfully",
+    data: uploadedUrls,
   });
 });
+
 //w: (end)  ╰──────────── uploadFiles ────────────╯
 
 //w: (start)╭──────────── completeProfile ────────────╮

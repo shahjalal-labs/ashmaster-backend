@@ -662,15 +662,17 @@ const deleteAccountFromDB = async (userId: string) => {
 };
 //w: (end)  ╰──────────── deleteAccount ────────────╯
 
-const uploadFiles = async (file: Express.Multer.File) => {
-  if (file === undefined) {
-    throw new ApiError(400, "Please select an image");
-  }
-  const fileUrl = await uploadInSpace(file, "users/files");
-  console.log(fileUrl, "auth.service.ts", 568);
+//w: (start)╭──────────── uploadFiles ────────────╮
 
-  return fileUrl;
+const uploadFiles = async (files: Express.Multer.File[]) => {
+  if (!files || files.length === 0) {
+    throw new ApiError(400, "Please select at least one file");
+  }
+
+  return Promise.all(files.map((file) => uploadInSpace(file, "users/files")));
 };
+
+//w: (end)  ╰──────────── uploadFiles ────────────╯
 
 export const authService = {
   loginUserIntoDB,
