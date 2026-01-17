@@ -6,7 +6,7 @@ import { notificationQueue } from "./queues/notificationQueue";
 
 // Express adapter
 const serverAdapter = new ExpressAdapter();
-serverAdapter.setBasePath("/admin/queues");
+serverAdapter.setBasePath("/bull");
 
 // Create Bull Board
 createBullBoard({

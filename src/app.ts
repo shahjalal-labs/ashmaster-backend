@@ -26,7 +26,7 @@ app.get("/", entryMessage);
 // Router setup
 app.use("/api/v1", router);
 app.use(
-  "/admin/queues",
+  "/bull",
   basicAuth({
     users: {
       admin: process.env.BULLBOARD_PASSWORD || "admin",
@@ -35,6 +35,8 @@ app.use(
   }),
   bullBoardRouter,
 );
+
+// app.use("/bull", bullBoardRouter); // No auth
 
 // Global Error Handler
 app.use(GlobalErrorHandler);

@@ -294,6 +294,7 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
 
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
+  // await new Promise((resolve) => setTimeout(resolve, 5000)); // Blocks for 5 seconds
 
   await notificationQueue.add("notify", {
     title: "hellow",
