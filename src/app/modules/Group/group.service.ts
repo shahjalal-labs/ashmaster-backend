@@ -47,7 +47,27 @@ const getGroupDetails = async (groupId: string) => {
   });
 
   if (!group) throw new ApiError(httpStatus.NOT_FOUND, "Group not found!");
-  return group;
+
+  const members = await prisma.user.findMany({
+    where: {
+      id: {
+        in: [...group?.memberIds, group.creatorId],
+      },
+    },
+    select: {
+      id: true,
+      fullname: true,
+      profile: {
+        select: {
+          profileImage: true,
+        },
+      },
+    },
+  });
+  return {
+    group,
+    members,
+  };
 };
 //w: (end)  ╰──────────── getGroupDetails ────────────╯
 

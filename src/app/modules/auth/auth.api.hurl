@@ -15,8 +15,8 @@ POST {{port6011}}/auth/login
 
 POST {{port6011}}/auth/auth-login
 {
-  "email":"sara@merepost.com",
-  "fullname":"Sara Ahmed",
+  "email":"koyelot367@roastic.com",
+  "fullname":"Hasan Bin Ali",
   "fcmToken":""
 }
 
