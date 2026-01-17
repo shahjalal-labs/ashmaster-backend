@@ -662,6 +662,16 @@ const deleteAccountFromDB = async (userId: string) => {
 };
 //w: (end)  ╰──────────── deleteAccount ────────────╯
 
+const uploadFiles = async (file: Express.Multer.File) => {
+  if (file === undefined) {
+    throw new ApiError(400, "Please select an image");
+  }
+  const fileUrl = await uploadInSpace(file, "users/files");
+  console.log(fileUrl, "auth.service.ts", 568);
+
+  return fileUrl;
+};
+
 export const authService = {
   loginUserIntoDB,
   authLogin,
@@ -673,4 +683,5 @@ export const authService = {
   updateProfileImage,
   completeProfile,
   deleteAccountFromDB,
+  uploadFiles,
 };

@@ -47,13 +47,20 @@ router.patch(
 );
 
 //w: (start)╭──────────── router ────────────╮
-router.patch(
+router.post(
   "/profile-image",
   auth(),
   fileUploader.profileImage,
   authController.updateProfileImage,
 );
 //w: (end)  ╰──────────── router ────────────╯
+
+router.post(
+  "/upload-files",
+  auth(),
+  fileUploader.uploadMultiple,
+  authController.uploadFiles,
+);
 
 //w: (start)╭──────────── completeProfile ────────────╮
 router.post(

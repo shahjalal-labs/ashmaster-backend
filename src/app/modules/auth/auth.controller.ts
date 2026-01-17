@@ -141,6 +141,19 @@ const updateProfileImage = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── updateProfileImage ────────────╯
 
+//w: (start)╭──────────── uploadFiles ────────────╮
+const uploadFiles = catchAsync(async (req: any, res: Response) => {
+  const fileUrl = await authService.uploadFiles(req.file);
+
+  sendResponse(res, {
+    statusCode: 200,
+    success: true,
+    message: "User profile image uploaded successfully",
+    data: fileUrl,
+  });
+});
+//w: (end)  ╰──────────── uploadFiles ────────────╯
+
 //w: (start)╭──────────── completeProfile ────────────╮
 const completeProfile = catchAsync(async (req: any, res: Response) => {
   const { id } = req.user;
@@ -181,4 +194,5 @@ export const authController = {
   updateProfileImage,
   completeProfile,
   deleteAccount,
+  uploadFiles,
 };
