@@ -295,6 +295,26 @@ const addMembersIntoGroup = async (memberId: string, groupId: string) => {
 
 //w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
 
+//w: (start)╭──────────── getMyGroups ────────────╮
+const getMyGroups = async (userId: string) => {
+  const groups = await prisma.group.findMany({
+    where: {
+      OR: [
+        {
+          creatorId: userId,
+        },
+        {
+          memberIds: {
+            has: userId,
+          },
+        },
+      ],
+    },
+  });
+  return groups;
+};
+//w: (end)  ╰──────────── getMyGroups ────────────╯
+
 export const GroupService = {
   createGroup,
   getGroupDetails,
@@ -303,4 +323,5 @@ export const GroupService = {
   leaveGroup,
   findMembersToAdd,
   addMembersIntoGroup,
+  getMyGroups,
 };

@@ -20,6 +20,8 @@ router.post(
   GroupController.createGroup,
 );
 
+router.get("/my", GroupController.getMyGroups);
+
 router.get("/:id", GroupController.getGroupDetails);
 
 router.patch(

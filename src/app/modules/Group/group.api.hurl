@@ -9,9 +9,20 @@ Content-Type: application/json
  "memberIds": ["694a39873340ac9b4e138239"]
 }
 
+
+# fetch my groups 
+GET {{port6011}}/group/my
+Authorization: {{ashRaisa}}
+
+
+
+
 # fetch group details
 GET {{port6011}}/group/6964e4e1656ea48b225e0eb4
 Authorization: {{ashRaisa}}
+
+
+
 
 
 # update group (creator only)

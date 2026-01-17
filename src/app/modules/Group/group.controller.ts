@@ -102,6 +102,19 @@ const addMembersIntoGroup = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
 
+//w: (start)╭──────────── getMyGroups ────────────╮
+const getMyGroups = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const result = await GroupService.getMyGroups(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched my groups successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getMyGroups ────────────╯
+
 export const GroupController = {
   createGroup,
   getGroupDetails,
@@ -110,4 +123,5 @@ export const GroupController = {
   leaveGroup,
   findMembersToAdd,
   addMembersIntoGroup,
+  getMyGroups,
 };
