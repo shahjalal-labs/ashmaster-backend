@@ -1,5 +1,5 @@
 {
-  "name": "hannanavtor-backend",
+  "name": "ashmaster-backend",
   "version": "1.0.0",
   "main": "server.js",
   "scripts": {
@@ -7,12 +7,12 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "concurrently \"tsx watch src/server.ts\" \"tsx watch src/jobs/workers/emailWorker.ts\" \"tsx watch src/jobs/workers/notificationWorker.ts\"",
     "build": "tsc",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma db push && prisma generate "
   },
   "keywords": [],
-  "author": "Ruhul Amin",
+  "author": "Md. Shahjalal",
   "license": "ISC",
-  "description": "hannanavtor-backend",
+  "description": "ashmaster-backend",
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
@@ -52,7 +52,6 @@
     "node-cron": "^3.0.3",
     "nodemailer": "^6.9.16",
     "nodemon": "^3.1.4",
-    "stripe": "^18.0.0",
     "uuid": "^13.0.0",
     "ws": "^8.19.0",
     "zod": "^3.23.8"

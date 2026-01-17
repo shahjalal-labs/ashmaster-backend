@@ -4,7 +4,7 @@ const storage = multer.memoryStorage();
 
 const upload = multer({
   storage: storage,
-  limits: { fileSize: 3000 * 1024 * 1024 }, // 3000 MB limit
+  limits: { fileSize: 3000 * 1024 * 1024 }, // 3 GB limit
   fileFilter: (req, file, cb) => {
     const allowedMimeTypes = [
       "image/jpeg",

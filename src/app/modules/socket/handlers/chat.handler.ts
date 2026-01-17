@@ -405,10 +405,6 @@ export const getUserChatRooms = async (userId: string, limit: number = 20) => {
     const rooms = await prisma.chatRoom.findMany({
       where: {
         participants: { has: userId },
-        // Only show rooms that have at least one message
-        messages: {
-          some: {},
-        },
       },
       include: {
         messages: {
