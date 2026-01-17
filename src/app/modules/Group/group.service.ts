@@ -51,7 +51,7 @@ const getGroupDetails = async (groupId: string) => {
   const members = await prisma.user.findMany({
     where: {
       id: {
-        in: [...group?.memberIds, group.creatorId],
+        in: [group.creatorId, ...group?.memberIds],
       },
     },
     select: {
@@ -60,6 +60,7 @@ const getGroupDetails = async (groupId: string) => {
       profile: {
         select: {
           profileImage: true,
+          profession: true,
         },
       },
     },
