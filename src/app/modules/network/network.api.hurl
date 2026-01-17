@@ -8,8 +8,8 @@ Authorization: {{ashRaisa}}
 
 # Send request
 POST {{port6011}}/network/request
-#Authorization: {{ashRaisa}}
-Authorization: {{ashsrasu}}
+Authorization: {{ashRaisa}}
+#Authorization: {{ashsrasu}}
 #Authorization: {{ashsrahim}}
 Content-Type: application/json
 
