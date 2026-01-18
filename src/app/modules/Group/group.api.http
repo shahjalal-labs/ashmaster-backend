@@ -1,65 +1,40 @@
-### Create group
+### Simple GET request
 
-POST {{port6011}}/group/create HTTP/1.1
-Authorization: {{ashRaisa}}
+GET https://httpbin.org/get HTTP/1.1
+
+
+### GET with query parameters
+
+GET https://httpbin.org/get?name=kulala&age=25 HTTP/1.1
+
+### POST with JSON body
+
+POST https://httpbin.org/post HTTP/1.1
 Content-Type: application/json
 
 {
-  "groupPhoto": "https://api.zenexcloud.com/emdadullah/uploads/users/profileImage/1768019205514-v4ull7jpu0e.png",
-  "memberIds": [
-    "694a39873340ac9b4e138239"
-  ],
-  "title": "Checking group creation"
+  "name": "John Doe",
+  "email": "john@example.com"
 }
 
+### PUT with headers
 
-### Fetch my groups
-
-GET {{port6011}}/group/my HTTP/1.1
-Authorization: {{ashRaisa}}
-
-
-### Fetch group details
-
-GET {{port6011}}/group/6964e4e1656ea48b225e0eb4 HTTP/1.1
-Authorization: {{ashRaisa}}
-
-
-### Update group (creator only)
-
-PATCH {{port6011}}/group/6964e4e1656ea48b225e0eb4 HTTP/1.1
-Authorization: {{ashRaisa}}
+PUT https://httpbin.org/put HTTP/1.1
 Content-Type: application/json
+X-Custom-Header: test-value
 
 {
-  "title": "Data Science Mentoring"
+  "id": 1,
+  "status": "updated"
 }
 
+### DELETE request
 
-### Fetch all members
+DELETE https://httpbin.org/delete HTTP/1.1
 
-GET {{port6011}}/group/members/6964e4e1656ea48b225e0eb4?page=1&limit=20 HTTP/1.1
-Authorization: {{ashRaisa}}
+### GET with multiple headers
 
-
-### Leave group (member only)
-
-DELETE {{port6011}}/group/6964e4e1656ea48b225e0eb4/leave HTTP/1.1
-Authorization: {{ashsrahim}}
-
-
-### Find members to add
-
-GET {{port6011}}/group/6964e4e1656ea48b225e0eb4/find-members HTTP/1.1
-Authorization: {{ashRaisa}}
-
-
-### Add member into group
-
-POST {{port6011}}/group/6964e4e1656ea48b225e0eb4/add-member HTTP/1.1
-Authorization: {{ashRaisa}}
-Content-Type: application/json
-
-{
-  "memberId": "694a39873340ac9b4e138239"
-}
+GET https://httpbin.org/headers HTTP/1.1
+Accept: application/json
+User-Agent: My-Test-Client
+Authorization: Bearer test-token

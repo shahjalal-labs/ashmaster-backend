@@ -14,7 +14,7 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
-  "receiverId": "694a254aad128cabeaf7412f",
+  "receiverId": "696b1b375609311f55de58fe",
   "message": "Hi, let's connect! I have dream to become a software engineer. I want to know many things from you."
 }
 

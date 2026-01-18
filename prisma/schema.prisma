@@ -94,7 +94,7 @@ model Profile {
   profession     String
   experienceYear Int
   availability   Json
-  profileImage   String?
+  profileImage   String  @default("https://i.ibb.co.com/nrs3FjM/images.png")
   interests      String[] @default([])
   userId         String   @unique @db.ObjectId
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
