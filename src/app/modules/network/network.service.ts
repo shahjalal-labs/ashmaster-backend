@@ -305,7 +305,8 @@ const getConnections = async (userId: string, options: TOptions) => {
       skip,
       take: limit,
       orderBy: {
-        createdAt: "desc",
+        // same as createdAt:"desc" but for indexed faster query
+        id: "desc",
       },
     }),
 
@@ -313,6 +314,22 @@ const getConnections = async (userId: string, options: TOptions) => {
       where: whereClause,
     }),
   ]);
+
+  const viewConnections = connections.map((c) => {
+    const connected: any = {};
+    if (c.sender.id === userId) {
+      connected.id = c.sender.id;
+      connected.fullname = c.sender.fullname;
+      connected.profileImage = c.sender.profile?.profileImage;
+      connected.profession = c.sender.profile?.profession;
+    } else {
+      connected.id = c.receiver.id;
+      connected.fullname = c.receiver.fullname;
+      connected.profileImage = c.receiver.profile?.profileImage;
+      connected.profession = c.receiver.profile?.profession;
+    }
+    return connected;
+  });
 
   return {
     meta: {
@@ -322,7 +339,9 @@ const getConnections = async (userId: string, options: TOptions) => {
       limit,
       totalPages: Math.ceil(total / limit),
     },
-    data: connections,
+    data: {
+      connections: viewConnections,
+    },
   };
 };
 //w: (end)  ╰──────────── getConnections ────────────╯
