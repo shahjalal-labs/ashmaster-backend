@@ -85,10 +85,11 @@ model MentorMenteeView {
 
 //w: (start)╭────────────  Profile  ────────────╮
 model Profile {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  about          String
-  age            Int
-  ethnicity      String
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  about     String
+  age       Int
+  ethnicity String
+
   gender         Gender
   profession     String
   experienceYear Int
@@ -117,8 +118,6 @@ model Preference {
   user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime           @default(now())
   updatedAt   DateTime           @updatedAt
-
-  @@map("preferences")
 }
 
 //w: (end)  ╰──────────── Preference   ────────────╯
@@ -173,8 +172,6 @@ model Group {
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   chatRoom   ChatRoom[]
-
-  @@map("groups")
 }
 
 //w: (end)  ╰──────────── Group  ────────────╯
@@ -204,8 +201,6 @@ model Message {
 
   room   ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
   sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
-
-  @@map("messages")
 }
 
 enum RoomType {

@@ -14,22 +14,21 @@ export type TCreateChecklistEndGoals = z.infer<
 >;
 //w: (end)  ╰──────────── createChecklistEndGoals ────────────╯
 
-//w: (start)╭──────────── changeChecklistStatus ────────────╮
+//w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoalsSchema = z
   .object({
-    status: z.nativeEnum(Status).optional(),
+    status: z.nativeEnum(Status),
     checklistId: z.string().min(24),
     title: z.string().min(4).optional(),
     description: z.string().min(10).optional(),
     type: z.nativeEnum(ChecklistEndGoalType),
   })
   .strict();
+//w: (end)  ╰──────────── updateChecklistEndGoals ────────────╯
 
 export type TChangeChecklistStatusSchema = z.infer<
   typeof updateChecklistEndGoalsSchema
 >;
-
-//w: (end)  ╰──────────── changeChecklistStatus ────────────╯
 
 const deleteChecklistEndGoalsSchema = z.object({});
 

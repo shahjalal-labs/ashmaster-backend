@@ -146,6 +146,7 @@ const updateChecklistEndGoals = async (
     },
   });
 
+  //in mentorprogress, view checklists are sorting with user checklistUpdateTracker field so it's updating when user update checklist
   if (payload.type === "CHECKLIST") {
     await prisma.user.update({
       where: {
