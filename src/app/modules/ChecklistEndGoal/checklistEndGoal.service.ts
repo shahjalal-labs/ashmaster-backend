@@ -61,28 +61,6 @@ const getAllChecklistOrEndGoals = async (
     prisma.checklistEndGoal.count({ where: whereClause }),
   ]);
 
-  let progress: number | null = null;
-
-  if (filter.type === "CHECKLIST") {
-    const [totalChecklist, completedChecklist] = await Promise.all([
-      prisma.checklistEndGoal.count({
-        where: { userId, type: "CHECKLIST" },
-      }),
-      prisma.checklistEndGoal.count({
-        where: {
-          userId,
-          type: "CHECKLIST",
-          status: "COMPLETE",
-        },
-      }),
-    ]);
-
-    progress =
-      totalChecklist > 0
-        ? Math.round((completedChecklist / totalChecklist) * 100)
-        : 0;
-  }
-
   return {
     meta: {
       page,
@@ -90,12 +68,37 @@ const getAllChecklistOrEndGoals = async (
       total,
       totalPages: Math.ceil(total / limit),
     },
-    progress,
     data,
   };
 };
 
 //w: (end)  ╰──────────── getAllChecklistOrEndGoals ────────────╯
+
+//w: (start)╭──────────── getMenteeProgressCount ────────────╮
+const getMenteeProgressCount = async (userId: string) => {
+  const [totalChecklist, completedChecklist] = await Promise.all([
+    prisma.checklistEndGoal.count({
+      where: { userId, type: "CHECKLIST" },
+    }),
+    prisma.checklistEndGoal.count({
+      where: {
+        userId,
+        type: "CHECKLIST",
+        status: "COMPLETE",
+      },
+    }),
+  ]);
+
+  let progress =
+    totalChecklist > 0
+      ? Math.round((completedChecklist / totalChecklist) * 100)
+      : 0;
+
+  return {
+    progress,
+  };
+};
+//w: (end)  ╰──────────── getMenteeProgressCount ────────────╯
 
 //w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = async (
@@ -199,4 +202,5 @@ export const ChecklistEndGoalsService = {
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
   getChecklistEndGoalById,
+  getMenteeProgressCount,
 };
