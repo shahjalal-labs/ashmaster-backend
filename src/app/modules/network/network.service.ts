@@ -315,18 +315,23 @@ const getConnections = async (userId: string, options: TOptions) => {
     }),
   ]);
 
-  const viewConnections = connections.map((c) => {
-    const connected: any = {};
-    if (c.sender.id === userId) {
-      connected.id = c.sender.id;
-      connected.fullname = c.sender.fullname;
-      connected.profileImage = c.sender.profile?.profileImage;
-      connected.profession = c.sender.profile?.profession;
+  //  finding opposite user for front end
+  const renderIntoUiConnections = connections.map((c) => {
+    const connected: any = {
+      sender: {},
+    };
+    if (c.sender.id !== userId) {
+      connected.id = c.id;
+      connected.sender.id = c.sender.id;
+      connected.sender.fullname = c.sender.fullname;
+      connected.sender.profile.profileImage = c.sender.profile?.profileImage;
+      connected.sender.profile.profession = c.sender.profile?.profession;
     } else {
-      connected.id = c.receiver.id;
-      connected.fullname = c.receiver.fullname;
-      connected.profileImage = c.receiver.profile?.profileImage;
-      connected.profession = c.receiver.profile?.profession;
+      connected.id = c.id;
+      connected.sender.id = c.receiver.id;
+      connected.sender.fullname = c.receiver.fullname;
+      connected.sender.profile.profileImage = c.receiver.profile?.profileImage;
+      connected.sender.profile.profession = c.receiver.profile?.profession;
     }
     return connected;
   });
@@ -340,7 +345,7 @@ const getConnections = async (userId: string, options: TOptions) => {
       totalPages: Math.ceil(total / limit),
     },
     data: {
-      connections: viewConnections,
+      connections: renderIntoUiConnections,
     },
   };
 };
