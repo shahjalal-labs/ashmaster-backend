@@ -1,13 +1,13 @@
 # create checklist / endgoals
 POST {{port6011}}/checklist-end-goals/create
-#Authorization: {{ashsrahim}}
-Authorization: {{ashsrasu}}
+Authorization: {{ashsrahim}}
+#Authorization: {{ashsrasu}}
 Content-Type: application/json
 
 {
- "title":"Wants to be a nice father",
+ "title":"Morality, ethics teach to my son",
  "description": "Study 8 am to 11 am before going to school. And ready for submission.",
- "type": "ENDGOALS"
+ "type": "CHECKLIST"
 }
 
 # get all checklist/ endgoals

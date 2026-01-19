@@ -14,6 +14,8 @@ if (config.env === ENV.DEVELOPMENT) {
   router.use(profileGuard());
 }
 
+router.get("/my", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
+
 router.get("/:id", ChecklistEndGoalsController.getAllChecklistOrEndGoals);
 
 router.post(

@@ -42,6 +42,28 @@ const getAllChecklistOrEndGoals = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getAllChecklistOrEndGoals ────────────╯
 
+//w: (start)╭──────────── getMyChecklistOrEndGoals ────────────╮
+const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
+  const pickedPagination = pick(req.query, paginationOptions);
+
+  const pickedFilter = pick(req.query, ["type"]);
+
+  const { id: userId } = req.user;
+  const result = await ChecklistEndGoalsService.getAllChecklistOrEndGoals(
+    userId,
+    pickedPagination,
+    pickedFilter,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: ` fetched successfully`,
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
+
 //w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = catchAsync(async (req, res) => {
   const { id } = req.user;
@@ -96,4 +118,5 @@ export const ChecklistEndGoalsController = {
   updateChecklistEndGoals,
   deleteChecklistEndGoals,
   getChecklistEndGoalById,
+  getMyChecklistOrEndGoals,
 };
