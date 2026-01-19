@@ -315,10 +315,13 @@ const getConnections = async (userId: string, options: TOptions) => {
     }),
   ]);
 
-  //  finding opposite user for front end
+  //  finding opposite user for front end. creating shape like this as front end already created model. for similarity backend used this pattern
   const renderIntoUiConnections = connections.map((c) => {
     const connected: any = {
-      sender: {},
+      id: "",
+      sender: {
+        profile: {},
+      },
     };
     if (c.sender.id !== userId) {
       connected.id = c.id;
@@ -344,9 +347,7 @@ const getConnections = async (userId: string, options: TOptions) => {
       limit,
       totalPages: Math.ceil(total / limit),
     },
-    data: {
-      connections: renderIntoUiConnections,
-    },
+    data: renderIntoUiConnections,
   };
 };
 //w: (end)  ╰──────────── getConnections ────────────╯
