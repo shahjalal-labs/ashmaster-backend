@@ -16,6 +16,8 @@ if (config.env === ENV.DEVELOPMENT) {
 
 router.get("/my", ChecklistEndGoalsController.getMyChecklistOrEndGoals);
 
+router.get("/progress", ChecklistEndGoalsController.getMenteeProgressCount);
+
 router.get("/:id", ChecklistEndGoalsController.getAllChecklistOrEndGoals);
 
 router.post(

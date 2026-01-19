@@ -89,10 +89,18 @@ const getMenteeProgressCount = async (userId: string) => {
     }),
   ]);
 
-  let progress =
-    totalChecklist > 0
-      ? Math.round((completedChecklist / totalChecklist) * 100)
-      : 0;
+  let progress = {
+    progressPercentage: "0.0",
+  };
+
+  let rawPercentage =
+    totalChecklist > 0 ? (completedChecklist / totalChecklist) * 100 : 0;
+
+  if (rawPercentage > 100) {
+    rawPercentage = 100;
+  }
+
+  progress.progressPercentage = rawPercentage.toFixed(1);
 
   return {
     progress,

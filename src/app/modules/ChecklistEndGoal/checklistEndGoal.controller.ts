@@ -64,6 +64,20 @@ const getMyChecklistOrEndGoals = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getMyChecklistOrEndGoals ────────────╯
 
+//w: (start)╭──────────── getMenteeProgressCount ────────────╮
+const getMenteeProgressCount = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+  const result = await ChecklistEndGoalsService.getMenteeProgressCount(userId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: ` fetched successfully`,
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getMenteeProgressCount ────────────╯
+
 //w: (start)╭──────────── updateChecklistEndGoals ────────────╮
 const updateChecklistEndGoals = catchAsync(async (req, res) => {
   const { id } = req.user;
@@ -119,4 +133,5 @@ export const ChecklistEndGoalsController = {
   deleteChecklistEndGoals,
   getChecklistEndGoalById,
   getMyChecklistOrEndGoals,
+  getMenteeProgressCount,
 };

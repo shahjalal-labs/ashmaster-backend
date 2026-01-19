@@ -10,7 +10,23 @@ Content-Type: application/json
  "type": "CHECKLIST"
 }
 
-# get all checklist/ endgoals
+
+# get my checklist/ endgoals
+
+GET  {{port6011}}/checklist-end-goals/my?type=ENDGOALS&page=1&limit=10&sortBy=title&sortOrder=asc
+Authorization: {{ashRaisa}}
+#Authorization: {{ashsrahim}}
+
+
+# get mentee progress count
+
+GET  {{port6011}}/checklist-end-goals/progress
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
+
+
+
+# get user all checklist/ endgoals
 
 
 GET  {{port6011}}/checklist-end-goals/694a254aad128cabeaf7412f?type=ENDGOALS&page=1&limit=10&sortBy=title&sortOrder=asc
