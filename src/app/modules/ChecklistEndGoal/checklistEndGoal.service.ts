@@ -195,6 +195,20 @@ const getChecklistEndGoalById = async (id: string) => {
     where: {
       id,
     },
+    include: {
+      user: {
+        select: {
+          id: true,
+          fullname: true,
+          profile: {
+            select: {
+              profileImage: true,
+              profession: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!result) {
