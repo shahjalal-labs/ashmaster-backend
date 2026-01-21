@@ -8,6 +8,7 @@ import { MentorProgressRoutes } from "../modules/mentorProgress/mentorProgress.r
 import { ScheduleRoutes } from "../modules/Schedule/schedule.routes";
 import { GroupRoutes } from "../modules/Group/group.routes";
 import { ChatRoutes } from "../modules/chat/chat.routes";
+import { NotificationRoutes } from "../modules/Notification/notification.routes";
 
 type TAllRoutes = {
   path: string;
@@ -48,6 +49,11 @@ const allRoutes: TAllRoutes[] = [
   {
     path: "/chat",
     route: ChatRoutes,
+  },
+
+  {
+    path: "/notify",
+    route: NotificationRoutes,
   },
 ];
 //w: (end)  ╰──────────── allRoutes ────────────╯

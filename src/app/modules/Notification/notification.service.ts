@@ -37,7 +37,8 @@ export const sendSingleNotification = async (
     },
   });
 
-  if (!userInfo.fcmToken.length === 0) {
+  if (userInfo.fcmToken.length === 0) {
+    console.warn(`No token found for sending notification`);
     return;
   }
 
@@ -51,6 +52,7 @@ export const sendSingleNotification = async (
       };
 
       const response = await admin.messaging().sendEachForMulticast(message);
+      console.log(response, "fcm response", 55);
 
       // remove invalid tokens
       const invalidTokens = response.responses
@@ -72,4 +74,8 @@ export const sendSingleNotification = async (
     console.log(error);
     return;
   }
+};
+
+export const NotificationService = {
+  sendSingleNotification,
 };
