@@ -79,6 +79,7 @@ export const sendSingleNotification = async (
 };
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+//w: (start)╭──────────── getMyNotifications ────────────╮
 const getMyNotifications = async (userId: string) => {
   const result = await prisma.notification.findMany({
     where: {
@@ -108,8 +109,23 @@ const getMyNotifications = async (userId: string) => {
 
   return result;
 };
+//w: (end)  ╰──────────── getMyNotifications ────────────╯
+
+//w: (start)╭──────────── toggleMarkAllAsReadUnreadh ────────────╮
+const markAllAsReadUnread = async (userId: string, isRead: boolean) => {
+  await prisma.notification.updateMany({
+    where: {
+      receiverId: userId,
+    },
+    data: {
+      isRead,
+    },
+  });
+};
+//w: (end)  ╰──────────── toggleMarkAllAsReadUnreadh ────────────╯
 
 export const NotificationService = {
   sendSingleNotification,
   getMyNotifications,
+  markAllAsReadUnread,
 };
