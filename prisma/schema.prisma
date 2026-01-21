@@ -205,21 +205,28 @@ model Message {
 
 //w: (start)╭────────────  Notification  ────────────╮
 model Notification {
-  id         String           @id @default(auto()) @map("_id") @db.ObjectId
-  title      String
-  body       String?
-  receiverId String
-  senderId   String?
-  handlerId  String?
-  type       NotificationType
-  isRead     Boolean          @default(false)
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  id                  String           @id @default(auto()) @map("_id") @db.ObjectId
+  title               String
+  body                String?
+  receiverId          String
+  senderId            String?
+  handlerId           String?
+  type                NotificationType
+  isRead              Boolean          @default(false)
+  notificationChannel NotificationChannel @default(BOTH)
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@map("notifications")
 }
 
 //w: (end)  ╰────────────  Notification  ────────────╯
+
+enum NotificationChannel{
+  INAPP
+  PUSH
+  BOTH
+}
 
 enum NotificationType {
   CHAT

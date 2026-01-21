@@ -9,6 +9,7 @@ export const sendSingleNotification = async (
   title: string,
   body: string,
   type: NotificationType,
+  notificationChannel: Noti,
   senderId?: string,
   handlerId?: string,
 ) => {
