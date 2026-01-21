@@ -1,15 +1,16 @@
-import { NotificationType } from "@prisma/client";
+import { NotificationChannel, NotificationType } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import admin from "../../../helpers/firebaseAdmin";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 
+//w: (start)╭──────────── sendSingleNotification ────────────╮
 export const sendSingleNotification = async (
   receiverId: string,
   title: string,
   body: string,
   type: NotificationType,
-  notificationChannel: Noti,
+  notificationChannel: NotificationChannel,
   senderId?: string,
   handlerId?: string,
 ) => {
@@ -43,6 +44,11 @@ export const sendSingleNotification = async (
       handlerId: handlerId,
     },
   });
+
+  if (notificationChannel === "INAPP") {
+    console.log(`It's only an in app notification not push notify`);
+    return;
+  }
 
   if (receiverInfo.fcmToken.length === 0) {
     console.warn(`No token found for sending notification`);
@@ -84,6 +90,7 @@ export const sendSingleNotification = async (
     return;
   }
 };
+//w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
 export const NotificationService = {
   sendSingleNotification,

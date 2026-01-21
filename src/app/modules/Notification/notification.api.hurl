@@ -6,6 +6,7 @@ Content-type: application/json
    "title":"Send test notification",
    "body":"This is a test notification from postman",
    "type":"SCHEDULE",
+   "notificationChannel": "INAPP",
    "senderId":"694a39873340ac9b4e138239",
    "handlerId":"695b3bd3c5fa61f1470e63d8"
 }
