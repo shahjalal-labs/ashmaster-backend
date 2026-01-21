@@ -9,7 +9,11 @@ import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
 import { redisOtpService } from "../../../shared/redis-services/otp.service";
 import httpStatus from "http-status";
-import { TCompleteProfileInput, UpdateProfileInput } from "./auth.validation";
+import {
+  TAuthLogin,
+  TCompleteProfileInput,
+  UpdateProfileInput,
+} from "./auth.validation";
 import redisClient from "../../../shared/redis";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
 import { notificationQueue } from "../../../jobs/queues/notificationQueue";
@@ -67,7 +71,7 @@ const loginUserIntoDB = async (payload: {
 
 // google login
 //w: (start)╭──────────── authLogin ────────────╮
-const authLogin = async (payload: User) => {
+const authLogin = async (payload: TAuthLogin) => {
   const user = await prisma.user.findUnique({
     where: {
       email: payload.email,
@@ -80,10 +84,15 @@ const authLogin = async (payload: User) => {
       config.jwt.expires_in as string,
     );
 
+    const fcmTokens = user.fcmToken;
+
+    if (payload.fcmToken) {
+      fcmTokens.push(payload.fcmToken);
+    }
     await prisma.user.update({
       where: { email: user.email },
       data: {
-        fcmToken: payload.fcmToken,
+        fcmToken: fcmTokens,
       },
     });
 
@@ -97,7 +106,7 @@ const authLogin = async (payload: User) => {
     const user = await prisma.user.create({
       data: {
         ...payload,
-        fcmToken: [payload?.fcmToken],
+        fcmToken: payload.fcmToken ? [payload.fcmToken] : [],
       },
     });
 

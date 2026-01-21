@@ -21,6 +21,9 @@ const authLoginSchema = z
     fullname: z.string(),
   })
   .strict();
+
+export type TAuthLogin = z.infer<typeof authLoginSchema>;
+
 //w: (end)  ╰──────────── authLogin ────────────╯
 
 //w: (start)╭──────────── sendForgotPassOtp ────────────╮
