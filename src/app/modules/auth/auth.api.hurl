@@ -8,15 +8,16 @@ POST {{port6011}}/auth/login
 {
   "email":"rasu@merepost.com",
   "password":"SjAbc1@Bad",
-  "fcmToken":"fcm1"
+  "fcmToken":"fcm4"
 }
 
 # auth login / google login
 
 POST {{port6011}}/auth/auth-login
 {
-  "email":"jamalbinhabib@gmail.com",
-  "fullname":"Jamal Bin Habib"
+  "email":"kamalbinhabib@gmail.com",
+  "fullname":"Kamal Bin Habib",
+  "fcmToken":"fcm1"
 }
 
 # upload profile image file

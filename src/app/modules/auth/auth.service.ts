@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 import ApiError from "../../../errors/ApiErrors";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
 import config from "../../../config";
-import { ProfilStatus, User } from "@prisma/client";
+import { ProfilStatus } from "@prisma/client";
 import generateOTP from "../../../helpers/generateOtp";
 import { uploadInSpace } from "../../../shared/uploadInSpace";
 import { Secret } from "jsonwebtoken";
@@ -45,12 +45,15 @@ const loginUserIntoDB = async (payload: {
   }
 
   const fcmTokens = user.fcmToken;
-  fcmTokens.push(payload.fcmToken);
+
+  if (!fcmTokens.includes(payload.fcmToken)) {
+    fcmTokens.push(payload.fcmToken);
+  }
 
   await prisma.user.update({
     where: { email: user.email },
     data: {
-      fcmToken: fcmTokens,
+      fcmToken: Array.from(new Set(fcmTokens)), // ensures uniqueness,
     },
   });
 
@@ -86,13 +89,13 @@ const authLogin = async (payload: TAuthLogin) => {
 
     const fcmTokens = user.fcmToken;
 
-    if (payload.fcmToken) {
+    if (payload.fcmToken && !fcmTokens.includes(payload.fcmToken)) {
       fcmTokens.push(payload.fcmToken);
     }
     await prisma.user.update({
       where: { email: user.email },
       data: {
-        fcmToken: fcmTokens,
+        fcmToken: Array.from(new Set(fcmTokens)), // ensures uniqueness,
       },
     });
 
