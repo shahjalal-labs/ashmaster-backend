@@ -203,21 +203,30 @@ model Message {
   sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
+//w: (start)╭────────────  Notification  ────────────╮
 model Notification {
-  id         String  @id @default(auto()) @map("_id") @db.ObjectId
+  id         String           @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  body       String?
   receiverId String
-  senderId   String?
-  type       String
+  senderId   String
+  type       NotificationType
+  isRead     Boolean
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   @@map("notifications")
 }
 
+//w: (end)  ╰────────────  Notification  ────────────╯
+
 enum NotificationType {
-   CHAT
-   Connections
-   Schedule
-   group
-   CHECKLISTENDGOAL
+  CHAT
+  CONNECTIONS
+  SCHEDULE
+  GROUP
+  CHECKLISTENDGOAL
+  SYSTEM
 }
 
 enum RoomType {
