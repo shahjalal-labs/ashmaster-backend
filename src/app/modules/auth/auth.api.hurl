@@ -34,8 +34,9 @@ Authorization: {{ashRaisa}}
 
 # get other profile
 # profile/userId
-GET {{port6011}}/auth/profile/694a39873340ac9b4e138239
-Authorization: {{ashRaisa}}
+GET {{port6011}}/auth/profile/694a254aad128cabeaf7412f
+#Authorization: {{ashRaisa}}
+Authorization: {{ashsrahim}}
 
 # Delete Account
 # Note: This will permanently delete the user account and all associated data

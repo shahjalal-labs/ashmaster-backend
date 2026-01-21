@@ -310,18 +310,23 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
   console.log(connections, "auth.service.ts", 276);
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
-  let connectionStatus = connections?.status;
+  let connectionStatus: any = connections?.status;
 
-  if (connections?.senderId === userId) {
-    connectionStatus = "";
+  if (connections?.status === "PENDING") {
+    if (connections?.senderId === userId) {
+      connectionStatus = "SENT";
+    } else {
+      connectionStatus = "RECEIVED";
+    }
   }
+
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
   // await new Promise((resolve) => setTimeout(resolve, 5000)); // Blocks for 5 seconds
   return {
     ...sanitizedUser,
     ...(otherUserId && {
-      connectionStatus: connections?.status || "NOT_CONNECTED",
+      connectionStatus: connectionStatus || "NOT_CONNECTED",
     }),
   };
 };
