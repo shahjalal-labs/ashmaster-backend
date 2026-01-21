@@ -2,10 +2,10 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Sharif Dada Chirokumary",
-   "email":"gokonam915@emaxasp.com",
+   "fullname":"Salman Haque",
+   "email":"salman@merepost.com",
    "password":"Aw32@320",
-   "fcmToken":"checking_fcm_token"
+   "fcmToken":"fcm1"
 }
 
 
@@ -14,8 +14,8 @@ Content-type: application/json
 POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
-   "email":"gokonam915@emaxasp.com",
-   "otp":"6271"
+   "email":"salman@merepost.com",
+   "otp":"9814"
 }
 
 

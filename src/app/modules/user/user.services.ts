@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { PendingUser, User } from "@prisma/client";
 import ApiError from "../../../errors/ApiErrors";
 import bcrypt from "bcryptjs";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
@@ -11,7 +11,7 @@ import { emailQueue } from "../../../jobs/queues/emailQueue";
 
 //w: (start)╭──────────── createUser ────────────╮
 //create new user
-const createUserIntoDB = async (payload: User) => {
+const createUserIntoDB = async (payload: PendingUser) => {
   // ,,e,p,a,f(ipef)=> Email, Password, Fcm token, Fullname
   const existingUser = await prisma.user.findUnique({
     where: { email: payload.email },
@@ -86,7 +86,7 @@ const signupVerification = async (payload: { email: string; otp: string }) => {
         fullname: pendingUser.fullname,
         email: pendingUser.email,
         password: pendingUser.password,
-        fcmToken: pendingUser.fcmToken,
+        fcmToken: pendingUser.fcmToken ? [pendingUser.fcmToken] : [],
       },
     });
   });
