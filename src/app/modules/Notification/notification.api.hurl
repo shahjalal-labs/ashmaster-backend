@@ -10,3 +10,10 @@ Content-type: application/json
    "senderId":"694a39873340ac9b4e138239",
    "handlerId":"695b3bd3c5fa61f1470e63d8"
 }
+
+# my
+GET {{port6011}}/notify/my
+Authorization: {{ashsrahim}}
+
+
+

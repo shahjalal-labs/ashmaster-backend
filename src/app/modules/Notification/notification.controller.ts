@@ -39,8 +39,15 @@ const getMyNotifications = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
 
   const result = await NotificationService.getMyNotifications(userId);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "fet",
+    data: result,
+  });
 });
 
 export const NotificationController = {
   sendSingleNotification,
+  getMyNotifications,
 };
