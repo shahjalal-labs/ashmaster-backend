@@ -1,6 +1,8 @@
 import { NotificationType } from "@prisma/client";
 import prisma from "../../../shared/prisma";
 import admin from "../../../helpers/firebaseAdmin";
+import ApiError from "../../../errors/ApiErrors";
+import httpStatus from "http-status";
 
 export const sendSingleNotification = async (
   receiverId: string,
@@ -10,8 +12,12 @@ export const sendSingleNotification = async (
   senderId?: string,
   handlerId?: string,
 ) => {
-  const userInfo = await prisma.user.findUnique({ where: { id: receiverId } });
-  if (!userInfo) return;
+  const receiverInfo = await prisma.user.findUnique({
+    where: { id: receiverId },
+  });
+  if (!receiverInfo) {
+    throw new ApiError(httpStatus.NOT_FOUND, "reciever not found!");
+  }
   /* if (!userInfo.fcmToken) {
     await prisma.notification.create({
       data: {
@@ -37,13 +43,13 @@ export const sendSingleNotification = async (
     },
   });
 
-  if (userInfo.fcmToken.length === 0) {
+  if (receiverInfo.fcmToken.length === 0) {
     console.warn(`No token found for sending notification`);
     return;
   }
 
   try {
-    const tokens = userInfo.fcmToken; // array of tokens
+    const tokens = receiverInfo.fcmToken; // array of tokens
 
     if (tokens.length > 0) {
       const message = {
@@ -64,7 +70,9 @@ export const sendSingleNotification = async (
           where: { id: receiverId },
           data: {
             fcmToken: {
-              set: userInfo.fcmToken.filter((t) => !invalidTokens.includes(t)),
+              set: receiverInfo.fcmToken.filter(
+                (t) => !invalidTokens.includes(t),
+              ),
             },
           },
         });

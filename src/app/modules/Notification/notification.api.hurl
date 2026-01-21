@@ -1,0 +1,11 @@
+# send test notification
+POST {{port6011}}/notify/send-test
+Content-type: application/json
+{
+   "receiverId":"694a254aad128cabeaf7412f",
+   "title":"Send test notification",
+   "body":"This is a test notification from postman",
+   "type":"SCHEDULE",
+   "senderId":"694a39873340ac9b4e138239",
+   "handlerId":"695b3bd3c5fa61f1470e63d8"
+}
