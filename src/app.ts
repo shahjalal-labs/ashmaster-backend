@@ -25,6 +25,7 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 app.get("/", entryMessage);
 // Router setup
 app.use("/api/v1", router);
+
 app.use(
   "/bull",
   basicAuth({
