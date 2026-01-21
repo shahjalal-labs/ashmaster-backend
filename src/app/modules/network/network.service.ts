@@ -382,9 +382,11 @@ const responseRequestOrRemoveConnection = async (
       select: {
         id: true,
         status: true,
+        senderId: true,
+        receiverId: true,
         receiver: {
           select: {
-            id: true,
+            fullname: true,
           },
         },
       },
@@ -395,7 +397,7 @@ const responseRequestOrRemoveConnection = async (
     throw new ApiError(httpStatus.BAD_REQUEST, "No request found");
   }
 
-  if (request?.receiver.id !== userId) {
+  if (request?.receiverId !== userId) {
     throw new ApiError(
       httpStatus.BAD_REQUEST,
       "You canno't response to other request",
@@ -418,6 +420,18 @@ const responseRequestOrRemoveConnection = async (
         status: payload.status,
       },
     });
+
+    await sendSingleNotification(
+      request.senderId, // notification receiverId
+      "Connection request accepted",
+      `${request.receiver.fullname} accepted your connection request`,
+      "CONNECTIONS",
+      "BOTH",
+      request.receiverId, // notification senderid
+      {
+        requestId: request.id,
+      },
+    );
   } else {
     await prisma.connections.delete({
       where: {

@@ -210,7 +210,6 @@ model Notification {
   body                String?
   receiverId          String
   senderId            String?
-  handlerId           String?
   type                NotificationType
   isRead              Boolean             @default(false)
   notificationChannel NotificationChannel @default(BOTH)

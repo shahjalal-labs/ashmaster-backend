@@ -51,7 +51,7 @@ export const sendSingleNotification = async (
       };
 
       const response = await admin.messaging().sendEachForMulticast(message);
-      console.log(response, "fcm response", 55);
+      console.log(response, "fcm response", 54);
 
       // remove invalid tokens
       const invalidTokens = response.responses
