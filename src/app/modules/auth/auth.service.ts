@@ -302,20 +302,22 @@ const getProfileFromDB = async (userId: string, otherUserId?: string) => {
       select: {
         id: true,
         status: true,
+        senderId: true,
+        receiverId: true,
       },
     });
   }
   console.log(connections, "auth.service.ts", 276);
   const { password, createdAt, updatedAt, ...sanitizedUser } = user;
 
+  let connectionStatus = connections?.status;
+
+  if (connections?.senderId === userId) {
+    connectionStatus = "";
+  }
   // Store in cache for future requests
   await setProfileCache(userId, sanitizedUser);
   // await new Promise((resolve) => setTimeout(resolve, 5000)); // Blocks for 5 seconds
-
-  await notificationQueue.add("notify", {
-    title: "hellow",
-  });
-
   return {
     ...sanitizedUser,
     ...(otherUserId && {

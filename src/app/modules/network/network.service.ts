@@ -207,7 +207,12 @@ const sendConnectionRequest = async (
 
   await sendSingleNotification(
     receiverId,
-    `${user.fullname} sent you a connection request`,
+    "New connection request",
+    `${user.fullname} has sent you a connection request`,
+    "CONNECTIONS",
+    "BOTH",
+    userId, // senderId
+    userId, //handlerId
   );
 };
 
