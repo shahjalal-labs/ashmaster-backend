@@ -20,21 +20,7 @@ export const sendSingleNotification = async (
   if (!receiverInfo) {
     throw new ApiError(httpStatus.NOT_FOUND, "reciever not found!");
   }
-  /* if (!userInfo.fcmToken) {
     await prisma.notification.create({
-      data: {
-        receiverId,
-        title,
-        body,
-        type: type,
-        handlerId: handlerId,
-        senderId: senderId,
-      },
-    });
-    return;
-  } */
-
-  await prisma.notification.create({
     data: {
       receiverId,
       title,

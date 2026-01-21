@@ -5,6 +5,7 @@ import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
+import { sendSingleNotification } from "../Notification/notification.service";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -154,6 +155,7 @@ const sendConnectionRequest = async (
       },
       select: {
         id: true,
+        fullname: true,
       },
     }),
 
@@ -202,6 +204,11 @@ const sendConnectionRequest = async (
       message,
     },
   });
+
+  await sendSingleNotification(
+    receiverId,
+    `${user.fullname} sent you a connection request`,
+  );
 };
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
