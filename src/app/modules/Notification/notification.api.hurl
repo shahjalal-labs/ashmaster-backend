@@ -15,7 +15,3 @@ Content-type: application/json
 GET {{port6011}}/notify/my
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
-
-
-
-

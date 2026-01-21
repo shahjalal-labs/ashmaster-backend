@@ -43,7 +43,8 @@ model User {
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
   message                Message[]
-  Notification           Notification[]
+  receivedNotifications  Notification[]     @relation("notificationRecieve")
+  sentNotifications      Notification[]     @relation("notificationSend")
 
   @@map("users")
 }
@@ -177,6 +178,7 @@ model Group {
 
 //w: (end)  ╰──────────── Group  ────────────╯
 
+//w: (start)╭────────────  ChatRoom ────────────╮
 model ChatRoom {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
   type         RoomType
@@ -190,6 +192,9 @@ model ChatRoom {
   @@map("chatrooms")
 }
 
+//w: (end)  ╰──────────── ChatRoom  ────────────╯
+
+//w: (start)╭────────────  Message ────────────╮
 model Message {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   roomId    String   @db.ObjectId
@@ -204,14 +209,17 @@ model Message {
   sender User     @relation(fields: [senderId], references: [id], onDelete: Cascade)
 }
 
+//w: (end)  ╰────────────  Message ────────────╯
+
 //w: (start)╭────────────  Notification  ────────────╮
 model Notification {
   id                  String              @id @default(auto()) @map("_id") @db.ObjectId
   title               String
   body                String?
-  receiverId          String
+  receiverId          String              @db.ObjectId
+  receiver            User                @relation("notificationRecieve", fields: [receiverId], references: [id])
   senderId            String?             @db.ObjectId
-  sender              User?               @relation(fields: [senderId], references: [id])
+  sender              User?               @relation("notificationSend", fields: [senderId], references: [id])
   type                NotificationType
   isRead              Boolean             @default(false)
   notificationChannel NotificationChannel @default(BOTH)

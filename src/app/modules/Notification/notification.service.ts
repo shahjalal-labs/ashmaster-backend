@@ -84,13 +84,27 @@ const getMyNotifications = async (userId: string) => {
     where: {
       receiverId: userId,
     },
+    select: {
+      id: true,
+      title: true,
+      body: true,
+      isRead: true,
+      metaData: true,
+      type: true,
+      sender: {
+        select: {
+          id: true,
+          fullname: true,
+          profile: {
+            select: {
+              profileImage: true,
+              profession: true,
+            },
+          },
+        },
+      },
+    },
   });
-
-   const receiver=await prisma.user.findUnique({
-    where: {
-      id: result.
-    }
-  }) ;
 
   return result;
 };
