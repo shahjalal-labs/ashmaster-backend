@@ -26,12 +26,13 @@ export const sendSingleNotification = async (
       title,
       body,
       senderId,
+      notificationChannel,
       type: type,
       metaData,
     },
   });
 
-  if (notificationChannel === "INAPP") {
+  if (notificationChannel === NotificationChannel.INAPP) {
     console.log(`It's only an in app notification not push notify`);
     return;
   }
@@ -78,6 +79,16 @@ export const sendSingleNotification = async (
 };
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+const getMyNotifications = async (userId: string) => {
+  const result = await prisma.notification.findMany({
+    where: {
+      receiverId: userId,
+    },
+  });
+  return result;
+};
+
 export const NotificationService = {
   sendSingleNotification,
+  getMyNotifications,
 };

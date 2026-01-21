@@ -35,6 +35,12 @@ const sendSingleNotification = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+const getMyNotifications = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+
+  const result = await NotificationService.getMyNotifications(userId);
+});
+
 export const NotificationController = {
   sendSingleNotification,
 };
