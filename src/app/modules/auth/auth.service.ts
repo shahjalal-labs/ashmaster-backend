@@ -40,10 +40,13 @@ const loginUserIntoDB = async (payload: {
     throw new ApiError(401, "Invalid credentials");
   }
 
+  const fcmTokens = user.fcmToken;
+  fcmTokens.push(payload.fcmToken);
+
   await prisma.user.update({
     where: { email: user.email },
     data: {
-      fcmToken: payload.fcmToken,
+      fcmToken: fcmTokens,
     },
   });
 
@@ -94,6 +97,7 @@ const authLogin = async (payload: User) => {
     const user = await prisma.user.create({
       data: {
         ...payload,
+        fcmToken: [payload?.fcmToken],
       },
     });
 

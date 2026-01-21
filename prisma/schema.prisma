@@ -28,7 +28,7 @@ model User {
   email                  String             @unique
   password               String?
   fullname               String
-  fcmToken               String?
+  fcmToken               String[]
   role                   UserRole           @default(MENTEE)
   profilStatus           ProfilStatus       @default(INCOMPLETE)
   profile                Profile?
@@ -209,7 +209,7 @@ model Notification {
   title      String
   body       String?
   receiverId String
-  senderId   String
+  senderId   String?
   type       NotificationType
   isRead     Boolean
   createdAt  DateTime         @default(now())
