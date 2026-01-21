@@ -1,13 +1,14 @@
 import { NotificationType } from "@prisma/client";
 import prisma from "../../../shared/prisma";
+import admin from "../../../helpers/firebaseAdmin";
 
 export const sendSingleNotification = async (
   receiverId: string,
   title: string,
   body: string,
   type: NotificationType,
-  handlerId?: string,
   senderId?: string,
+  handlerId?: string,
 ) => {
   const userInfo = await prisma.user.findUnique({ where: { id: receiverId } });
   if (!userInfo) return;
@@ -18,11 +19,16 @@ export const sendSingleNotification = async (
         title,
         body,
         type: type,
-
+        handlerId: handlerId,
         senderId: senderId,
       },
     });
     return;
+  }
+
+  const tokens = userInfo.fcmToken;
+
+  if (tokens.length) {
   }
 
   const message = {
@@ -30,12 +36,12 @@ export const sendSingleNotification = async (
       title: title,
       body: body,
     },
-    token: userInfo.fcmToken,
+    tokens: userInfo.fcmToken,
   };
 
   await prisma.notification.create({
     data: {
-      userId: receiverId,
+      receiverId,
       title,
       body,
       senderId,
@@ -45,7 +51,7 @@ export const sendSingleNotification = async (
   });
 
   try {
-    const response = await admin.messaging().send(message);
+    const response = await admin.messaging().sendEachForMulticast(message);
     return response;
   } catch (error) {
     console.log(error);

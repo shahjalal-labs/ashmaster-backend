@@ -212,7 +212,7 @@ model Notification {
   senderId   String?
   handlerId  String?
   type       NotificationType
-  isRead     Boolean
+  isRead     Boolean          @default(false)
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
 
