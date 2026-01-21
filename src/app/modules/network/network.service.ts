@@ -196,7 +196,7 @@ const sendConnectionRequest = async (
     );
   }
 
-  await prisma.connections.create({
+  const connection = await prisma.connections.create({
     data: {
       senderId: userId,
       receiverId,
@@ -212,7 +212,9 @@ const sendConnectionRequest = async (
     "CONNECTIONS",
     "BOTH",
     userId, // senderId
-    userId, //handlerId
+    {
+      requestId: connection.id,
+    },
   );
 };
 

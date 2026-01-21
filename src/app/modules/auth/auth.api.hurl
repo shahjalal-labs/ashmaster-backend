@@ -31,7 +31,6 @@ GET {{port6011}}/auth/profile
 Authorization: {{ashRaisa}}
 
 
-
 # get other profile
 # profile/userId
 GET {{port6011}}/auth/profile/694a254aad128cabeaf7412f

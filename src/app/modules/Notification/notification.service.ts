@@ -12,7 +12,7 @@ export const sendSingleNotification = async (
   type: NotificationType,
   notificationChannel: NotificationChannel,
   senderId?: string,
-  handlerId?: string,
+  metaData?: any,
 ) => {
   const receiverInfo = await prisma.user.findUnique({
     where: { id: receiverId },
@@ -20,14 +20,14 @@ export const sendSingleNotification = async (
   if (!receiverInfo) {
     throw new ApiError(httpStatus.NOT_FOUND, "reciever not found!");
   }
-    await prisma.notification.create({
+  await prisma.notification.create({
     data: {
       receiverId,
       title,
       body,
       senderId,
       type: type,
-      handlerId: handlerId,
+      metaData,
     },
   });
 
