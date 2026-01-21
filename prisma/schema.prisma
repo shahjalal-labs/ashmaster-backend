@@ -43,6 +43,7 @@ model User {
   checklistUpdateTracker DateTime?
   schedule               Schedule[]
   message                Message[]
+  Notification           Notification[]
 
   @@map("users")
 }
@@ -209,7 +210,8 @@ model Notification {
   title               String
   body                String?
   receiverId          String
-  senderId            String?
+  senderId            String?             @db.ObjectId
+  sender              User?               @relation(fields: [senderId], references: [id])
   type                NotificationType
   isRead              Boolean             @default(false)
   notificationChannel NotificationChannel @default(BOTH)

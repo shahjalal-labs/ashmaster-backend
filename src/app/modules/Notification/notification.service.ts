@@ -85,6 +85,13 @@ const getMyNotifications = async (userId: string) => {
       receiverId: userId,
     },
   });
+
+   const receiver=await prisma.user.findUnique({
+    where: {
+      id: result.
+    }
+  }) ;
+
   return result;
 };
 

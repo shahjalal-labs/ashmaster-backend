@@ -35,6 +35,7 @@ const sendSingleNotification = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+//w: (start)╭──────────── getMyNotifications ────────────╮
 const getMyNotifications = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
 
@@ -42,10 +43,11 @@ const getMyNotifications = catchAsync(async (req, res) => {
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
-    message: "fet",
+    message: "Fetched my notifications successfully",
     data: result,
   });
 });
+//w: (end)  ╰──────────── getMyNotifications ────────────╯
 
 export const NotificationController = {
   sendSingleNotification,

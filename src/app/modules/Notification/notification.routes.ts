@@ -9,9 +9,11 @@ const router = Router();
 router.post("/send-test", NotificationController.sendSingleNotification);
 
 if (config.env === ENV.DEVELOPMENT) {
-  router.use(profileGuard());
+  // router.use(profileGuard());
 }
 
-router.get("/my", auth(), NotificationController.getMyNotifications);
+router.use(auth());
+
+router.get("/my", NotificationController.getMyNotifications);
 
 export const NotificationRoutes = router;
