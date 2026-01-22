@@ -18,6 +18,10 @@ const sendEmail = async (
     },
   }); */
 
+  console.log({
+    emai: config.emailSender.email,
+    pass: config.emailSender.app_pass,
+  });
   const transporter = nodemailer.createTransport({
     host: "smtp.hostinger.com",
     port: 465,
