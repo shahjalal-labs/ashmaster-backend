@@ -17,6 +17,11 @@ GET {{port6011}}/notify/my?page=1&limit=20&isRead=all
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
 
+# get single notification and marks as read
+GET {{port6011}}/notify/single/697240f164d0478c9ab2f506
+#Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
+
 # mark all as read or unread
 PATCH {{port6011}}/notify/mark-all
 #Authorization: {{ashsrahim}}

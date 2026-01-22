@@ -72,9 +72,25 @@ const getMyNotifications = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getMyNotifications ────────────╯
 
+//w: (start)╭──────────── getSingleNotifAndMarkRead ────────────╮
 const getSingleNotifAndMarkRead = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
+
+  const { id: notifId } = req.params;
+
+  const result = await NotificationService.getSingleNotifAndMarkRead(
+    userId,
+    notifId,
+  );
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Notification fetched successfully",
+    data: result,
+  });
 });
+//w: (end)  ╰──────────── getSingleNotifAndMarkRead ────────────╯
 
 //w: (start)╭──────────── markAllAsReadUnread ────────────╮
 const markAllAsReadUnread = catchAsync(async (req, res) => {

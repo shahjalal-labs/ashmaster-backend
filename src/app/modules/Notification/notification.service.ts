@@ -168,7 +168,10 @@ const getSingleNotifAndMarkRead = async (userId: string, notifId: string) => {
   }
 
   if (notif.receiverId !== userId) {
-    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
+    throw new ApiError(
+      httpStatus.UNAUTHORIZED,
+      "You are not authorized to view  other's notification",
+    );
   }
 
   const updatedNotif = await prisma.notification.update({
