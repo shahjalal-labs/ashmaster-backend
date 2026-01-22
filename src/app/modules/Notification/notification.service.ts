@@ -99,8 +99,9 @@ const getMyNotifications = async (
         title: true,
         body: true,
         isRead: true,
-        metaData: true,
         type: true,
+        notificationChannel: true,
+        metaData: true,
         sender: {
           select: {
             id: true,
@@ -154,8 +155,37 @@ const markAllAsReadUnread = async (userId: string, isRead: boolean) => {
 };
 //w: (end)  ╰──────────── markAllAsReadUnread ────────────╯
 
+//w: (start)╭──────────── getSingleNotifyAndMarkRead ────────────╮
+const getSingleNotifAndMarkRead = async (userId: string, notifId: string) => {
+  const notif = await prisma.notification.findUnique({
+    where: {
+      id: notifId,
+    },
+  });
+
+  if (!notif) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Notification not found");
+  }
+
+  if (notif.receiverId !== userId) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "You are not authorized");
+  }
+
+  const updatedNotif = await prisma.notification.update({
+    where: {
+      id: notifId,
+    },
+    data: {
+      isRead: true,
+    },
+  });
+  return updatedNotif;
+};
+//w: (end)  ╰──────────── getSingleNotifyAndMarkRead ────────────╯
+
 export const NotificationService = {
   sendSingleNotification,
   getMyNotifications,
   markAllAsReadUnread,
+  getSingleNotifAndMarkRead,
 };

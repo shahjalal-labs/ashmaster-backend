@@ -72,6 +72,10 @@ const getMyNotifications = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getMyNotifications ────────────╯
 
+const getSingleNotifAndMarkRead = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+});
+
 //w: (start)╭──────────── markAllAsReadUnread ────────────╮
 const markAllAsReadUnread = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
@@ -91,4 +95,5 @@ export const NotificationController = {
   sendSingleNotification,
   getMyNotifications,
   markAllAsReadUnread,
+  getSingleNotifAndMarkRead,
 };
