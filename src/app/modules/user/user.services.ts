@@ -47,7 +47,7 @@ const createUserIntoDB = async (payload: PendingUser) => {
   });
   // await sendEmail(userInfo.email, subject, html);
   await redisOtpService.storeOtp(userInfo.email, otp);
-  return;
+  return otp;
 };
 //w: (end)  ╰──────────── createUser ────────────╯
 
