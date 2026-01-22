@@ -15,3 +15,9 @@ Content-type: application/json
 GET {{port6011}}/notify/my
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
+
+# mark all as read or unread
+PATCH {{port6011}}/notify/mark-all
+#Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
+

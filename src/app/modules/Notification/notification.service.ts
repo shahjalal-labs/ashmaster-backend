@@ -111,7 +111,7 @@ const getMyNotifications = async (userId: string) => {
 };
 //w: (end)  ╰──────────── getMyNotifications ────────────╯
 
-//w: (start)╭──────────── toggleMarkAllAsReadUnreadh ────────────╮
+//w: (start)╭──────────── markAllAsReadUnread ────────────╮
 const markAllAsReadUnread = async (userId: string, isRead: boolean) => {
   await prisma.notification.updateMany({
     where: {
@@ -122,7 +122,7 @@ const markAllAsReadUnread = async (userId: string, isRead: boolean) => {
     },
   });
 };
-//w: (end)  ╰──────────── toggleMarkAllAsReadUnreadh ────────────╯
+//w: (end)  ╰──────────── markAllAsReadUnread ────────────╯
 
 export const NotificationService = {
   sendSingleNotification,
