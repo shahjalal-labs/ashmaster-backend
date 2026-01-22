@@ -45,6 +45,8 @@ const createUserIntoDB = async (payload: PendingUser) => {
     fullname: payload.fullname,
     otp,
   });
+
+  console.log(`job added`);
   // await sendEmail(userInfo.email, subject, html);
   await redisOtpService.storeOtp(userInfo.email, otp);
   return otp;
