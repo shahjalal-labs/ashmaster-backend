@@ -19,3 +19,5 @@ root /var/www/ashmaster-backend;
         }
         client_max_body_size 3000M;
     }
+
+    "start": "concurrently \"node ./dist/server.js\" \"node ./dist/workers/emailWorker.js\" \"node ./dist/workers/notificationWorker.js\"",
