@@ -7,12 +7,23 @@ const sendEmail = async (
   text?: string,
 ) => {
   // Create a transporter
-  const transporter = nodemailer.createTransport({
+  //development phase mail send
+  /* const transporter = nodemailer.createTransport({
     service: "gmail",
     port: 587,
     secure: false,
     auth: {
       user: config.emailSender.email,
+      pass: config.emailSender.app_pass,
+    },
+  }); */
+
+  const transporter = nodemailer.createTransport({
+    host: "smtp.hostinger.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: config.emailSender.email, 
       pass: config.emailSender.app_pass,
     },
   });

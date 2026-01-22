@@ -2,8 +2,8 @@
 POST  {{port6011}}/user/create
 Content-type: application/json
 {
-   "fullname":"Salman Haque",
-   "email":"salman@merepost.com",
+   "fullname":"Turjo Khan Sani",
+   "email":"turjo@merepost.com",
    "password":"Aw32@320",
    "fcmToken":"fcm1"
 }
