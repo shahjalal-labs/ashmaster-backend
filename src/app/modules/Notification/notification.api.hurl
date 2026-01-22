@@ -11,8 +11,8 @@ Content-type: application/json
    "handlerId":"695b3bd3c5fa61f1470e63d8"
 }
 
-# my
-GET {{port6011}}/notify/my
+# my notifications
+GET {{port6011}}/notify/my?page=1&limit=20
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
 

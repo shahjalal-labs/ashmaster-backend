@@ -81,13 +81,18 @@ export const sendSingleNotification = async (
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
 //w: (start)╭──────────── getMyNotifications ────────────╮
-const getMyNotifications = async (userId: string, options: TOptions) => {
+const getMyNotifications = async (
+  userId: string,
+  options: TOptions,
+  filter = true,
+) => {
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
 
   const [data, total] = await Promise.all([
     prisma.notification.findMany({
       where: {
         receiverId: userId,
+        isRead: filter,
       },
       select: {
         id: true,
@@ -121,7 +126,12 @@ const getMyNotifications = async (userId: string, options: TOptions) => {
   ]);
 
   return {
-    meta: {},
+    meta: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
     data,
   };
 };
