@@ -23,7 +23,7 @@ const sendEmail = async (
     port: 465,
     secure: true,
     auth: {
-      user: config.emailSender.email, 
+      user: config.emailSender.email,
       pass: config.emailSender.app_pass,
     },
   });
@@ -36,7 +36,13 @@ const sendEmail = async (
     html,
     text,
   };
-  await transporter.sendMail(mailOptions);
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log("Email sent");
+  } catch (error) {
+    console.error("SMTP ERROR:", error);
+    throw error;
+  }
 };
 
 export default sendEmail;
