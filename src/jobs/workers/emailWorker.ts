@@ -33,9 +33,9 @@ new Worker(
         margin-bottom: 16px;
         font-size: 22px;
         font-weight: 600;
-        color: #222;
+        color: #abc346;
       ">
-        Account verification
+        Bridge Connections Account verification
       </h2>
 
       <p style="margin: 0 0 12px; font-size: 15px;">
