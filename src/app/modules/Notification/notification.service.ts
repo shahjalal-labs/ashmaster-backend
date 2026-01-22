@@ -84,15 +84,24 @@ export const sendSingleNotification = async (
 const getMyNotifications = async (
   userId: string,
   options: TOptions,
-  filter = true,
+  filter: boolean | string,
 ) => {
   const { page, skip, limit } = paginationHelper.calcalutePagination(options);
+
+  let readStatus;
+
+  switch (filter) {
+    case true: {
+      readStatus = true;
+      break;
+    }
+  }
 
   const [data, total] = await Promise.all([
     prisma.notification.findMany({
       where: {
         receiverId: userId,
-        isRead: filter,
+        ...(typeof filter === "boolean" ? { isRead: filter } : {}),
       },
       select: {
         id: true,

@@ -42,6 +42,14 @@ const getMyNotifications = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const options = pick(req.query, paginationOptions);
 
+  let { filter } = req.query;
+
+  switch (filter) {
+    case "true": {
+      (filter as any) = true;
+    }
+  }
+
   const result = await NotificationService.getMyNotifications(userId, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
