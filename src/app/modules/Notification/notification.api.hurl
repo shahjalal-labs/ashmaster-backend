@@ -22,5 +22,5 @@ PATCH {{port6011}}/notify/mark-all
 Authorization: {{ashsrasu}}
 Content-type: application/json
 {
-  "isRead":true
+  "isRead":false
 }

@@ -2,6 +2,8 @@ import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { NotificationService } from "./notification.service";
+import { paginationOptions } from "../../../shared/paginationHelper";
+import { pick } from "../../../shared/pick";
 
 //w: (start)╭──────────── sendSingleNotification ────────────╮
 //send test notification
@@ -38,8 +40,9 @@ const sendSingleNotification = catchAsync(async (req, res) => {
 //w: (start)╭──────────── getMyNotifications ────────────╮
 const getMyNotifications = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
+  const options = pick(req.query, paginationOptions);
 
-  const result = await NotificationService.getMyNotifications(userId);
+  const result = await NotificationService.getMyNotifications(userId, options);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,

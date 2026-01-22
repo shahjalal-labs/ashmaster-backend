@@ -3,6 +3,7 @@ import prisma from "../../../shared/prisma";
 import admin from "../../../helpers/firebaseAdmin";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
+import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 
 //w: (start)╭──────────── sendSingleNotification ────────────╮
 export const sendSingleNotification = async (
@@ -80,34 +81,49 @@ export const sendSingleNotification = async (
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
 //w: (start)╭──────────── getMyNotifications ────────────╮
-const getMyNotifications = async (userId: string) => {
-  const result = await prisma.notification.findMany({
-    where: {
-      receiverId: userId,
-    },
-    select: {
-      id: true,
-      title: true,
-      body: true,
-      isRead: true,
-      metaData: true,
-      type: true,
-      sender: {
-        select: {
-          id: true,
-          fullname: true,
-          profile: {
-            select: {
-              profileImage: true,
-              profession: true,
+const getMyNotifications = async (userId: string, options: TOptions) => {
+  const { page, skip, limit } = paginationHelper.calcalutePagination(options);
+
+  const [data, total] = await Promise.all([
+    prisma.notification.findMany({
+      where: {
+        receiverId: userId,
+      },
+      select: {
+        id: true,
+        title: true,
+        body: true,
+        isRead: true,
+        metaData: true,
+        type: true,
+        sender: {
+          select: {
+            id: true,
+            fullname: true,
+            profile: {
+              select: {
+                profileImage: true,
+                profession: true,
+              },
             },
           },
         },
       },
-    },
-  });
+      skip,
+      take: limit,
+    }),
 
-  return result;
+    prisma.notification.count({
+      where: {
+        receiverId: userId,
+      },
+    }),
+  ]);
+
+  return {
+    meta: {},
+    data,
+  };
 };
 //w: (end)  ╰──────────── getMyNotifications ────────────╯
 
