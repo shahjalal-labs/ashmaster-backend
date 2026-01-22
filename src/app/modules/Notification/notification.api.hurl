@@ -12,7 +12,7 @@ Content-type: application/json
 }
 
 # my notifications
-GET {{port6011}}/notify/my?page=1&limit=20
+GET {{port6011}}/notify/my?page=1&limit=20&isRead=false
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
 

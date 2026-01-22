@@ -42,15 +42,27 @@ const getMyNotifications = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
   const options = pick(req.query, paginationOptions);
 
-  let { filter } = req.query;
+  let { isRead } = req.query;
 
-  switch (filter) {
+  switch (isRead) {
     case "true": {
-      (filter as any) = true;
+      (isRead as any) = true;
+      break;
+    }
+    case "false": {
+      (isRead as any) = false;
+      break;
+    }
+    default: {
+      isRead = "all";
     }
   }
 
-  const result = await NotificationService.getMyNotifications(userId, options);
+  const result = await NotificationService.getMyNotifications(
+    userId,
+    options,
+    isRead,
+  );
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
