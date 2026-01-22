@@ -20,4 +20,7 @@ Authorization: {{ashsrasu}}
 PATCH {{port6011}}/notify/mark-all
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
-
+Content-type: application/json
+{
+  "isRead":true
+}

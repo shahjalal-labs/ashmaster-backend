@@ -2,6 +2,8 @@ import { Router } from "express";
 import { NotificationController } from "./notification.controller";
 import config, { ENV } from "../../../config";
 import auth from "../../middlewares/auth";
+import validateRequest from "../../middlewares/validateRequest";
+import { NotificationValidation } from "./notification.validation";
 
 const router = Router();
 
@@ -16,6 +18,10 @@ router.use(auth());
 router.get("/my", NotificationController.getMyNotifications);
 
 //mark all as read or unread
-router.patch("/mark-all", NotificationController.markAllAsReadUnread);
+router.patch(
+  "/mark-all",
+  validateRequest(NotificationValidation.markAllAsReadOrUnreadSchema),
+  NotificationController.markAllAsReadUnread,
+);
 
 export const NotificationRoutes = router;
