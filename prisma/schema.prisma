@@ -183,7 +183,7 @@ model ChatRoom {
   id           String    @id @default(auto()) @map("_id") @db.ObjectId
   type         RoomType
   groupId      String?   @db.ObjectId
-  group        Group?    @relation(fields: [groupId], references: [id])
+  group        Group?    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   participants String[]  @db.ObjectId // both P2P and group
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt

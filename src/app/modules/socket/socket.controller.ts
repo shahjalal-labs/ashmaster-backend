@@ -206,13 +206,14 @@ export const setupWebSocketServer = (server: Server) => {
                   orderBy: { createdAt: "desc" },
                   take: 1,
                 },
-                group: (room) => ({
+
+                group: {
                   select: {
                     id: true,
                     title: true,
                     groupPhoto: true,
                   },
-                }),
+                },
               },
             });
 
@@ -288,9 +289,7 @@ export const setupWebSocketServer = (server: Server) => {
               }),
             );
 
-            console.log(
-              `👥 User ${userId} subscribed to existing room ${roomId}`,
-            );
+            console.log(`User ${userId} subscribed to existing room ${roomId}`);
             break;
           }
 
