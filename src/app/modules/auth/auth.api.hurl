@@ -6,8 +6,8 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"rasu@merepost.com",
-  "password":"SjAbc1@Bad",
+  "email":"bijege7524@mustaer.com",
+  "password":"Aw32@320",
   "fcmToken":"fcm4"
 }
 

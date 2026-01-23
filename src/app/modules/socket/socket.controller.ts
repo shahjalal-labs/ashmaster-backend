@@ -203,7 +203,7 @@ export const setupWebSocketServer = (server: Server) => {
                       },
                     },
                   },
-                  orderBy: { createdAt: "desc" },
+                  orderBy: { id: "desc" },
                   take: 1,
                 },
 

@@ -4,6 +4,7 @@ import prisma from "../../../shared/prisma";
 import { TCreateGroupSchema, TUpdateGroupSchema } from "./group.validation";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
+import { findOrCreateGroupRoom } from "../socket/handlers/chat.handler";
 
 //w: (start)╭──────────── createGroup ────────────╮
 const createGroup = async (userId: string, payload: TCreateGroupSchema) => {
@@ -285,7 +286,7 @@ const findMembersToAdd = async (userId: string, groupId: string) => {
 
 //w: (start)╭──────────── addMembersIntoGroup ────────────╮
 const addMembersIntoGroup = async (memberId: string, groupId: string) => {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const group = await tx.group.findUnique({
       where: { id: groupId },
       select: { memberIds: true },
@@ -302,7 +303,7 @@ const addMembersIntoGroup = async (memberId: string, groupId: string) => {
 
     const updatedMembers = [...group.memberIds, memberId];
 
-    return tx.group.update({
+    const updatedGroup = await tx.group.update({
       where: { id: groupId },
       data: {
         memberIds: updatedMembers,
@@ -311,7 +312,13 @@ const addMembersIntoGroup = async (memberId: string, groupId: string) => {
         memberIds: true,
       },
     });
+
+    return updatedGroup;
   });
+
+  await findOrCreateGroupRoom(memberId, groupId);
+
+  return result;
 };
 
 //w: (end)  ╰──────────── addMembersIntoGroup ────────────╯
