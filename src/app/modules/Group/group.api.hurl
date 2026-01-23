@@ -60,5 +60,5 @@ Authorization: {{ashRaisa}}
 Content-Type: application/json
 
 {
- "memberId":"694a39873340ac9b4e138239"
+ "memberId":"696b1b375609311f55de58fe"
 }

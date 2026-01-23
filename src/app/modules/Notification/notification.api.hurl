@@ -2,13 +2,23 @@
 POST {{port6011}}/notify/send-test
 Content-type: application/json
 {
-   "receiverId":"694a254aad128cabeaf7412f",
-   "title":"Send test notification",
+   "receiverId":"694a793d6f65b4f863400d6a",
+   "title":"10 Send test notification",
    "body":"This is a test notification from postman",
    "type":"SCHEDULE",
    "notificationChannel": "INAPP",
-   "senderId":"694a39873340ac9b4e138239",
-   "handlerId":"695b3bd3c5fa61f1470e63d8"
+   "senderId":"696e0f7ac1538597d9cb43f4",
+   "metaData":{
+  "action": "friend_request",
+  "actionId": "12345abcde",
+  "messagePreview": "John Doe sent you a friend request",
+  "extra": {
+    "priority": "high",
+    "sound": "ping",
+    "deeplink": "myapp://friends/requests"
+  }
+}
+
 }
 
 # my notifications
