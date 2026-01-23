@@ -77,12 +77,14 @@ const getUnreadCount = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
 
   const result = await NotificationService.getUnreadCount(userId);
-console.log(result, 'notification.controller.ts', 80);
+  console.log(result, "notification.controller.ts", 80);
   sendResponse(res, {
     statusCode: httpStatus.OK,
     success: true,
     message: "Fetched notification unread count successfully",
-    data: result,
+    data: {
+      unreadCount: result,
+    },
   });
 });
 //w: (end)  ╰──────────── getUnreadCount ────────────╯

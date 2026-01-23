@@ -465,14 +465,24 @@ export const setupWebSocketServer = (server: Server) => {
           }
 
           case "get-more-messages": {
-            const { roomId, before, limit = 20 } = data;
+            const { roomId, before, limit = 20, page = 1 } = data;
 
+            /*
+             *
+               roomId: string,
+  limit: number,
+  page: number,
+  userId: string,
+  before?: string,
+
+             * */
             // Get older messages from database
             const olderMessages = await getOlderMessagesFromDB(
               roomId,
-              before,
               limit,
+              page,
               userId,
+              before,
             );
 
             ws.send(
@@ -772,17 +782,19 @@ const updateConversationsForUsers = async (userIds: string[]) => {
 
 const getOlderMessagesFromDB = async (
   roomId: string,
-  before: string,
   limit: number,
+  page: number,
   userId: string,
+  before?: string,
 ) => {
   try {
     const beforeDate = new Date(before);
+    const skip = (page - 1) * limit;
 
     const messages = await prisma.message.findMany({
       where: {
         roomId,
-        createdAt: { lt: beforeDate },
+        // createdAt: { lt: beforeDate },
       },
       select: {
         id: true,
@@ -803,7 +815,7 @@ const getOlderMessagesFromDB = async (
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { id: "desc" },
       take: limit,
     });
 
