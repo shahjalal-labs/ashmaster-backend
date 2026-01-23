@@ -22,6 +22,14 @@ GET {{port6011}}/notify/single/697240f164d0478c9ab2f506
 #Authorization: {{ashsrahim}}
 Authorization: {{ashsrasu}}
 
+
+# get notification unread count
+GET {{port8012}}/notify/unread-count
+#Authorization: {{ashsrahim}}
+Authorization: {{ashsrasu}}
+
+
+
 # mark all as read or unread
 PATCH {{port6011}}/notify/mark-all
 #Authorization: {{ashsrahim}}

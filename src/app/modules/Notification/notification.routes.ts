@@ -19,6 +19,8 @@ router.get("/my", NotificationController.getMyNotifications);
 
 router.get("/single/:id", NotificationController.getSingleNotifAndMarkRead);
 
+router.get("/unread-count", NotificationController.getUnreadCount);
+
 //mark all as read or unread
 router.patch(
   "/mark-all",

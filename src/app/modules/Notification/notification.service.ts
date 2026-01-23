@@ -186,9 +186,21 @@ const getSingleNotifAndMarkRead = async (userId: string, notifId: string) => {
 };
 //w: (end)  ╰──────────── getSingleNotifyAndMarkRead ────────────╯
 
+//w: (start)╭──────────── getUnreadCount ────────────╮
+const getUnreadCount = async (userId: string) => {
+  return await prisma.notification.count({
+    where: {
+      receiverId: userId,
+      isRead: true,
+    },
+  });
+};
+//w: (end)  ╰──────────── getUnreadCount ────────────╯
+
 export const NotificationService = {
   sendSingleNotification,
   getMyNotifications,
   markAllAsReadUnread,
   getSingleNotifAndMarkRead,
+  getUnreadCount,
 };

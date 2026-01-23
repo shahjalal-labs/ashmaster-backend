@@ -72,6 +72,21 @@ const getMyNotifications = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── getMyNotifications ────────────╯
 
+//w: (start)╭──────────── getUnreadCount ────────────╮
+const getUnreadCount = catchAsync(async (req, res) => {
+  const { id: userId } = req.user;
+
+  const result = await NotificationService.getUnreadCount(userId);
+console.log(result, 'notification.controller.ts', 80);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Fetched notification unread count successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── getUnreadCount ────────────╯
+
 //w: (start)╭──────────── getSingleNotifAndMarkRead ────────────╮
 const getSingleNotifAndMarkRead = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
@@ -112,4 +127,5 @@ export const NotificationController = {
   getMyNotifications,
   markAllAsReadUnread,
   getSingleNotifAndMarkRead,
+  getUnreadCount,
 };
