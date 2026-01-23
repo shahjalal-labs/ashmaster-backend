@@ -12,5 +12,3 @@
 | ,,Disconnect                           | Cleanup when user leaves       |
 
 ---
-
-I am good, what's about you, are you fine?

@@ -66,7 +66,7 @@ export const setupWebSocketServer = (server: Server) => {
     ws.userId = userId;
 
     // 3. CLEANUP PREVIOUS CONNECTIONS FOR SAME USER
-    cleanupUserConnections(userId);
+    // cleanupUserConnections(userId);
 
     // 4. ADD USER TO CONNECTION MAPS
     if (!userConnections.has(userId)) {
@@ -469,7 +469,7 @@ export const setupWebSocketServer = (server: Server) => {
 
             /*
              *
-               roomId: string,
+      roomId: string,
   limit: number,
   page: number,
   userId: string,
@@ -788,7 +788,7 @@ const getOlderMessagesFromDB = async (
   before?: string,
 ) => {
   try {
-    const beforeDate = new Date(before);
+    const beforeDate = new Date(before as string);
     const skip = (page - 1) * limit;
 
     const messages = await prisma.message.findMany({
@@ -816,6 +816,7 @@ const getOlderMessagesFromDB = async (
         },
       },
       orderBy: { id: "desc" },
+      skip,
       take: limit,
     });
 
