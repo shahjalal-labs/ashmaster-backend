@@ -34,7 +34,7 @@ const sendEmail = async (
 
   // Email options
   const mailOptions = {
-    from: `Bridge Connection: <${config.emailSender.email}>`,
+    from: `"Bridge Connection" <${config.emailSender.email}>`,
     to,
     subject,
     html,
