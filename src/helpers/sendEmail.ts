@@ -24,8 +24,8 @@ const sendEmail = async (
   });
   const transporter = nodemailer.createTransport({
     host: "smtp.hostinger.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
     auth: {
       user: config.emailSender.email,
       pass: config.emailSender.app_pass,
