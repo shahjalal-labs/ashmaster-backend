@@ -23,13 +23,26 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
       },
     });
 
-    await notificationQueue.add("new-schedule", {
-      paylaod,
-      userId,
-      scheduleId: schedule.id,
-    });
+    await notificationQueue.add(
+      "newSchedule",
+      {
+        paylaod,
+        userId,
+        scheduleId: schedule.id,
+      },
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+        removeOnComplete: {
+          age: 3600 * 2, //2h
+        },
+      },
+    );
     // Notify all guests
-    await sendNotifToManyUser(
+    /* await sendNotifToManyUser(
       paylaod.guestIds,
       `New Schedule: ${paylaod.title}`,
       paylaod.description,
@@ -37,7 +50,7 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
       NotificationChannel.BOTH,
       userId,
       { scheduleId: schedule.id },
-    );
+    ); */
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new ApiError(
