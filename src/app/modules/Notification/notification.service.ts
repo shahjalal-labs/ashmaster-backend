@@ -80,6 +80,88 @@ export const sendSingleNotification = async (
 };
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+export const sendNotifToManyUser = async (
+  receiverIds: string[],
+  title: string,
+  body: string,
+  type: NotificationType,
+  notificationChannel: NotificationChannel,
+  senderId?: string,
+  metaData?: any,
+) => {
+  if (!receiverIds.length) return;
+
+  // Fetch all receivers
+  const receivers = await prisma.user.findMany({
+    where: { id: { in: receiverIds } },
+  });
+
+  if (!receivers.length) {
+    console.warn("No valid receivers found");
+    return;
+  }
+
+  // Create notifications in DB for all receivers
+  const notificationsData = receivers.map((r) => ({
+    receiverId: r.id,
+    title,
+    body,
+    senderId,
+    notificationChannel,
+    type,
+    metaData,
+  }));
+
+  await prisma.notification.createMany({
+    data: notificationsData,
+  });
+
+  if (notificationChannel === NotificationChannel.INAPP) {
+    console.log("It's only an in-app notification, skipping push.");
+    return;
+  }
+
+  // Prepare FCM tokens
+  const tokenMap: Record<string, string[]> = {};
+  receivers.forEach((r) => {
+    if (r.fcmToken.length > 0) tokenMap[r.id] = r.fcmToken;
+  });
+
+  const allTokens = Object.values(tokenMap).flat();
+  if (!allTokens.length) {
+    console.warn("No FCM tokens found for push notifications");
+    return;
+  }
+
+  try {
+    const message = {
+      notification: { title, body },
+      tokens: allTokens,
+    };
+
+    const response = await admin.messaging().sendEachForMulticast(message);
+    console.log(response, "FCM response");
+
+    // Remove invalid tokens per user
+    response.responses.forEach((res, idx) => {
+      if (!res.success) {
+        const token = allTokens[idx];
+        for (const [userId, tokens] of Object.entries(tokenMap)) {
+          if (tokens.includes(token)) {
+            tokenMap[userId] = tokens.filter((t) => t !== token);
+            prisma.user.update({
+              where: { id: userId },
+              data: { fcmToken: { set: tokenMap[userId] } },
+            });
+          }
+        }
+      }
+    });
+  } catch (err) {
+    console.error("Error sending FCM notifications:", err);
+  }
+};
+
 //w: (start)╭──────────── getMyNotifications ────────────╮
 const getMyNotifications = async (
   userId: string,
@@ -199,6 +281,7 @@ const getUnreadCount = async (userId: string) => {
 
 export const NotificationService = {
   sendSingleNotification,
+  sendNotifToManyUser,
   getMyNotifications,
   markAllAsReadUnread,
   getSingleNotifAndMarkRead,
