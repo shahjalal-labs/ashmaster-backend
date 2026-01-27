@@ -226,7 +226,7 @@ const sendConnectionRequest = async (
     },
   );
 
-  await sendSingleNotification(
+  /* await sendSingleNotification(
     receiverId,
     "New connection request",
     `${user.fullname} has sent you a connection request`,
@@ -236,7 +236,7 @@ const sendConnectionRequest = async (
     {
       requestId: connection.id,
     },
-  );
+  ); */
 };
 
 //w: (end)  ╰──────────── sendConnectionRequest ────────────╯
