@@ -2,15 +2,16 @@ import prisma from "../../../shared/prisma";
 import { TCreateSchedule } from "./schedule.validation";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { Prisma } from "@prisma/client";
+import { NotificationChannel, NotificationType, Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
 import { endOfMonth, startOfMonth } from "date-fns";
+import { sendNotifToManyUser } from "../Notification/notification.service";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
   try {
-    await prisma.schedule.create({
+    const schedule = await prisma.schedule.create({
       data: {
         ...paylaod,
         host: {
@@ -20,6 +21,17 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
         },
       },
     });
+
+    // Notify all guests
+    await sendNotifToManyUser(
+      paylaod.guestIds,
+      `New Schedule: ${paylaod.title}`,
+      paylaod.description,
+      NotificationType.SCHEDULE,
+      NotificationChannel.BOTH,
+      userId,
+      { scheduleId: schedule.id },
+    );
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new ApiError(
