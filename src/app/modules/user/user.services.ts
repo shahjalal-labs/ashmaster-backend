@@ -53,7 +53,9 @@ const createUserIntoDB = async (payload: PendingUser) => {
         type: "exponential",
         delay: 1000,
       },
-      removeOnComplete: true,
+      removeOnComplete: {
+        age: 3600 * 3, // 3h,  after completing and 3h end it will remove from redis
+      },
     },
   );
 

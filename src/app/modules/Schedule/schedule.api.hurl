@@ -3,13 +3,12 @@ POST {{port6011}}/schedule/create
 Authorization: {{ashsrahim}}
 Content-Type: application/json
 {
-  "dateTime": "2026-02-01T15:30:00Z",
+  "dateTime": "2026-04-01T15:30:00Z",
   "title": "Backend Architecture Review",
   "description": "Discussion on service boundaries, database schema, and performance bottlenecks.",
   "guestIds": [
-    "64f1c2a9e3b14a8c9d0e1234",
-    "64f1c2a9e3b14a8c9d0e5678",
-    "64f1c2a9e3b14a8c9d0e9999"
+    "694a254aad128cabeaf7412f",
+    "694a793d6f65b4f863400d6a"
   ],
  "images":[]
 }

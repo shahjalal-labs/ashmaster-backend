@@ -7,6 +7,7 @@ import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
 import { endOfMonth, startOfMonth } from "date-fns";
 import { sendNotifToManyUser } from "../Notification/notification.service";
+import { notificationQueue } from "../../../jobs/queues/notificationQueue";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -22,6 +23,11 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
       },
     });
 
+    await notificationQueue.add("new-schedule", {
+      paylaod,
+      userId,
+      scheduleId: schedule.id,
+    });
     // Notify all guests
     await sendNotifToManyUser(
       paylaod.guestIds,
