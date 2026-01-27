@@ -24,4 +24,3 @@ Content-type: application/json
 GET {{port6011}}/user
 
 
-## moved to final bucket
