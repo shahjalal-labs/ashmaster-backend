@@ -2,12 +2,11 @@ import prisma from "../../../shared/prisma";
 import { TCreateSchedule } from "./schedule.validation";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
-import { NotificationChannel, NotificationType, Prisma } from "@prisma/client";
 import { IPaginationOptions } from "../../../interfaces/paginations";
 import { paginationHelper } from "../../../shared/paginationHelper";
 import { endOfMonth, startOfMonth } from "date-fns";
-import { sendNotifToManyUser } from "../Notification/notification.service";
 import { notificationQueue } from "../../../jobs/queues/notificationQueue";
+import { Prisma } from "@prisma/client";
 
 //w: (start)╭──────────── createSchedule ────────────╮
 const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
@@ -33,6 +32,7 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
       {
         attempts: 3,
         backoff: {
+          // retry delay = baseDelay * 2^(n - 1), n = retry attempt
           type: "exponential",
           delay: 2000,
         },
@@ -41,16 +41,6 @@ const createSchedule = async (userId: string, paylaod: TCreateSchedule) => {
         },
       },
     );
-    // Notify all guests
-    /* await sendNotifToManyUser(
-      paylaod.guestIds,
-      `New Schedule: ${paylaod.title}`,
-      paylaod.description,
-      NotificationType.SCHEDULE,
-      NotificationChannel.BOTH,
-      userId,
-      { scheduleId: schedule.id },
-    ); */
   } catch (error: any) {
     if (error.code === "P2002") {
       throw new ApiError(
