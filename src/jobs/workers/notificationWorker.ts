@@ -27,7 +27,8 @@ new Worker(
         break;
       }
       // new connection request notif
-      case "requestToConnect": {
+      //w: (start)╭────────────   ────────────╮
+      case "newConnection": {
         const { receiverId, userId, fullname, requestId } = data;
         await sendSingleNotification(
           receiverId,
@@ -41,6 +42,10 @@ new Worker(
           },
         );
         break;
+      }
+      //w: (end)  ╰────────────   ────────────╯
+
+      case "requestAcceptance": {
       }
     }
   },

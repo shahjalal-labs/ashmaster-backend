@@ -206,8 +206,9 @@ const sendConnectionRequest = async (
     },
   });
 
+  // notify the other user
   await notificationQueue.add(
-    "requestToConnect",
+    "newConnection",
     {
       receiverId,
       userId,
@@ -226,6 +227,7 @@ const sendConnectionRequest = async (
     },
   );
 
+  //notify other user without bullmq
   /* await sendSingleNotification(
     receiverId,
     "New connection request",
@@ -442,6 +444,23 @@ const responseRequestOrRemoveConnection = async (
       },
     });
 
+    await notificationQueue.add(
+      // connectionRequest acceptance notif
+      "requestAcceptance",
+      {},
+      {
+        attempts: 3,
+        backoff: {
+          type: "exponential",
+          delay: 2000,
+        },
+        removeOnComplete: {
+          age: 3600 * 2, //2h
+        },
+      },
+    );
+
+    // notify the other user
     await sendSingleNotification(
       request.senderId, // notification receiverId
       "Connection request accepted",
