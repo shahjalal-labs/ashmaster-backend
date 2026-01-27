@@ -40,11 +40,22 @@ const createUserIntoDB = async (payload: PendingUser) => {
   // Generate OTP and expiry time
   const otp = generateOTP(); // 4-digit OTP
 
-  await emailQueue.add("sendOtp", {
-    email: payload.email,
-    fullname: payload.fullname,
-    otp,
-  });
+  await emailQueue.add(
+    "sendOtp",
+    {
+      email: payload.email,
+      fullname: payload.fullname,
+      otp,
+    },
+    {
+      attempts: 5,
+      backoff: {
+        type: "exponential",
+        delay: 1000,
+      },
+      removeOnComplete: true,
+    },
+  );
 
   console.log(`job added`);
   // await sendEmail(userInfo.email, subject, html);
