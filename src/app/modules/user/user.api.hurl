@@ -1,5 +1,5 @@
 # create user
-POST  {{port6011 }}/user/create
+POST  {{vps6011 }}/user/create
 Content-type: application/json
 {
    "fullname":"Md. Shahjalal",
@@ -11,16 +11,15 @@ Content-type: application/json
 
 
 # signup verification
-POST  {{port6011}}/user/signup-verification
+POST  {{vps6011}}/user/signup-verification
 Content-type: application/json
 {
    "email":"shahjalal.backend@gmail.com",
-   "otp":"9625"
+   "otp":"7974"
 }
 
 
 # get all users 
 
 GET {{port6011}}/user
-
 

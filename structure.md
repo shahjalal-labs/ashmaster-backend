@@ -3,6 +3,7 @@
 ```bash
 .
 ├── bun.lock
+├── ecosystem.config.js
 ├── msg.md
 ├── package.json
 ├── package-lock.json
@@ -44,15 +45,19 @@
 │   │   │   │   ├── ChecklistEndGoalFullContent.md
 │   │   │   │   ├── checklistEndGoal.routes.ts
 │   │   │   │   ├── checklistEndGoal.service.ts
-│   │   │   │   ├── checklistEndGoal.validation.ts
-│   │   │   │   └── mentoProgress.ts
+│   │   │   │   └── checklistEndGoal.validation.ts
 │   │   │   ├── Group
 │   │   │   │   ├── group.api.hurl
 │   │   │   │   ├── group.controller.ts
 │   │   │   │   ├── GroupFullContent.md
+│   │   │   │   ├── group.http.env.json
 │   │   │   │   ├── group.routes.ts
 │   │   │   │   ├── group.service.ts
-│   │   │   │   └── group.validation.ts
+│   │   │   │   ├── group.validation.ts
+│   │   │   │   └── kulala
+│   │   │   │       ├── basic.http
+│   │   │   │       ├── group.api.http
+│   │   │   │       └── variables.http
 │   │   │   ├── mentorProgress
 │   │   │   │   ├── mentorProgress.api.hurl
 │   │   │   │   ├── mentorProgress.controller.ts
@@ -68,6 +73,12 @@
 │   │   │   │   ├── network.routes.ts
 │   │   │   │   ├── network.service.ts
 │   │   │   │   └── network.validation.ts
+│   │   │   ├── Notification
+│   │   │   │   ├── notification.api.hurl
+│   │   │   │   ├── notification.controller.ts
+│   │   │   │   ├── notification.routes.ts
+│   │   │   │   ├── notification.service.ts
+│   │   │   │   └── notification.validation.ts
 │   │   │   ├── Schedule
 │   │   │   │   ├── schedule.api.hurl
 │   │   │   │   ├── schedule.controller.ts
@@ -82,7 +93,6 @@
 │   │   │   │   ├── socket.interface.ts
 │   │   │   │   ├── socket.note.md
 │   │   │   │   ├── socket.service.ts
-│   │   │   │   ├── websocketSendResponse.ts
 │   │   │   │   └── wstest.json
 │   │   │   └── user
 │   │   │       ├── user.api.hurl
@@ -96,8 +106,7 @@
 │   ├── app.ts
 │   ├── config
 │   │   ├── index.ts
-│   │   ├── serviceAccount.ts
-│   │   └── stripe.ts
+│   │   └── serviceAccount.ts
 │   ├── docs
 │   │   └── cli_commands.md
 │   ├── errors
@@ -121,10 +130,13 @@
 │   │   └── paginations.ts
 │   ├── jobs
 │   │   ├── bullBoard.ts
+│   │   ├── jobsFullContent.md
 │   │   ├── queues
-│   │   │   └── emailQueue.ts
+│   │   │   ├── emailQueue.ts
+│   │   │   └── notificationQueue.ts
 │   │   └── workers
-│   │       └── emailWorker.ts
+│   │       ├── emailWorker.ts
+│   │       └── notificationWorker.ts
 │   ├── resource
 │   │   └── requirements.md
 │   ├── server.ts
@@ -149,6 +161,6 @@
 │   └── google.png
 └── vercel.json
 
-31 directories, 116 files
+33 directories, 126 files
 
 ```
