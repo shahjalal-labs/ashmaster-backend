@@ -6,6 +6,7 @@ import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
 import { sendSingleNotification } from "../Notification/notification.service";
+import { notificationQueue } from "../../../jobs/queues/notificationQueue";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
 const getSuggestions = async (userId: string, options: TOptions) => {
@@ -204,6 +205,26 @@ const sendConnectionRequest = async (
       message,
     },
   });
+
+  await notificationQueue.add(
+    "requestToConnect",
+    {
+      receiverId,
+      userId,
+      fullname: user.fullname,
+      requestId: connection.id,
+    },
+    {
+      attempts: 3,
+      backoff: {
+        type: "exponential",
+        delay: 2000,
+      },
+      removeOnComplete: {
+        age: 3600 * 2, //2h
+      },
+    },
+  );
 
   await sendSingleNotification(
     receiverId,

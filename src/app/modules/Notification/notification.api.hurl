@@ -29,9 +29,10 @@ GET {{port6011}}/notify/my?page=1&limit=20&isRead=all
 Authorization: {{ashRaisa}}
 
 # get single notification and marks as read
-GET {{port6011}}/notify/single/697856cb945ebd465bd04f48
+GET {{port6011}}/notify/single/6978616ac37761286140fef8
 #Authorization: {{ashsrahim}}
-Authorization: {{ashsrasu}}
+#Authorization: {{ashsrasu}}
+Authorization: {{ashRaisa}}
 
 
 # get notification unread count
