@@ -1,5 +1,5 @@
 # create user
-POST  {{vps6011 }}/user/create
+POST  {{port6011 }}/user/create
 Content-type: application/json
 {
    "fullname":"Md. Shahjalal",
@@ -14,8 +14,8 @@ Content-type: application/json
 POST  {{port6011}}/user/signup-verification
 Content-type: application/json
 {
-   "email":"salman@merepost.com",
-   "otp":"9814"
+   "email":"shahjalal.backend@gmail.com",
+   "otp":"9625"
 }
 
 

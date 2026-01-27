@@ -6,8 +6,8 @@ SjAbc1@Bad
 POST {{port6011}}/auth/login
 
 {
-  "email":"bijege7524@mustaer.com",
-  "password":"Aw32@320",
+  "email":"shahjalal.backend@gmail.com",
+  "password":"SjAbc1@Bad",
   "fcmToken":"fcm4"
 }
 
