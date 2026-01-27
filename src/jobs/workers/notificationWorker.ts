@@ -12,6 +12,7 @@ new Worker(
     const { name, data } = job;
     switch (name) {
       // new schedule
+      //w: (start)╭────────────  newSchedule ────────────╮
       case "newSchedule": {
         const { paylaod, userId, scheduleId } = data;
 
@@ -26,8 +27,10 @@ new Worker(
         );
         break;
       }
+      //w: (end)  ╰────────────  newSchedule ────────────╯
+
       // new connection request notif
-      //w: (start)╭────────────   ────────────╮
+      //w: (start)╭────────────  newConnection ────────────╮
       case "newConnection": {
         const { receiverId, userId, fullname, requestId } = data;
         await sendSingleNotification(
@@ -43,10 +46,25 @@ new Worker(
         );
         break;
       }
-      //w: (end)  ╰────────────   ────────────╯
+      //w: (end)  ╰────────────  newConnection ────────────╯
 
+      //w: (start)╭────────────  requestAcceptance ────────────╮
       case "requestAcceptance": {
+        const { senderId, fullname, receiverId, requestId } = data;
+        await sendSingleNotification(
+          senderId, // notification receiverId
+          "Connection request accepted",
+          `${fullname} accepted your connection request`,
+          "CONNECTIONS",
+          "BOTH",
+          receiverId, // notification senderid
+          //notif metadata
+          {
+            requestId,
+          },
+        );
       }
+      //w: (end)  ╰────────────  requestAcceptance ────────────╯
     }
   },
   {

@@ -5,7 +5,6 @@ import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
 import { TResponseRequest, TSendConnectionReqest } from "./network.validation";
-import { sendSingleNotification } from "../Notification/notification.service";
 import { notificationQueue } from "../../../jobs/queues/notificationQueue";
 
 //w: (start)╭──────────── getSuggestions ────────────╮
@@ -444,10 +443,15 @@ const responseRequestOrRemoveConnection = async (
       },
     });
 
+    // connectionRequest acceptance notif
     await notificationQueue.add(
-      // connectionRequest acceptance notif
       "requestAcceptance",
-      {},
+      {
+        senderId: request.senderId,
+        fullname: request.receiver.fullname,
+        receiverId: request.receiverId, // notification senderid
+        requestId: request.id,
+      },
       {
         attempts: 3,
         backoff: {
@@ -461,7 +465,7 @@ const responseRequestOrRemoveConnection = async (
     );
 
     // notify the other user
-    await sendSingleNotification(
+    /* await sendSingleNotification(
       request.senderId, // notification receiverId
       "Connection request accepted",
       `${request.receiver.fullname} accepted your connection request`,
@@ -471,7 +475,7 @@ const responseRequestOrRemoveConnection = async (
       {
         requestId: request.id,
       },
-    );
+    ); */
   } else {
     await prisma.connections.delete({
       where: {
