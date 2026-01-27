@@ -80,6 +80,7 @@ export const sendSingleNotification = async (
 };
 //w: (end)  ╰──────────── sendSingleNotification ────────────╯
 
+//w: (start)╭──────────── sendNotifToManyUser ────────────╮
 export const sendNotifToManyUser = async (
   receiverIds: string[],
   title: string,
@@ -143,24 +144,58 @@ export const sendNotifToManyUser = async (
     console.log(response, "FCM response");
 
     // Remove invalid tokens per user
+    // Build token → userId map
+    const tokenToUserId = new Map<string, string>();
+    receivers.forEach((r) => {
+      r.fcmToken.forEach((token) => {
+        tokenToUserId.set(token, r.id);
+      });
+    });
+
+    // Collect invalid tokens per user
+    const tokensToRemoveByUser: Record<string, Set<string>> = {};
+
     response.responses.forEach((res, idx) => {
       if (!res.success) {
-        const token = allTokens[idx];
-        for (const [userId, tokens] of Object.entries(tokenMap)) {
-          if (tokens.includes(token)) {
-            tokenMap[userId] = tokens.filter((t) => t !== token);
-            prisma.user.update({
-              where: { id: userId },
-              data: { fcmToken: { set: tokenMap[userId] } },
-            });
+        const code = res.error?.code;
+
+        if (
+          code === "messaging/registration-token-not-registered" ||
+          code === "messaging/invalid-registration-token"
+        ) {
+          const token = allTokens[idx];
+          const userId = tokenToUserId.get(token);
+          if (!userId) return;
+
+          if (!tokensToRemoveByUser[userId]) {
+            tokensToRemoveByUser[userId] = new Set();
           }
+          tokensToRemoveByUser[userId].add(token);
         }
       }
     });
+
+    // Update each user once
+    await Promise.all(
+      Object.entries(tokensToRemoveByUser).map(([userId, tokensToRemove]) => {
+        const currentTokens = tokenMap[userId] || [];
+        const updatedTokens = currentTokens.filter(
+          (t) => !tokensToRemove.has(t),
+        );
+
+        if (updatedTokens.length === currentTokens.length) return;
+
+        return prisma.user.update({
+          where: { id: userId },
+          data: { fcmToken: { set: updatedTokens } },
+        });
+      }),
+    );
   } catch (err) {
     console.error("Error sending FCM notifications:", err);
   }
 };
+//w: (end)  ╰──────────── sendNotifToManyUser ────────────╯
 
 //w: (start)╭──────────── getMyNotifications ────────────╮
 const getMyNotifications = async (
