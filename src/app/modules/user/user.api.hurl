@@ -1,9 +1,9 @@
 # create user
-POST  {{port6011}}/user/create
+POST  {{vps6011 }}/user/create
 Content-type: application/json
 {
-   "fullname":"Turjo Khan Sani",
-   "email":"turjo@merepost.com",
+   "fullname":"Md. Shahjalal",
+   "email":"shahjalal.backend@gmail.com",
    "password":"Aw32@320",
    "fcmToken":"fcm1"
 }
@@ -22,5 +22,4 @@ Content-type: application/json
 # get all users 
 
 GET {{port6011}}/user
-
 

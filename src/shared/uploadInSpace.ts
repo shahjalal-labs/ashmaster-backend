@@ -3,16 +3,6 @@ import { Upload } from "@aws-sdk/lib-storage";
 import path from "path";
 
 /* const DO_CONFIG = {
-  endpoint: "https://nyc3.digitaloceanspaces.com",
-  region: "nyc3",
-  credentials: {
-    accessKeyId: "DO002RGDJ947DJHJ9WDT",
-    secretAccessKey: "e5+/pko6Ojar51Hb8ojUKfq2HtXy+tnGKOfs3rIcEfo",
-  },
-  spaceName: "smtech-space",
-}; */
-
-const DO_CONFIG = {
   endpoint: "https://api.zenexcloud.com",
 
   region: "s3v4",
@@ -26,6 +16,22 @@ const DO_CONFIG = {
   },
 
   spaceName: "emdadullah",
+}; */
+
+const DO_CONFIG = {
+  endpoint: "https://bridge-system.atl1.digitaloceanspaces.com",
+
+  region: "s3v4",
+
+  useSSL: false,
+
+  credentials: {
+    accessKeyId: "DO00KCDPKH7BEVUAEBM3",
+
+    secretAccessKey: "RF9lyevyc4fyUV+WfYPFsTtWyP8mjh45BZe/oYQ5OpM",
+  },
+
+  spaceName: "bridge-system",
 };
 
 const s3Config: S3ClientConfig = {
