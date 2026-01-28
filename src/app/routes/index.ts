@@ -9,6 +9,7 @@ import { ScheduleRoutes } from "../modules/Schedule/schedule.routes";
 import { GroupRoutes } from "../modules/Group/group.routes";
 import { ChatRoutes } from "../modules/chat/chat.routes";
 import { NotificationRoutes } from "../modules/Notification/notification.routes";
+import { PaymentRoutes } from "../modules/Payment/payment.routes";
 
 type TAllRoutes = {
   path: string;
@@ -54,6 +55,10 @@ const allRoutes: TAllRoutes[] = [
   {
     path: "/notify",
     route: NotificationRoutes,
+  },
+  {
+    path: "/payment",
+    route: PaymentRoutes,
   },
 ];
 //w: (end)  ╰──────────── allRoutes ────────────╯
