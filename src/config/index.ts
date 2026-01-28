@@ -27,7 +27,7 @@ export default {
     app_pass: process.env.APP_PASS,
   },
   stripe: {
-    stripe_secret_key: process.env.STRIPE_SK,
+secret_key: process.env.STRIPE_SK,
   },
   agora: {
     app_id: process.env.AGORA_APP_ID,
