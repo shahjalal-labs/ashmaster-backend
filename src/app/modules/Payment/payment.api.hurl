@@ -1,6 +1,6 @@
 
 # create group
-POST http://localhost:6011/create-payment-intent
+POST {{port6011}}/payment/create-payment-intent
 Content-Type: application/json
 
 {
