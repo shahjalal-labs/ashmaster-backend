@@ -274,6 +274,14 @@ const mentorProgress = async (userId: string) => {
 
 //w: (end)  ╰──────────── mentorProgress ────────────╯
 
+/* My test request
+
+```http
+GET http://localhost:6011
+
+```http
+*/
+
 export const MentorProgressService = {
   mentorChecklistView,
   viewSpeficMenteeChecklists,
