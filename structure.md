@@ -4,6 +4,7 @@
 .
 ├── bun.lock
 ├── ecosystem.config.js
+├── kulala.note.md
 ├── msg.md
 ├── package.json
 ├── package-lock.json
@@ -49,15 +50,9 @@
 │   │   │   ├── Group
 │   │   │   │   ├── group.api.hurl
 │   │   │   │   ├── group.controller.ts
-│   │   │   │   ├── GroupFullContent.md
-│   │   │   │   ├── group.http.env.json
 │   │   │   │   ├── group.routes.ts
 │   │   │   │   ├── group.service.ts
-│   │   │   │   ├── group.validation.ts
-│   │   │   │   └── kulala
-│   │   │   │       ├── basic.http
-│   │   │   │       ├── group.api.http
-│   │   │   │       └── variables.http
+│   │   │   │   └── group.validation.ts
 │   │   │   ├── mentorProgress
 │   │   │   │   ├── mentorProgress.api.hurl
 │   │   │   │   ├── mentorProgress.controller.ts
@@ -88,8 +83,10 @@
 │   │   │   ├── socket
 │   │   │   │   ├── handlers
 │   │   │   │   │   └── chat.handler.ts
+│   │   │   │   ├── pr
+│   │   │   │   │   └── map_set
+│   │   │   │   │       └── map_set.ts
 │   │   │   │   ├── socket.controller.ts
-│   │   │   │   ├── socketFullContent.md
 │   │   │   │   ├── socket.interface.ts
 │   │   │   │   ├── socket.note.md
 │   │   │   │   ├── socket.service.ts
@@ -147,7 +144,8 @@
 │   │   ├── prisma.ts
 │   │   ├── redis-services
 │   │   │   ├── chat.service.ts
-│   │   │   └── otp.service.ts
+│   │   │   ├── otp.service.ts
+│   │   │   └── redisservice.note.md
 │   │   ├── redis.ts
 │   │   ├── searchFilter.ts
 │   │   ├── sendResponse.ts
@@ -161,6 +159,6 @@
 │   └── google.png
 └── vercel.json
 
-33 directories, 126 files
+34 directories, 123 files
 
 ```
