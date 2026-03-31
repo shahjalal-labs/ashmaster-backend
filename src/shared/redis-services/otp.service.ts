@@ -1,4 +1,3 @@
-import { type } from "os";
 import ApiError from "../../errors/ApiErrors";
 import redisClient from "../redis";
 import httpStatus from "http-status";
@@ -16,11 +15,6 @@ export const redisOtpService = {
   async verifyOtp(email: string, otp: string): Promise<boolean> {
     const key = `${OTP_PREFIX}${email}`;
     const storedOtp = await redisClient.get(key);
-    console.log(
-      storedOtp,
-      typeof storedOtp,
-      "[1;31mstoredOtp in otp.service.ts at line 18[0m",
-    );
 
     if (!storedOtp)
       throw new ApiError(httpStatus.BAD_REQUEST, "Invalid or expired otp");

@@ -5,7 +5,6 @@ import {
   chatRedisService,
   IMessage,
 } from "../../../../shared/redis-services/chat.service";
-import { v4 as uuidv4 } from "uuid";
 
 // Get user details for message sender
 export const getUserDetails = async (userId: string) => {
@@ -115,7 +114,7 @@ export const findOrCreateP2PRoom = async (
     const initialMessages = await chatRedisService.getMessages(room.id, 20);
 
     // Get partner details
-    const partnerId = room.participants.find((id) => id !== userId);
+    const partnerId = room.participants.find((id: string) => id !== userId);
     const partner = partnerId ? await getUserDetails(partnerId) : null;
 
     return {
