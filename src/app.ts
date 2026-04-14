@@ -9,6 +9,7 @@ import { entryMessage } from "./app/middlewares/entry";
 import { notFound } from "./app/middlewares/notFound";
 import helmet from "helmet";
 import config, { ENV } from "./config";
+import { configRoutes } from "./config/viewRoutes";
 
 const app: Application = express();
 
@@ -25,6 +26,9 @@ app.use("/uploads", express.static(path.join(__dirname, "..", "uploads")));
 app.get("/", entryMessage);
 // Router setup
 app.use("/api/v1", router);
+
+//privacy policy, terms of service etc route
+app.use("/", configRoutes);
 
 app.use(
   "/bull",

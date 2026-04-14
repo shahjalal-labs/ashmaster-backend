@@ -1,0 +1,54 @@
+### send test notification
+
+POST {{port6011}}/notify/send-test HTTP/1.1
+Content-Type: application/json
+
+{
+  "body": "This is a test notification from postman",
+  "metaData": {
+    "action": "friend_request",
+    "actionId": "12345abcde",
+    "extra": {
+      "deeplink": "myapp://friends/requests",
+      "priority": "high",
+      "sound": "ping"
+    },
+    "messagePreview": "John Doe sent you a friend request"
+  },
+  "notificationChannel": "BOTH",
+  "receiverId": "694a39873340ac9b4e138239",
+  "senderId": "696e0f7ac1538597d9cb43f4",
+  "title": "10 Send test notification",
+  "type": "SCHEDULE"
+}
+
+
+### my notifications
+
+# / isRead=> true, false, all
+
+GET {{port6011}}/notify/my?page=1&limit=20&isRead=all HTTP/1.1
+Authorization: {{ashRaisa}}
+
+
+### get single notification and marks as read
+
+GET {{port6011}}/notify/single/6978616ac37761286140fef8 HTTP/1.1
+Authorization: {{ashRaisa}}
+
+
+### get notification unread count
+
+GET {{port8012}}/notify/unread-count HTTP/1.1
+Authorization: {{ashsrasu}}
+
+
+### mark all as read or unread
+
+PATCH {{port6011}}/notify/mark-all HTTP/1.1
+Authorization: {{ashsrasu}}
+Content-Type: application/json
+
+{
+  "isRead": false
+}
