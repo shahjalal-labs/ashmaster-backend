@@ -39,42 +39,42 @@ strong{font-weight:600;}
 
 <header class="card">
 <h1>Bridge Connection Privacy Policy</h1>
-<p class="muted"><strong>Version:</strong> 1.0</p>
-<p class="muted"><strong>Last Updated:</strong> April 14, 2026</p>
-<p class="muted"><strong>Effective Date:</strong> April 14, 2026</p>
+<p class="muted"><strong>Effective Date:</strong> April 19, 2026</p>
 </header>
 
 <section class="card">
 
 <h2>1. INTRODUCTION</h2>
-<p>Welcome to Bridge Connection ("we," "our," or "us"). We are committed to protecting your privacy and ensuring the security of your personal information. This Privacy Policy explains how we collect, use, and safeguard your information when you use our mobile application, website, and related services.</p>
+<p>Bridge System LLC (“we,” “our,” or “us”) operates the Bridge app (the “Service”). This Privacy Policy explains how we collect, use, and protect your information when you use our app and website.</p>
 
 <h2>2. INFORMATION WE COLLECT</h2>
 
-<h3>Information You Provide</h3>
+<h3>Personal Information</h3>
 <ul>
-<li>Name, email address, phone number</li>
-<li>Profile details (such as interests, bio, preferences)</li>
-<li>Messages, posts, or content you share</li>
-<li>Photos or media you upload</li>
+<li>Name, email address</li>
+<li>Profile details (such as interests, job title, preferences)</li>
+<li>Optional user-provided information</li>
 </ul>
 
-<h3>Information We Collect Automatically</h3>
+<h3>Usage Data</h3>
 <ul>
-<li><strong>Device Information:</strong> Device model, OS version, app version</li>
-<li><strong>Usage Data:</strong> Features used, interactions, session time</li>
-<li><strong>Log Data:</strong> IP address, crash logs, diagnostics</li>
-<li><strong>Location Data (if enabled):</strong> To provide location-based features</li>
+<li>App activity and features used</li>
+<li>Device information for analytics and performance</li>
+</ul>
+
+<h3>Communications</h3>
+<ul>
+<li>Messages exchanged between mentors and mentees</li>
+<li>Encrypted during transmission</li>
+<li>May be securely stored for delivery and legal compliance</li>
 </ul>
 
 <h2>3. HOW WE USE YOUR INFORMATION</h2>
 <ul>
-<li>Provide and operate our services</li>
-<li>Create and manage your account</li>
-<li>Personalize your experience</li>
-<li>Improve app functionality and performance</li>
-<li>Ensure safety and prevent fraud</li>
-<li>Respond to user inquiries and support requests</li>
+<li>Provide and personalize the mentorship experience</li>
+<li>Facilitate communication between users</li>
+<li>Maintain and improve functionality, security, and performance</li>
+<li>Send updates, service notifications, and announcements</li>
 <li>Comply with legal obligations</li>
 </ul>
 
@@ -89,46 +89,34 @@ strong{font-weight:600;}
 </thead>
 <tbody>
 <tr>
-<td>User Account</td>
-<td>Email, Name</td>
-<td>Authentication & identification</td>
+<td>Account</td>
+<td>Name, Email</td>
+<td>User identification</td>
 </tr>
 <tr>
-<td>Recommendations</td>
-<td>Usage activity</td>
-<td>Personalized suggestions</td>
+<td>Matching</td>
+<td>Profile details</td>
+<td>Mentor-mentee pairing</td>
 </tr>
 <tr>
-<td>Security</td>
-<td>IP, device logs</td>
-<td>Fraud prevention</td>
+<td>Messaging</td>
+<td>Messages</td>
+<td>Communication between users</td>
 </tr>
 </tbody>
 </table>
 
-<h2>4. HOW WE SHARE INFORMATION</h2>
-<p>We do not sell your personal data. We may share information:</p>
+<h2>4. DATA SHARING</h2>
+<p>We do not sell your personal data. We may share information with trusted service providers (such as hosting and analytics providers) who assist in operating the Service. These providers are bound by confidentiality obligations.</p>
+
+<h2>5. SECURITY</h2>
+<p>We use encryption and modern data management practices to protect your information. However, no digital system is completely secure, and users share data at their own discretion.</p>
+
+<h2>6. YOUR RIGHTS</h2>
 <ul>
-<li>With service providers (hosting, analytics, support)</li>
-<li>To comply with legal obligations</li>
-<li>To protect user safety and enforce policies</li>
-<li>During business transfers (e.g., merger or acquisition)</li>
-</ul>
-
-<h2>5. THIRD-PARTY SERVICES</h2>
-<p>Bridge Connection may use third-party tools for analytics, payments, or infrastructure. These services have their own privacy policies.</p>
-
-<h2>6. DATA SECURITY</h2>
-<p>We implement technical and organizational safeguards including encryption and restricted access. However, no system is completely secure.</p>
-
-<h2>7. YOUR RIGHTS</h2>
-
-<ul>
-<li>Access your personal data</li>
-<li>Request corrections</li>
-<li>Request deletion</li>
-<li>Withdraw consent</li>
-<li>Object to certain processing</li>
+<li>Access your information</li>
+<li>Update your data</li>
+<li>Delete your account</li>
 </ul>
 
 <h3>Example Requests</h3>
@@ -142,40 +130,36 @@ strong{font-weight:600;}
 <tbody>
 <tr>
 <td>Access</td>
-<td>"Send me my stored data"</td>
+<td>"Send me my data"</td>
 </tr>
 <tr>
 <td>Deletion</td>
 <td>"Delete my account"</td>
 </tr>
 <tr>
-<td>Correction</td>
-<td>"Update my email address"</td>
+<td>Update</td>
+<td>"Change my profile details"</td>
 </tr>
 </tbody>
 </table>
 
-<h2>8. DATA RETENTION</h2>
-<p>We retain your information only as long as necessary for service delivery, legal compliance, and security purposes.</p>
+<h2>7. CHILDREN'S PRIVACY</h2>
+<p>The Service is intended for users aged 18 and older. We do not knowingly collect data from minors.</p>
 
-<h2>9. INTERNATIONAL DATA TRANSFERS</h2>
-<p>Your data may be processed in different countries. We take appropriate safeguards to protect your data across jurisdictions.</p>
+<h2>8. CHANGES TO THIS POLICY</h2>
+<p>We may update this Privacy Policy periodically. The latest version will always be available on our website.</p>
 
-<h2>10. CHILDREN'S PRIVACY</h2>
-<p>Our services are not intended for individuals under 18. We do not knowingly collect data from minors.</p>
+<h2>9. CONTACT US</h2>
+<p>For questions about this Privacy Policy:</p>
 
-<h2>11. CHANGES TO THIS POLICY</h2>
-<p>We may update this policy. Changes will be posted with a revised "Last Updated" date.</p>
-
-<h2>12. CONTACT US</h2>
-<p>If you have any questions or requests regarding this Privacy Policy:</p>
-
+<p><strong>Company:</strong> Bridge System LLC</p>
 <p><strong>Email:</strong> customersupport@bridgesystemllc.com</p>
+<p><strong>Website:</strong> bridgesystemllc.com</p>
 
 </section>
 
 <footer>
-© 2026 Bridge System LLC — Bridge Connection Privacy Policy
+© 2026 Bridge System LLC — Privacy Policy
 </footer>
 
 </div>

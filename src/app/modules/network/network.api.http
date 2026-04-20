@@ -1,0 +1,53 @@
+### 
+
+# Simple Network Tests
+
+
+### Get suggestions
+
+GET {{port6011}}/network/suggestions?page=1&limit=10 HTTP/1.1
+Authorization: {{ashRaisa}}
+
+
+### Send request
+
+POST {{port6011}}/network/request HTTP/1.1
+Authorization: {{ashRaisa}}
+Content-Type: application/json
+
+{
+  "message": "Hi, let's connect! I have dream to become a software engineer. I want to know many things from you.",
+  "receiverId": "694a793d6f65b4f863400d6a"
+}
+
+
+### Get pending requests
+
+GET {{port6011}}/network/request-pending?page=1&limit=10 HTTP/1.1
+Authorization: {{ashsrasu}}
+
+
+### response/remove connection or cancel sent connection request
+
+# / ACCEPTED | REJECTED | REMOVE // accpet/reject to response the request & remove to delete existing connection or cancel send request
+
+PATCH {{port6011}}/network/response-or-remove HTTP/1.1
+Content-Type: application/json
+Authorization: {{ashsrasu}}
+
+{
+  "requestId": "697887bbb92c730c8e2d95ca",
+  "status": "ACCEPTED"
+}
+
+
+### get connections
+
+GET {{port6011}}/network/connections?page=1&limit=10 HTTP/1.1
+Authorization: {{rahim}}
+
+
+### get my connections count
+
+GET {{port6011}}/network/connections-count HTTP/1.1
+Authorization: {{raisa}}

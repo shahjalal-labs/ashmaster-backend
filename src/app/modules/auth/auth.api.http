@@ -9,7 +9,7 @@ POST {{port6011}}/auth/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "raisa@merepost.com",
+  "email": "rahim@merepost.com",
   "fcmToken": "fcm4",
   "password": "SjAbc1@Bad"
 }
@@ -27,7 +27,7 @@ Content-Type: application/json
 }
 
 
-### upload profile image file
+### upload profile image
 
 GET PACTH {{port6011}}/auth/profile-image HTTP/1.1
 Content-Type: application/json
@@ -299,71 +299,4 @@ Content-Type: application/json
     ],
     "profession": "Product Manager"
   }
-}
-
-
-### 
-
-# Complete Profile (For ADMIN role - optional)
-
-POST {{port6011}}/auth/complete-profile HTTP/1.1
-Authorization: {{accessToken}}
-Content-Type: application/json
-
-{
-  "preference": {
-    "age": {
-      "max": 50,
-      "min": 25
-    },
-    "career": "IT Administration",
-    "ethnicity": "NO_ANSWER",
-    "gender": "NO_ANSWER"
-  },
-  "profile": {
-    "about": "Platform administrator with system management responsibilities",
-    "age": 40,
-    "availability": {
-      "friday": [
-        {
-          "end": "17:00",
-          "start": "09:00"
-        }
-      ],
-      "monday": [
-        {
-          "end": "17:00",
-          "start": "09:00"
-        }
-      ],
-      "thursday": [
-        {
-          "end": "17:00",
-          "start": "09:00"
-        }
-      ],
-      "tuesday": [
-        {
-          "end": "17:00",
-          "start": "09:00"
-        }
-      ],
-      "wednesday": [
-        {
-          "end": "17:00",
-          "start": "09:00"
-        }
-      ]
-    },
-    "ethnicity": "WHITE",
-    "experienceYear": "12 years",
-    "gender": "FEMALE",
-    "interests": [
-      "System Administration",
-      "Security",
-      "DevOps"
-    ],
-    "profession": "System Administrator"
-  },
-  "role": "ADMIN"
 }
