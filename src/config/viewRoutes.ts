@@ -154,7 +154,7 @@ strong{font-weight:600;}
 
 <p><strong>Company:</strong> Bridge System LLC</p>
 <p><strong>Email:</strong> customersupport@bridgesystemllc.com</p>
-<p><strong>Website:</strong> bridgesystemllc.com</p>
+<p><strong>Website:</strong> https://www.bridgesystemllc.com</p>
 
 </section>
 
