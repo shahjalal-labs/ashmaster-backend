@@ -745,6 +745,145 @@ const appStoreDescription = () => {
 `;
 };
 
+const csaeSafetyStandards = () => {
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSAE Safety Standards</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f7f7;
+    margin: 0;
+    padding: 0;
+  }
+
+  .container {
+    max-width: 700px;
+    margin: 60px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+  }
+
+  h1 {
+    color: #b71c1c;
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .date {
+    text-align: center;
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 25px;
+  }
+
+  h2 {
+    color: #333;
+    margin-top: 20px;
+  }
+
+  p {
+    line-height: 1.6;
+    color: #444;
+  }
+
+  ul {
+    padding-left: 20px;
+  }
+
+  li {
+    margin-bottom: 8px;
+  }
+
+  .highlight {
+    background: #ffebee;
+    padding: 10px;
+    border-left: 4px solid #c62828;
+    margin: 15px 0;
+  }
+
+  .contact {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f1f1f1;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Child Sexual Abuse and Exploitation (CSAE) Safety Standards</h1>
+  <div class="date">Effective Date: April 23, 2026</div>
+
+  <h2>1. Commitment to Child Safety</h2>
+  <p>
+    We are fully committed to ensuring a safe digital environment for all users.
+    Protecting children from abuse, exploitation, and harmful content is a core priority of our platform.
+  </p>
+
+  <h2>2. Zero Tolerance Policy</h2>
+  <div class="highlight">
+    We strictly prohibit any form of harmful or exploitative content involving minors.
+  </div>
+  <ul>
+    <li>Child Sexual Abuse Material (CSAM)</li>
+    <li>Any form of grooming, exploitation, or manipulation of minors</li>
+    <li>Content that sexualizes or endangers children</li>
+    <li>Distribution, sharing, or attempt to upload illegal content involving minors</li>
+  </ul>
+  <p>
+    Any violation of this policy results in immediate enforcement action.
+  </p>
+
+  <h2>3. Enforcement Actions</h2>
+  <p>We take strict action against violations, including:</p>
+  <ul>
+    <li>Immediate removal of violating content</li>
+    <li>Account suspension or permanent ban</li>
+    <li>Reporting illegal activity to relevant authorities when required</li>
+  </ul>
+
+  <h2>4. Reporting Violations</h2>
+  <p>
+    If you encounter any content or behavior that violates this policy, please report it immediately so we can take action.
+  </p>
+
+  <div class="contact">
+    📧 Contact Email: customersupport@bridgesystemllc.com
+  </div>
+
+  <h2>5. Compliance</h2>
+  <p>This platform complies with:</p>
+  <ul>
+    <li>Google Play Child Safety Standards</li>
+    <li>Applicable child protection laws and regulations</li>
+    <li>Industry best practices for online safety</li>
+  </ul>
+
+  <h2>6. Policy Updates</h2>
+  <p>
+    This policy may be updated periodically to improve safety measures and ensure ongoing compliance with legal and regulatory standards.
+  </p>
+
+</div>
+
+</body>
+</html>`;
+};
+
 export const configRoutes = Router();
 
 configRoutes.get("/privacy-policy", (_req, res) => {
@@ -765,4 +904,8 @@ configRoutes.get("/account-delete", (_req, res) => {
 
 configRoutes.get("/appstore-description", (_req, res) => {
   res.type("html").send(appStoreDescription());
+});
+
+configRoutes.get("/csae-safety-standards", (_req, res) => {
+  res.type("html").send(csaeSafetyStandards());
 });
