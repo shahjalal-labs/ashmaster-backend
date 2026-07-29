@@ -16,7 +16,6 @@ import {
 } from "./auth.validation";
 import redisClient from "../../../shared/redis";
 import { emailQueue } from "../../../jobs/queues/emailQueue";
-import { notificationQueue } from "../../../jobs/queues/notificationQueue";
 
 //email, password login
 //w: (start)╭──────────── loginUserIntoDB ────────────╮
