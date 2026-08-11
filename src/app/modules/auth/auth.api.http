@@ -9,7 +9,7 @@ POST {{port6011}}/auth/login HTTP/1.1
 Content-Type: application/json
 
 {
-  "email": "rahim@merepost.com",
+  "email": "raisa@merepost.com",
   "fcmToken": "fcm4",
   "password": "SjAbc1@Bad"
 }

@@ -1,18 +1,13 @@
-### 
-
-# Simple Network Tests
-
-
 ### Get suggestions
 
 GET {{port6011}}/network/suggestions?page=1&limit=10 HTTP/1.1
-Authorization: {{ashRaisa}}
+Authorization: {{raisa}}
 
 
 ### Send request
 
 POST {{port6011}}/network/request HTTP/1.1
-Authorization: {{ashRaisa}}
+Authorization: {{raisa}}
 Content-Type: application/json
 
 {
@@ -44,7 +39,7 @@ Authorization: {{ashsrasu}}
 ### get connections
 
 GET {{port6011}}/network/connections?page=1&limit=10 HTTP/1.1
-Authorization: {{rahim}}
+Authorization: {{raisa}}
 
 
 ### get my connections count
