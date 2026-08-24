@@ -1,6 +1,5 @@
 import prisma from "../../../shared/prisma";
 import { Prisma, ProfilStatus, UserRole } from "@prisma/client";
-
 import { paginationHelper, TOptions } from "../../../shared/paginationHelper";
 import ApiError from "../../../errors/ApiErrors";
 import httpStatus from "http-status";
@@ -140,7 +139,7 @@ const exploreAllUsers = async (userId: string, options: any) => {
   const { page, limit, skip } = paginationHelper.calcalutePagination(options);
 
   // 1. Find all users that are already connected or pending (any status)
-  const connectedOrPendingUsers = await prisma.user.findMany({
+  /* const connectedOrPendingUsers = await prisma.user.findMany({
     where: {
       OR: [
         {
@@ -162,9 +161,11 @@ const exploreAllUsers = async (userId: string, options: any) => {
     select: {
       id: true,
     },
-  });
+  }); */
 
-  const excludedIds = connectedOrPendingUsers.map((u) => u.id);
+  // const excludedIds = connectedOrPendingUsers.map((u) => u.id);
+
+  const excludedIds = [];
   excludedIds.push(userId); // also exclude self
 
   // 2. Build where clause
