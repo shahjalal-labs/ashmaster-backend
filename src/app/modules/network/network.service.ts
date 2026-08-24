@@ -189,6 +189,22 @@ const exploreAllUsers = async (userId: string, options: any) => {
       contains: options.search,
       mode: "insensitive",
     };
+
+    // if multiple field wants
+    /* whereClause.OR = [
+      {
+        fullname: {
+          contains: options.search,
+          mode: "insensitive",
+        },
+      },
+      {
+        email: {
+          contains: options.search,
+          mode: "insensitive",
+        },
+      },
+    ]; */
   }
 
   // 5. Fetch data and total count
