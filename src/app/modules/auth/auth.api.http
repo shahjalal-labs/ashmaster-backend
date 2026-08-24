@@ -44,8 +44,8 @@ Authorization: {{raisa}}
 
 # profile/userId
 
-GET {{port6011}}/auth/profile/694a254aad128cabeaf7412f HTTP/1.1
-Authorization: {{rahim}}
+GET {{port6011}}/auth/profile/697d809a8429ccf084a39bff HTTP/1.1
+Authorization: {{raisa}}
 
 
 ### Delete Account

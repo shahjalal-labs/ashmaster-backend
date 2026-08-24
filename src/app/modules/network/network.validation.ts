@@ -1,5 +1,14 @@
 import { z } from "zod";
 
+const exploreAllQuery = z
+  .object({
+    page: z.coerce.number().int().positive().optional(),
+    limit: z.coerce.number().int().positive().optional(),
+    role: z.enum(["MENTOR", "MENTEE"]).optional(),
+    search: z.string().optional(),
+  })
+  .strict();
+
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = z
   .object({
@@ -29,4 +38,5 @@ export type TResponseRequest = z.infer<
 export const NetworkValidation = {
   sendConnectionRequest,
   responseRequestOrRemoveConnection,
+  exploreAllQuery,
 };

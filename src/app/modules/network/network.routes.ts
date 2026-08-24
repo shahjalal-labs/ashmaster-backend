@@ -9,13 +9,17 @@ import config, { ENV } from "../../../config";
 const router = express.Router();
 
 router.use(auth());
-if (config.env === ENV.DEVELOPMENT) {
+/* if (config.env === ENV.DEVELOPMENT) {
   router.use(profileGuard());
-}
+} */
 // Get suggestions (for home page)
 //w: (start)╭──────────── getSuggestions ────────────╮
 router.get("/suggestions", NetworkController.getSuggestions);
 //w: (end)  ╰──────────── getSuggestions ────────────╯
+
+//w: (start)╭──────────── exploreAllUsers ────────────╮
+router.get("/explore-all", NetworkController.exploreAllUsers);
+//w: (end)  ╰──────────── exploreAllUsers ────────────╯
 
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 router.post(

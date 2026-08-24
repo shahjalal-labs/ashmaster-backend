@@ -133,6 +133,104 @@ const getSuggestions = async (userId: string, options: TOptions) => {
 };
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
+// get all mentor and mentee to connect
+//w: (start)╭──────────── exploreAllUsers ────────────╮
+const exploreAllUsers = async (userId: string, options: any) => {
+  // Extract pagination
+  const { page, limit, skip } = paginationHelper.calcalutePagination(options);
+
+  // 1. Find all users that are already connected or pending (any status)
+  const connectedOrPendingUsers = await prisma.user.findMany({
+    where: {
+      OR: [
+        {
+          receivedRequests: {
+            some: {
+              senderId: userId,
+            },
+          },
+        },
+        {
+          sentRequests: {
+            some: {
+              receiverId: userId,
+            },
+          },
+        },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const excludedIds = connectedOrPendingUsers.map((u) => u.id);
+  excludedIds.push(userId); // also exclude self
+
+  // 2. Build where clause
+  const whereClause: Prisma.UserWhereInput = {
+    id: {
+      notIn: excludedIds,
+    },
+    role: {
+      not: "ADMIN", // never show admins
+    },
+    profilStatus: "COMPLETE", // optional but consistent
+  };
+
+  // 3. Apply optional role filter
+  if (options.role) {
+    whereClause.role = options.role; // "MENTOR" or "MENTEE"
+  }
+
+  // 4. Apply optional search (by fullname)
+  if (options.search) {
+    whereClause.fullname = {
+      contains: options.search,
+      mode: "insensitive",
+    };
+  }
+
+  // 5. Fetch data and total count
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where: whereClause,
+      select: {
+        id: true,
+        fullname: true,
+        role: true,
+        profile: {
+          select: {
+            profileImage: true,
+            profession: true,
+          },
+        },
+      },
+      skip,
+      take: limit,
+      orderBy: {
+        createdAt: "desc",
+      },
+    }),
+    prisma.user.count({
+      where: whereClause,
+    }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages,
+    },
+    data: users,
+  };
+};
+//w: (end)  ╰──────────── exploreAllUsers ────────────╯
+
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = async (
   userId: string,
@@ -510,6 +608,7 @@ const getMyConnectionCount = async (userId: string) => {
 
 export const NetworkService = {
   getSuggestions,
+  exploreAllUsers,
   sendConnectionRequest,
   getPendingRequest,
   getConnections,

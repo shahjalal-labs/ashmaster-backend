@@ -1,5 +1,3 @@
----
-
 ## connection suggestion logic
 
 1. exact match needed (we using AND operator)

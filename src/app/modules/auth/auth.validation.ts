@@ -163,8 +163,7 @@ const completeProfileSchema = z
             .min(2, "Interest must be at least 2 characters long")
             .max(50, "Interest must be at most 50 characters long"),
         )
-        .min(1, "At least one interest is required")
-        .max(10, "Maximum 10 interests allowed"),
+        .min(1, "At least one interest is required"),
     }),
 
     // Preference data

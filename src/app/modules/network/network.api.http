@@ -1,7 +1,22 @@
+
+
+
 ### Get suggestions
 
 GET {{port6011}}/network/suggestions?page=1&limit=10 HTTP/1.1
 Authorization: {{raisa}}
+
+
+### Get explore-all users
+GET {{port6011}}/network/explore-all?page=1&limit=10&role=MENTOR&search=John
+Authorization: {{raisa}}
+
+
+### Get explore-all users
+GET {{port6011}}/network/explore-all?page=1&limit=10
+Authorization: {{raisa}}
+
+
 
 
 ### Send request

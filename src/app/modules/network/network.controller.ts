@@ -23,6 +23,28 @@ const getSuggestions = catchAsync(async (req: any, res: Response) => {
 });
 //w: (end)  ╰──────────── getSuggestions ────────────╯
 
+//w: (start)╭──────────── exploreAllUsers ────────────╮
+const exploreAllUsers = catchAsync(async (req: any, res: Response) => {
+  const { id } = req.user;
+
+  // Pick pagination fields and additional filters
+  const options = {
+    ...pick(req.query, paginationOptions),
+    role: req.query.role,
+    search: req.query.search,
+  };
+
+  const result = await NetworkService.exploreAllUsers(id, options);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Explore users fetched successfully",
+    data: result,
+  });
+});
+//w: (end)  ╰──────────── exploreAllUsers ────────────╯
+
 //w: (start)╭──────────── sendConnectionRequest ────────────╮
 const sendConnectionRequest = catchAsync(async (req, res) => {
   const userId = req.user.id;
@@ -96,6 +118,7 @@ const getMyConnectionCount = catchAsync(async (req, res) => {
 
 export const NetworkController = {
   getSuggestions,
+  exploreAllUsers,
   sendConnectionRequest,
   getPendingRequests,
   getConnections,
