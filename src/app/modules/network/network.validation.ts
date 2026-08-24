@@ -35,8 +35,22 @@ export type TResponseRequest = z.infer<
 
 //w: (end)  ╰──────────── responseRequest ────────────╯
 
+//w: (start)╭──────────── respondToUser ────────────╮
+const respondRequestByOtherUserId = z
+  .object({
+    targetUserId: z.string().min(24, "Invalid user ID format"),
+    action: z.enum(["ACCEPT", "REJECT", "REMOVE"]),
+  })
+  .strict();
+
+export type TRespondRequestByOtherUserId = z.infer<
+  typeof respondRequestByOtherUserId
+>;
+//w: (end)  ╰──────────── respondToUser ────────────╯
+
 export const NetworkValidation = {
   sendConnectionRequest,
   responseRequestOrRemoveConnection,
+  respondRequestByOtherUserId,
   exploreAllQuery,
 };

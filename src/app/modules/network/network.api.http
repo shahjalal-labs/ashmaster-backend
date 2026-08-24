@@ -51,6 +51,18 @@ Authorization: {{ashsrasu}}
 }
 
 
+### Respond a pending connection request by other user id
+# action :  "ACCEPT", "REJECT", "REMOVE"
+PATCH {{port6011}}/network/respond-to-user
+Authorization: {{ashsrasu}}
+Content-Type: application/json
+
+{
+  "targetUserId": "694a793d6f65b4f863400d6a",
+  "action": "ACCEPT"
+}
+
+
 ### get connections
 
 GET {{port6011}}/network/connections?page=1&limit=10 HTTP/1.1

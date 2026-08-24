@@ -101,6 +101,33 @@ const responseRequestOrRemoveConnection = catchAsync(async (req, res) => {
 });
 //w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
+//w: (start)╭──────────── respondToUser ────────────╮
+const respondRequestByOtherUserId = catchAsync(
+  async (req: any, res: Response) => {
+    const { id: userId } = req.user;
+    const { targetUserId, action } = req.body;
+
+    const result = await NetworkService.respondRequestByOtherUserId(userId, {
+      targetUserId,
+      action,
+    });
+
+    const messageMap: any = {
+      ACCEPT: "Connection request accepted successfully",
+      REJECT: "Connection request rejected successfully",
+      REMOVE: "Connection removed successfully",
+    };
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: messageMap[action] || "Action completed successfully",
+      data: result,
+    });
+  },
+);
+//w: (end)  ╰──────────── respondToUser ────────────╯
+
 //w: (start)╭──────────── getMyConnectionCount ────────────╮
 const getMyConnectionCount = catchAsync(async (req, res) => {
   const { id: userId } = req.user;
@@ -123,5 +150,6 @@ export const NetworkController = {
   getPendingRequests,
   getConnections,
   responseRequestOrRemoveConnection,
+  respondRequestByOtherUserId,
   getMyConnectionCount,
 };

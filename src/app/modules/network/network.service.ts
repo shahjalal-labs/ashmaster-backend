@@ -601,6 +601,144 @@ const responseRequestOrRemoveConnection = async (
 };
 //w: (end)  ╰──────────── responseRequestOrRemoveConnection ────────────╯
 
+//w: (start)╭──────────── respondToUser ────────────╮
+const respondRequestByOtherUserId = async (
+  userId: string,
+  payload: { targetUserId: string; action: "ACCEPT" | "REJECT" | "REMOVE" },
+) => {
+  const { targetUserId, action } = payload;
+
+  // 1. Prevent self-interaction
+  if (userId === targetUserId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You cannot interact with yourself.",
+    );
+  }
+
+  // 2. Find the connection using uniqueKey
+  const uniqueKey = [userId, targetUserId].sort().join("_");
+
+  const connection = await prisma.connections.findUnique({
+    where: { uniqueKey },
+    select: {
+      id: true,
+      status: true,
+      senderId: true,
+      receiverId: true,
+      receiver: {
+        select: {
+          fullname: true,
+        },
+      },
+      sender: {
+        select: {
+          fullname: true,
+        },
+      },
+    },
+  });
+
+  // 3. Check if connection exists
+  if (!connection) {
+    throw new ApiError(
+      httpStatus.NOT_FOUND,
+      "No connection found between you and this user.",
+    );
+  }
+
+  // 4. Verify current user is part of this connection
+  if (connection.senderId !== userId && connection.receiverId !== userId) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You are not authorized to respond to this connection.",
+    );
+  }
+
+  // 5. Validate action based on current status and user role
+  const isReceiver = connection.receiverId === userId;
+  const isSender = connection.senderId === userId;
+
+  // 5a. ACCEPT - only receiver can accept a pending request
+  if (action === "ACCEPT") {
+    if (!isReceiver) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Only the receiver can accept this connection request.",
+      );
+    }
+
+    if (connection.status !== "PENDING") {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "This connection request is not pending.",
+      );
+    }
+
+    // Update to ACCEPTED
+    await prisma.connections.update({
+      where: { id: connection.id },
+      data: { status: "ACCEPTED" },
+    });
+
+    // Send acceptance notification
+    await notificationQueue.add(
+      "requestAcceptance",
+      {
+        senderId: connection.senderId,
+        fullname: connection.receiver.fullname,
+        receiverId: connection.receiverId,
+        requestId: connection.id,
+      },
+      {
+        attempts: 3,
+        backoff: { type: "exponential", delay: 2000 },
+        removeOnComplete: { age: 3600 * 2 },
+      },
+    );
+  }
+
+  // 5b. REJECT - only receiver can reject a pending request
+  else if (action === "REJECT") {
+    if (!isReceiver) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "Only the receiver can reject this connection request.",
+      );
+    }
+
+    if (connection.status !== "PENDING") {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "This connection request is not pending.",
+      );
+    }
+
+    // Delete the rejected request
+    await prisma.connections.delete({
+      where: { id: connection.id },
+    });
+  }
+
+  // 5c. REMOVE - either party can remove an accepted connection or cancel a pending request
+  else if (action === "REMOVE") {
+    // Allow removal in any status (PENDING or ACCEPTED)
+    // Both sender and receiver can remove/cancel
+
+    await prisma.connections.delete({
+      where: { id: connection.id },
+    });
+  }
+
+  return {
+    success: true,
+    action,
+    connectionId: connection.id,
+    targetUserId,
+  };
+};
+//w: (end)  ╰──────────── respondToUser ────────────╯
+
 //w: (start)╭──────────── getMyConnectionCount ────────────╮
 const getMyConnectionCount = async (userId: string) => {
   const connectionsCount = await prisma.connections.count({
@@ -630,5 +768,6 @@ export const NetworkService = {
   getPendingRequest,
   getConnections,
   responseRequestOrRemoveConnection,
+  respondRequestByOtherUserId,
   getMyConnectionCount,
 };

@@ -40,6 +40,14 @@ router.patch(
   NetworkController.responseRequestOrRemoveConnection,
 );
 
+//w: (start)╭──────────── respondToUser ────────────╮
+router.patch(
+  "/respond-to-user",
+  validateRequest(NetworkValidation.respondRequestByOtherUserId),
+  NetworkController.respondRequestByOtherUserId,
+);
+//w: (end)  ╰──────────── respondToUser ────────────╯
+
 router.get("/connections-count", NetworkController.getMyConnectionCount);
 
 export const NetworkRoutes = router;
